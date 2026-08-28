@@ -1,37 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  /* Warm Cream / Sand Off-White */
+  /* LIGHT MODE (Clean, textured paper vibe) */
   --background: #F4F3ED;
-  --foreground: #1A1C20;
-  
-  /* UI Elements */
+  --foreground: #111111;
   --card: #FFFFFF;
-  --card-foreground: #1A1C20;
-  --border: #E2E1D9;
+  --card-foreground: #111111;
+  --border: #E5E4DE;
   
-  /* Brand & Gamified Accents */
   --primary: #FF7A00;
   --primary-foreground: #FFFFFF;
   
-  /* Battle Colors */
-  --battle-red: #FF5C5C;
-  --battle-pink: #FF8080;
-  --battle-green: #80FF80;
-  --battle-yellow: #FFDF80;
+  --battle-red: #FF4444;
+  --battle-pink: #FF6B6B;
+  --battle-green: #00E676;
+  --battle-yellow: #FFD600;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Soft Charcoal / Dark Slate */
-    --background: #121417;
-    --foreground: #F9F8F3;
-    
-    /* UI Elements */
-    --card: #1A1C20;
-    --card-foreground: #F9F8F3;
-    --border: #2A2D35;
-  }
+/* We will use a class-based dark mode so next-themes can control it */
+.dark {
+  /* CINEMATIC DARK MODE (Pitch black, sleek) */
+  --background: #030303; 
+  --foreground: #FAFAFA;
+  --card: #0A0A0C;
+  --card-foreground: #FAFAFA;
+  --border: #1F1F22;
 }
 
 @theme inline {
@@ -50,7 +43,7 @@
   --color-battle-yellow: var(--battle-yellow);
 
   --font-sans: var(--font-outfit);
-  --font-arcade: var(--font-space-grotesk);
+  --font-arcade: var(--font-arcade);
 }
 
 /* Global resets for a premium app feel */
@@ -97,4 +90,20 @@ body {
 .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+/* Cinematic Striped Text for Rank Numbers */
+.striped-text {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--primary),
+    var(--primary) 3px,
+    transparent 3px,
+    transparent 8px
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--primary);
+  filter: drop-shadow(0 0 10px rgba(255, 122, 0, 0.3));
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, Orbitron } from "next/font/google"; // CHANGED TO ORBITRON
+import { Outfit, Orbitron } from "next/font/google"; 
 import NoiseOverlay from "@/components/ui/NoiseOverlay";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -11,10 +12,9 @@ const outfit = Outfit({
 
 const orbitron = Orbitron({
   subsets: ["latin"],
-  variable: "--font-arcade", // Using this for our numbers and gaming text
+  variable: "--font-arcade", 
   display: "swap",
 });
-
 
 export const metadata: Metadata = {
   title: "GOAT Rank | Settle the Debate",
@@ -24,11 +24,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F4F3ED" },
-    { media: "(prefers-color-scheme: dark)", color: "#121417" },
+    { media: "(prefers-color-scheme: dark)", color: "#030303" },
   ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1, // Prevents unwanted zooming on mobile input focus
+  maximumScale: 1, 
 };
 
 export default function RootLayout({
@@ -38,14 +38,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.variable} ${orbitron.variable} antialiased relative min-h-screen flex flex-col`}>
-        {/* The tactile paper texture that sits over everything */}
-        <NoiseOverlay />
-        
-        {/* Main Application Wrapper */}
-        <main className="flex-1 relative z-10 w-full max-w-[1920px] mx-auto">
-          {children}
-        </main>
+      <body className={`${outfit.variable} ${orbitron.variable} antialiased relative min-h-screen flex flex-col transition-colors duration-500`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NoiseOverlay />
+          
+          <main className="flex-1 relative z-10 w-full max-w-[1920px] mx-auto">
+            {children}
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );
