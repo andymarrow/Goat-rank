@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Warm Cream / Sand Off-White */
+  --background: #F4F3ED;
+  --foreground: #1A1C20;
+  
+  /* UI Elements */
+  --card: #FFFFFF;
+  --card-foreground: #1A1C20;
+  --border: #E2E1D9;
+  
+  /* Brand & Gamified Accents */
+  --primary: #FF7A00;
+  --primary-foreground: #FFFFFF;
+  
+  /* Battle Colors */
+  --battle-red: #FF5C5C;
+  --battle-pink: #FF8080;
+  --battle-green: #80FF80;
+  --battle-yellow: #FFDF80;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Soft Charcoal / Dark Slate */
+    --background: #121417;
+    --foreground: #F9F8F3;
+    
+    /* UI Elements */
+    --card: #1A1C20;
+    --card-foreground: #F9F8F3;
+    --border: #2A2D35;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  
+  --color-battle-red: var(--battle-red);
+  --color-battle-pink: var(--battle-pink);
+  --color-battle-green: var(--battle-green);
+  --color-battle-yellow: var(--battle-yellow);
+
+  --font-sans: var(--font-outfit);
+  --font-arcade: var(--font-space-grotesk);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Global resets for a premium app feel */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom Text Selection for a polished feel */
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* Hide scrollbar but keep functionality for that native app feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+/* E-Sports Sharp Cut Corners */
+.cut-corner {
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+.cut-corner-lg {
+  clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+}
+
+/* Hide scrollbar for horizontal scrolling tabs */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
