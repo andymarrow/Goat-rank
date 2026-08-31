@@ -54,7 +54,7 @@ export default function DesktopNavbar() {
           <span>Host Battle ($10)</span>
         </Link>
         
-        <Link href="/profile" className="w-9 h-9 rounded-full bg-border flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+        <Link href="/dashboard" className="w-9 h-9 rounded-full bg-border flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
           <User className="w-4 h-4 text-foreground/70" />
         </Link>
       </div>

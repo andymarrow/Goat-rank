@@ -24,7 +24,7 @@ export default function MobileTabBar() {
         <Activity className="w-5 h-5" />
         <span className="text-[10px] font-medium">Activity</span>
       </Link>
-      <Link href="/profile" className="flex flex-col items-center gap-1 text-foreground/60 hover:text-primary transition-colors p-2">
+      <Link href="/dashboard" className="flex flex-col items-center gap-1 text-foreground/60 hover:text-primary transition-colors p-2">
         <User className="w-5 h-5" />
         <span className="text-[10px] font-medium">Profile</span>
       </Link>

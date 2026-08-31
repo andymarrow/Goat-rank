@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Timer, Flame, Trophy, Search, UserPlus, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import AddContenderModal from "./AddContenderModal";
 
 // Mock Data
 const MOCK_ROOM = {
@@ -28,6 +29,7 @@ const MOCK_RANKINGS = [
 
 export default function GlobalRoomClient({ slug }: { slug: string }) {
   const [search, setSearch] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredRankings = MOCK_RANKINGS.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
   const topThree = filteredRankings.slice(0, 3);
@@ -109,10 +111,13 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
               />
             </div>
             
-            <button className="w-full cut-corner border border-primary/50 hover:bg-primary hover:text-primary-foreground px-6 py-3 flex items-center justify-center gap-2 text-primary font-arcade text-xs transition-all group shadow-[0_0_15px_rgba(255,122,0,0.1)]">
-              <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              ADD MISSING CONTENDER ($5)
-            </button>
+            <button 
+  onClick={() => setIsModalOpen(true)} // <-- Add this
+  className="w-full cut-corner border border-primary/50 hover:bg-primary hover:text-primary-foreground px-6 py-3 flex items-center justify-center gap-2 text-primary font-arcade text-xs transition-all group shadow-[0_0_15px_rgba(255,122,0,0.1)]"
+>
+  <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+  ADD MISSING CONTENDER ($5)
+</button>
           </div>
 
         </div>
@@ -227,17 +232,27 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
           )}
 
           {filteredRankings.length === 0 && (
-            <div className="text-center py-16 bg-card border border-border cut-corner">
-              <p className="text-foreground/40 font-arcade text-sm mb-4">NO CONTENDER FOUND.</p>
-              <button className="cut-corner border border-primary text-primary px-6 py-2 font-arcade text-xs hover:bg-primary hover:text-primary-foreground transition-colors">
-                ADD THEM TO THE ARENA ($5)
-              </button>
-            </div>
-          )}
+  <div className="text-center py-16 bg-card border border-border cut-corner">
+    <p className="text-foreground/40 font-arcade text-sm mb-4">NO CONTENDER FOUND.</p>
+    <button 
+      onClick={() => setIsModalOpen(true)} // <-- Add this
+      className="cut-corner border border-primary text-primary px-6 py-2 font-arcade text-xs hover:bg-primary hover:text-primary-foreground transition-colors"
+    >
+      ADD THEM TO THE ARENA ($5)
+    </button>
+  </div>
+)}
 
         </div>
 
       </div>
+
+      <AddContenderModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        roomTitle={MOCK_ROOM.title} 
+      />
+      
     </div>
   );
 }
