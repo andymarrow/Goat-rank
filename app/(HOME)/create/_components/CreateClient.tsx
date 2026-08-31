@@ -11,6 +11,7 @@ export default function CreateClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
+    roomType: "1v1", // <-- Add this! "1v1" or "global"
     category: "Soccer",
     title: "",
     contenders: [],
