@@ -1,8 +1,13 @@
 import HeroCarousel from "./_components/HeroCarousel";
 import GlobalLeaderboardsRow from "./_components/GlobalLeaderboardsRow";
 import FaceOffsRow from "./_components/FaceOffsRow";
+import { getActive1v1Rooms } from "@/actions/getRooms"; // <-- IMPORT ACTION
 
-export default function HomePage() {
+export default async function HomePage() {
+  
+  // Fetch live 1v1 battles from Supabase on the server!
+  const live1v1Battles = await getActive1v1Rooms();
+
   return (
     <div className="w-full flex flex-col gap-2 pb-24">
       {/* HERO SECTION */}
@@ -19,9 +24,10 @@ export default function HomePage() {
         <HeroCarousel />
       </div>
 
-      {/* HORIZONTAL ROWS (Cinematic Style) */}
       <GlobalLeaderboardsRow />
-      <FaceOffsRow />
+      
+      {/* Pass the live database data into our component! */}
+      <FaceOffsRow liveBattles={live1v1Battles} />
       
     </div>
   );
