@@ -1,5 +1,6 @@
 "use server";
 
+import { createAdminClient } from "@/utils/supabase/admin";
 import { headers } from "next/headers";
 import { createCheckout, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
 
@@ -115,5 +116,96 @@ export async function createVoteCheckout(data: {
   } catch (error) {
     console.error("Lemon Squeezy Checkout Error:", error);
     return { error: "Failed to initialize payment terminal." };
+  }
+}
+
+export async function createRoomCheckout(data: {
+  title: string;
+  category: string;
+  roomType: string;
+  contenders: any[];
+  creatorId?: string; // We will enforce auth later, optional for now
+}): Promise<{ url?: string; error?: string }> {
+  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
+  const variantId = process.env.LS_VARIANT_CREATOR;
+
+  if (!storeId || !variantId) {
+    return { error: "Payment terminal is not configured." };
+  }
+
+  try {
+    ensureConfigured();
+    const supabase = createAdminClient();
+
+    // 1. Pre-build the room in Supabase as 'pending_payment'
+    const { data: room, error: roomError } = await supabase
+      .from("rooms")
+      .insert({
+        title: data.title.slice(0, 100),
+        category: data.category,
+        room_type: data.roomType,
+        status: "pending_payment", // <--- Crucial! Will be hidden from UI until paid.
+        charity_name: "Pending Charity", // Can be customized later
+        creator_id: data.creatorId || null,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+      })
+      .select("id")
+      .single();
+
+    if (roomError || !room) {
+      console.error("DB Room Creation Error:", roomError);
+      return { error: "Failed to initialize arena in database." };
+    }
+
+    // 2. Insert the Contenders
+    for (let i = 0; i < data.contenders.length; i++) {
+      const c = data.contenders[i];
+      
+      // Insert Entity (or find existing)
+      const { data: entity } = await supabase
+        .from("entities")
+        .insert({
+          name: c.name,
+          category: data.category,
+          brand_color: c.color,
+          image_url: c.image,
+        })
+        .select("id")
+        .single();
+
+      if (entity) {
+        // Link Entity to Room
+        await supabase.from("room_contenders").insert({
+          room_id: room.id,
+          entity_id: entity.id,
+          seed_index: i,
+        });
+      }
+    }
+
+    // 3. Request LemonSqueezy Checkout
+    const origin = await resolveOrigin();
+
+    const { data: checkout, error } = await createCheckout(storeId, variantId, {
+      productOptions: {
+        name: `Deploy Arena: ${data.title}`,
+        description: `Unlocks 1 of your 3 Creator passes. 10% commission enabled.`,
+        redirectUrl: `${origin}/dashboard?success=true`,
+        receiptButtonText: "Go to Command Center",
+      },
+      checkoutData: {
+        custom: {
+          type: "creator_pass",
+          room_id: room.id, // We only need to pass the ID!
+        },
+      },
+    });
+
+    if (error) return { error: "Failed to initialize payment terminal." };
+    return { url: checkout?.data.attributes.url };
+    
+  } catch (error) {
+    console.error("Lemon Squeezy Checkout Error:", error);
+    return { error: "System failure." };
   }
 }

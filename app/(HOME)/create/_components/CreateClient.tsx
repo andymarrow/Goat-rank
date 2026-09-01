@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import BriefingStep from "./BriefingStep";
 import ContenderStep from "./ContenderStep";
 import ReviewStep from "./ReviewStep"; // <-- ADD IMPORT
+import { createRoomCheckout } from "@/actions/checkout";
 
 export default function CreateClient() {
   const [step, setStep] = useState(1);
@@ -21,14 +22,24 @@ export default function CreateClient() {
   const prevStep = () => setStep((s) => s - 1);
 
   // Simulated Checkout Handler
-  const handleCheckout = () => {
+   const handleCheckout = async () => {
     setIsSubmitting(true);
     
-    // Fake network delay to simulate calling the checkout API
-    setTimeout(() => {
-      alert("Redirecting to Checkout for $10...\n\n(Backend Integration coming soon: wire to LS_VARIANT_CREATOR)");
+    // Call our secure Server Action
+    const res = await createRoomCheckout({
+      title: formData.title,
+      category: formData.category,
+      roomType: formData.roomType,
+      contenders: formData.contenders,
+      // creatorId: "..." // We will pass the logged-in user ID here in the final Auth phase!
+    });
+
+    if (res.url) {
+      window.location.href = res.url;
+    } else {
+      alert(res.error || "Checkout failed. Check console.");
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

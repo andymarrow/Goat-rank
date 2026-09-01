@@ -20,8 +20,6 @@ function isValidSignature(rawBody: string, signature: string, secret: string) {
     return false;
   }
 
-  // timingSafeEqual throws on a length mismatch, so check that first —
-  // the lengths themselves are not a secret.
   if (received.length !== expected.length) return false;
 
   return crypto.timingSafeEqual(received, expected);
@@ -50,8 +48,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
   }
 
-  // The raw body is required: the signature covers the exact bytes sent, so
-  // parsing to JSON first would invalidate it.
   const rawBody = await req.text();
   const signature = req.headers.get("x-signature");
 
@@ -72,8 +68,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Malformed JSON" }, { status: 400 });
   }
 
-  // Everything below returns 200: the delivery was authentic, it just isn't a
-  // vote we need to record. A non-2xx would make Lemon Squeezy retry forever.
   if (payload.meta?.event_name !== "order_created") {
     return NextResponse.json({ received: true }, { status: 200 });
   }
@@ -81,55 +75,79 @@ export async function POST(req: Request) {
   const attributes = payload.data?.attributes;
   const orderId = payload.data?.id;
 
-  // `order_created` also fires for pending and failed orders.
   if (attributes?.status !== "paid") {
     return NextResponse.json({ received: true, ignored: "unpaid" }, { status: 200 });
   }
 
-  // Custom data lives on `meta`, NOT on the order attributes.
   const custom = payload.meta?.custom_data;
 
-  if (custom?.type !== "battle_vote" || !custom.room_id || !custom.contender_id || !orderId) {
-    return NextResponse.json({ received: true, ignored: "not a vote" }, { status: 200 });
+  // If there is no custom data type, we ignore it.
+  if (!custom?.type || !orderId) {
+    return NextResponse.json({ received: true, ignored: "missing custom data" }, { status: 200 });
   }
 
-  // subtotal_usd is the pay-what-you-want price the voter actually chose,
-  // normalised to USD cents. total_usd would fold in the tax Lemon Squeezy
-  // collects as merchant of record and inflate the battle pool.
-  const amountCents = attributes.subtotal_usd ?? 0;
-
-  if (amountCents <= 0) {
-    return NextResponse.json({ received: true, ignored: "zero amount" }, { status: 200 });
-  }
-
-  const voterName = custom.voter_name || "Anonymous";
   const supabase = createAdminClient();
 
-  // A single insert is all we do: the on_vote_inserted trigger fans the amount
-  // out to room_contenders, rooms.total_pool, entities.lifetime_raised and the
-  // creator's wallet. Never touch those aggregates from here.
-  const { error } = await supabase.from("votes").insert({
-    // Legacy column name from an earlier payment provider; it holds the
-    // Lemon Squeezy order id and its unique constraint is our idempotency key.
-    polar_transaction_id: orderId,
-    room_id: custom.room_id,
-    contender_id: custom.contender_id,
-    amount: amountCents / 100, // Lemon Squeezy sends cents, we store dollars
-    voter_name: voterName,
-    message: custom.message || null,
-    voter_avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(voterName)}`,
-  });
-
-  if (error) {
-    if (error.code === UNIQUE_VIOLATION) {
-      // Already recorded on an earlier delivery — ack so retries stop.
-      return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+  // ==========================================
+  // SCENARIO 1: A USER BOUGHT A VOTE ($3+)
+  // ==========================================
+  if (custom.type === "battle_vote") {
+    if (!custom.room_id || !custom.contender_id) {
+      return NextResponse.json({ received: true, ignored: "invalid vote payload" }, { status: 200 });
     }
 
-    console.error("Database Insert Error:", error);
-    // 500 so Lemon Squeezy retries rather than dropping a paid vote.
-    return NextResponse.json({ error: "DB Error" }, { status: 500 });
+    const amountCents = attributes.subtotal_usd ?? 0;
+    if (amountCents <= 0) {
+      return NextResponse.json({ received: true, ignored: "zero amount" }, { status: 200 });
+    }
+
+    const voterName = custom.voter_name || "Anonymous";
+
+    const { error } = await supabase.from("votes").insert({
+      polar_transaction_id: orderId,
+      room_id: custom.room_id,
+      contender_id: custom.contender_id,
+      amount: amountCents / 100, 
+      voter_name: voterName,
+      message: custom.message || null,
+      voter_avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(voterName)}`,
+    });
+
+    if (error) {
+      if (error.code === UNIQUE_VIOLATION) {
+        return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+      }
+      console.error("Vote Insert Error:", error);
+      return NextResponse.json({ error: "DB Error" }, { status: 500 });
+    }
+
+    return NextResponse.json({ received: true, action: "vote_processed" }, { status: 200 });
   }
 
-  return NextResponse.json({ received: true }, { status: 200 });
+
+  // ==========================================
+  // SCENARIO 2: A CREATOR DEPLOYED A ROOM ($10)
+  // ==========================================
+  if (custom.type === "creator_pass") {
+    if (!custom.room_id) {
+      return NextResponse.json({ received: true, ignored: "missing room_id for creator pass" }, { status: 200 });
+    }
+
+    // Set the room status to 'active' so it shows up on the homepage!
+    const { error } = await supabase
+      .from("rooms")
+      .update({ status: "active" })
+      .eq("id", custom.room_id)
+      .eq("status", "pending_payment"); // Extra safety check
+
+    if (error) {
+      console.error("Room Activation Error:", error);
+      return NextResponse.json({ error: "DB Error" }, { status: 500 });
+    }
+
+    return NextResponse.json({ received: true, action: "room_activated" }, { status: 200 });
+  }
+
+  // Fallback for unknown types
+  return NextResponse.json({ received: true, ignored: "unknown type" }, { status: 200 });
 }
