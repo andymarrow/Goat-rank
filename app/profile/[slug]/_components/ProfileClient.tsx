@@ -114,7 +114,8 @@ export default function ProfileClient({ initialProfileData }: { initialProfileDa
                 {/* Free Arcade Upvote Button */}
                 <div className="mt-2 flex items-center justify-between border-t border-border pt-4 z-10">
                   <span className="font-arcade text-[10px] text-foreground/30 uppercase tracking-widest">COMMUNITY RATING</span>
-                  <UpvoteButton initialCount={t.upvotes} />
+                  {/* Pass the actual DB ID of this vote into the component! */}
+                  <UpvoteButton initialCount={t.upvotes} voteId={t.id} />
                 </div>
               </div>
             );

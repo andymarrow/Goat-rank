@@ -3,27 +3,43 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowBigUp } from "lucide-react";
+import { addTestimonialUpvote } from "@/actions/upvote"; // <-- IMPORT ACTION
 
 interface UpvoteButtonProps {
   initialCount: number;
+  voteId: string; // <-- We need the DB ID of the vote to update it
 }
 
-export default function UpvoteButton({ initialCount }: UpvoteButtonProps) {
+export default function UpvoteButton({ initialCount, voteId }: UpvoteButtonProps) {
   const [count, setCount] = useState(initialCount);
   const [clicks, setClicks] = useState<{ id: number }[]>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleUpvote = useCallback(() => {
+  const handleUpvote = useCallback(async () => {
+    // 1. Optimistic UI Update (Instant feedback for the user)
     setCount((prev) => prev + 1);
     
-    // Create a unique ID for the floating +1 animation
     const newClick = { id: Date.now() + Math.random() };
     setClicks((prev) => [...prev, newClick]);
 
-    // Remove the floating number from the DOM after animation finishes (1 second)
     setTimeout(() => {
       setClicks((prev) => prev.filter((c) => c.id !== newClick.id));
     }, 1000);
-  }, []);
+
+    // 2. Prevent spamming the server
+    if (isUpdating) return;
+    setIsUpdating(true);
+
+    // 3. Call the Server Action in the background
+    const result = await addTestimonialUpvote(voteId);
+    
+    // If the database rejected it (e.g., they already voted), revert the optimistic update
+    if (!result.success) {
+      setCount((prev) => prev - 1);
+    }
+
+    setIsUpdating(false);
+  }, [voteId, isUpdating]);
 
   return (
     <div className="relative flex items-center">
