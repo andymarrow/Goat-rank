@@ -41,12 +41,16 @@ export default function HeroCarousel() {
           const isActive = activeIndex === index;
 
           return (
-            <motion.div
+            <motion.button
               key={battle.id}
               layout
+              type="button"
+              aria-label={`${battle.title} — ${battle.category}`}
+              aria-pressed={isActive}
               onClick={() => setActiveIndex(index)}
               onMouseEnter={() => setActiveIndex(index)}
-              className="cut-corner-lg relative overflow-hidden cursor-pointer group bg-black border border-border"
+              onFocus={() => setActiveIndex(index)}
+              className="pressable cut-corner-lg relative overflow-hidden cursor-pointer group bg-black border border-border text-left"
               initial={false}
               animate={{ flex: isActive ? 3 : 1, opacity: 1 }}
               transition={{ type: "spring", bounce: 0, duration: 0.5 }}
@@ -73,6 +77,14 @@ export default function HeroCarousel() {
                 </div>
               )}
 
+              {/* Surface texture over the artwork, beneath the UI overlay.
+                  Scanlines only on the expanded card — at rail width they
+                  moire against the shrunken artwork. */}
+              <div className="tex-dots absolute inset-0 z-0 pointer-events-none" />
+              {isActive && (
+                <div className="tex-scanlines absolute inset-0 z-0 pointer-events-none" />
+              )}
+
               {/* UI OVERLAY */}
               <motion.div 
                 className="absolute inset-0 p-6 md:p-8 flex flex-col justify-between z-10"
@@ -96,7 +108,7 @@ export default function HeroCarousel() {
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-2xl mx-auto bg-black/40 backdrop-blur-xl border border-white/10 p-6 cut-corner flex flex-col gap-4"
+                    className="corner-ticks w-full max-w-2xl mx-auto bg-black/40 backdrop-blur-xl border border-white/10 p-6 cut-corner flex flex-col gap-4"
                   >
                     <div className="flex justify-between items-end">
                       <h2 className="text-white text-3xl font-arcade uppercase font-bold tracking-wider">
@@ -138,7 +150,7 @@ export default function HeroCarousel() {
                   </motion.div>
                 )}
               </motion.div>
-            </motion.div>
+            </motion.button>
           );
         })}
       </div>

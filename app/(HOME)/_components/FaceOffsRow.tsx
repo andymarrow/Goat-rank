@@ -28,8 +28,11 @@ export default function FaceOffsRow({ liveBattles }: { liveBattles: any[] }) {
           if (!c1 || !c2) return null;
 
           return (
-            <Link href={`/battle/${battle.id}`} key={battle.id} className="snap-start shrink-0 group">
-              <div className="relative w-[240px] md:w-[280px] h-[360px] md:h-[420px] cut-corner bg-black border border-border group-hover:border-primary/50 transition-all overflow-hidden flex flex-col">
+            <Link href={`/battle/${battle.id}`} key={battle.id} className="pressable hover-lift snap-start shrink-0 group">
+              <div className="corner-ticks relative w-[240px] md:w-[280px] h-[360px] md:h-[420px] cut-corner bg-black border border-border group-hover:border-primary/50 transition-all overflow-hidden flex flex-col">
+                {/* Board texture over both halves, under the VS badge (z-20)
+                    and the meta row (z-10). */}
+                <div className="tex-dots absolute inset-0 z-[5] pointer-events-none" />
                 
                 {/* Top Split (Contender 1) */}
                 <div className="relative flex-1 w-full bg-[#111]">

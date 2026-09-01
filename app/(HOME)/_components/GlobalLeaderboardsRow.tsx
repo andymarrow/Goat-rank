@@ -30,7 +30,7 @@ export default function GlobalLeaderboardsRow() {
             <button 
               key={f}
               onClick={() => setActiveFilter(f)}
-              className={`px-4 py-1.5 rounded-full text-xs font-arcade transition-colors whitespace-nowrap border ${
+              className={`pressable px-4 py-1.5 rounded-full text-xs font-arcade transition-colors whitespace-nowrap border ${
                 activeFilter === f 
                   ? "bg-primary text-black border-primary" 
                   : "bg-transparent text-white/60 border-white/20 hover:border-white/50 hover:text-white"
@@ -45,11 +45,12 @@ export default function GlobalLeaderboardsRow() {
       {/* Horizontal Scroll Track */}
       <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-8 snap-x snap-mandatory">
         {GLOBAL_ROOMS.map((room) => (
-          <Link href={`/global/${room.id}`} key={room.id} className="snap-start shrink-0 group">
-            <div className="relative w-[300px] md:w-[400px] aspect-[16/9] cut-corner overflow-hidden bg-black border border-border group-hover:border-primary/50 transition-colors">
+          <Link href={`/global/${room.id}`} key={room.id} className="pressable hover-lift snap-start shrink-0 group">
+            <div className="corner-ticks relative w-[300px] md:w-[400px] aspect-[16/9] cut-corner overflow-hidden bg-black border border-border group-hover:border-primary/50 transition-colors">
               
               <Image src={room.image} alt={room.title} fill className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+              <div className="tex-scanlines absolute inset-0 pointer-events-none" />
 
               {/* Top Right Badges */}
               <div className="absolute top-3 right-3 flex flex-col gap-2">
