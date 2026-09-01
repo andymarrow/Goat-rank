@@ -4,13 +4,6 @@ import { motion } from "framer-motion";
 import { MessageSquare, Flame, Zap, ChevronRight } from "lucide-react";
 import Image from "next/image";
 
-const MOCK_MESSAGES = [
-  { id: "m1", user: "Ridge", avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Ridge", amount: 5, contender: "Ronaldo", color: "#F9F8F3", text: "Siuuu! Not even a debate." },
-  { id: "m2", user: "Willow", avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Willow", amount: 20, contender: "Messi", color: "#3B82F6", text: "8 Ballon d'Ors. Case closed." },
-  { id: "m3", user: "Thorn", avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Thorn", amount: 3, contender: "Ronaldo", color: "#F9F8F3", text: "Best goalscorer in history!" },
-  { id: "m4", user: "Fell", avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Fell", amount: 100, contender: "Messi", color: "#3B82F6", text: "MESSI IS THE UNDISPUTED GOAT! 🐐🇦🇷" },
-];
-
 export default function BattleChat({ 
   battle, 
   onVoteClick 
@@ -19,7 +12,7 @@ export default function BattleChat({
   onVoteClick: (index: number) => void;
 }) {
   
-  const getMessageStyle = (amount: number, contenderColor: string) => {
+  const getMessageStyle = (amount: number) => {
     if (amount >= 50) return `border-l-4 border-yellow-400 bg-yellow-400/10 text-yellow-700 dark:text-yellow-100`; 
     if (amount >= 15) return `border-l-4 bg-foreground/5`; 
     return `border-l-2 bg-transparent opacity-80`; 
@@ -36,47 +29,57 @@ export default function BattleChat({
         </div>
         <div className="flex items-center gap-1 text-xs font-arcade text-green-500">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          8,241 VIEWING
+          LIVE
         </div>
       </div>
 
       {/* CHAT SCROLL AREA */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-hide bg-card">
-        {MOCK_MESSAGES.map((msg, i) => {
+        {/* We map over the real live votes now! */}
+        {battle.recentVotes?.map((msg: any, i: number) => {
           const isWhale = msg.amount >= 50;
+          
+          // Match the vote to the contender to get their brand color
+          const contenderColor = battle.contenders.find((c: any) => c.id === msg.contender_id)?.color || "#FFFFFF";
 
           return (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: i * 0.05 }} // Stagger initial load
               key={msg.id}
-              className={`p-3 cut-corner transition-all ${getMessageStyle(msg.amount, msg.color)}`}
-              style={{ borderLeftColor: isWhale ? "#FACC15" : msg.color }}
+              className={`p-3 cut-corner transition-all ${getMessageStyle(msg.amount)}`}
+              style={{ borderLeftColor: isWhale ? "#FACC15" : contenderColor }}
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 bg-background cut-corner overflow-hidden border border-border">
-                    <Image src={msg.avatar} alt={msg.user} width={24} height={24} className="opacity-80" />
+                    <Image src={msg.voter_avatar} alt={msg.voter_name} width={24} height={24} className="opacity-80" />
                   </div>
-                  <span className="font-arcade text-xs text-foreground/80 font-bold">{msg.user}</span>
+                  <span className="font-arcade text-xs text-foreground/80 font-bold">{msg.voter_name}</span>
                 </div>
                 
                 <div 
                   className={`flex items-center gap-1 font-arcade text-xs px-2 py-0.5 cut-corner ${isWhale ? 'bg-yellow-400 text-black font-bold' : 'bg-background text-foreground'}`}
-                  style={{ border: isWhale ? 'none' : `1px solid ${msg.color}` }}
+                  style={{ border: isWhale ? 'none' : `1px solid ${contenderColor}` }}
                 >
-                  {isWhale ? <Flame className="w-3 h-3" /> : <Zap className="w-3 h-3" style={{ color: msg.color }} />}
+                  {isWhale ? <Flame className="w-3 h-3" /> : <Zap className="w-3 h-3" style={{ color: contenderColor }} />}
                   ${msg.amount}
                 </div>
               </div>
               
               <p className="text-sm font-sans text-foreground leading-relaxed">
-                {msg.text}
+                {msg.message}
               </p>
             </motion.div>
           );
         })}
+
+        {battle.recentVotes?.length === 0 && (
+          <div className="text-center font-arcade text-xs text-foreground/30 mt-10">
+            NO BATTLE CRIES YET. BE THE FIRST!
+          </div>
+        )}
       </div>
 
       {/* STICKY FOOTER */}
@@ -86,20 +89,12 @@ export default function BattleChat({
         </div>
         
         <div className="flex flex-col gap-2">
-          <button 
-            onClick={() => onVoteClick(0)}
-            className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md"
-            style={{ backgroundColor: battle.contenders[0].color, color: "#000" }}
-          >
+          <button onClick={() => onVoteClick(0)} className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md" style={{ backgroundColor: battle.contenders[0].color, color: "#000" }}>
             <span>VOTE {battle.contenders[0].name.toUpperCase()}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
           
-          <button 
-            onClick={() => onVoteClick(1)}
-            className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md text-white"
-            style={{ backgroundColor: battle.contenders[1].color }}
-          >
+          <button onClick={() => onVoteClick(1)} className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md text-white" style={{ backgroundColor: battle.contenders[1].color }}>
             <span>VOTE {battle.contenders[1].name.toUpperCase()}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
