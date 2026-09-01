@@ -14,7 +14,7 @@ const MAX_CUSTOM_VALUE = 500;
  * The SDK holds its API key in module-global state, so this only needs to run
  * once per server instance. It runs lazily inside the action rather than at
  * module scope on purpose: a module-scope client that throws on a missing key
- * breaks `next build`, which is exactly how the previous Stripe version failed.
+ * breaks `next build` during page-data collection.
  */
 let isConfigured = false;
 function ensureConfigured() {

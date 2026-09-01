@@ -24,9 +24,9 @@ export default function CreateClient() {
   const handleCheckout = () => {
     setIsSubmitting(true);
     
-    // Fake network delay to simulate calling Polar.sh API
+    // Fake network delay to simulate calling the checkout API
     setTimeout(() => {
-      alert("Redirecting to Polar.sh Checkout for $10...\n\n(Backend Integration coming soon!)");
+      alert("Redirecting to Checkout for $10...\n\n(Backend Integration coming soon: wire to LS_VARIANT_CREATOR)");
       setIsSubmitting(false);
     }, 1500);
   };

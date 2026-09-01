@@ -30,7 +30,7 @@ Tailwind v4 is CSS-first — there is **no `tailwind.config`**. Theme tokens are
 - `entities` — reusable contenders (a player, movie, car), global across rooms. Holds `brand_color`, `image_url`, `lifetime_raised`.
 - `rooms` — a contest. `room_type` enum `1v1 | global`, `status` enum `pending_payment | active | settled`, plus `total_pool`, `expires_at`, `charity_name`, `creator_id → profiles`.
 - `room_contenders` — join of `rooms` × `entities` with per-room `current_votes` and `seed_index`. **`seed_index` fixes display order** (left/top vs right/bottom); consumers sort by it rather than relying on row order.
-- `votes` — one paid vote. Unique `polar_transaction_id` is the payment-provider idempotency key. Carries the public testimonial (`voter_name`, `voter_avatar`, `message`, `upvote_count`).
+- `votes` — one paid vote. Unique `polar_transaction_id` is the payment-provider idempotency key — the column name is a leftover from an earlier provider and now holds the Lemon Squeezy order id. Carries the public testimonial (`voter_name`, `voter_avatar`, `message`, `upvote_count`).
 - `testimonial_upvotes` — anonymous upvotes on a vote, deduped by `user_fingerprint`.
 - `profiles` — `auth.users` extension with `wallet_balance` / `total_earned`.
 
@@ -46,23 +46,25 @@ Consequence: inserting a row into `votes` is the *only* thing app code should do
 - [utils/supabase/client.ts](utils/supabase/client.ts) — browser anon client. Currently unused: the "live" battle chat and leaderboards are static, no realtime channel is subscribed anywhere.
 - [utils/supabase/admin.ts](utils/supabase/admin.ts) — service-role client. Webhook/server-only; it bypasses RLS, so keep it out of anything reachable from the browser.
 
-### Payment flow (Stripe hosted checkout)
+### Payment flow (Lemon Squeezy hosted checkout)
 
-Server-side only — there is deliberately **no publishable key and no Stripe.js on the client**. [VoteModal](app/battle/[slug]/_components/VoteModal.tsx) calls the `createVoteCheckout` server action in [actions/checkout.ts](actions/checkout.ts), which creates a Checkout Session carrying `{ type: "battle_vote", room_id, contender_id, message, voter_name }` in **metadata**, and returns `session.url` for a plain `window.location.href` redirect. The DB IDs never round-trip through the browser.
+Lemon Squeezy is the merchant of record. Server-side only — no client SDK, no publishable key. [VoteModal](app/battle/[slug]/_components/VoteModal.tsx) calls the `createVoteCheckout` server action in [actions/checkout.ts](actions/checkout.ts), which calls `createCheckout(storeId, LS_VARIANT_VOTE, …)` with the dollar amount as `customPrice` (pay-what-you-want) and returns `data.attributes.url` for a plain `window.location.href` redirect. The DB IDs never round-trip through the browser.
 
-[app/api/webhooks/stripe/route.ts](app/api/webhooks/stripe/route.ts) verifies the signature against the **raw** `req.text()` body (parsing first would invalidate it), ignores everything but `checkout.session.completed`, skips sessions whose `payment_status` is not yet `paid`, and inserts one `votes` row via the admin client.
+[app/api/webhooks/lemonsqueezy/route.ts](app/api/webhooks/lemonsqueezy/route.ts) verifies an HMAC-SHA256 hex digest of the **raw** `req.text()` body against the `x-signature` header, handles only `meta.event_name === "order_created"`, skips orders whose `status` is not `paid`, and inserts one `votes` row via the admin client.
 
 Conventions that are load-bearing here:
 
-- **Amounts are dollars in Postgres, cents at Stripe.** Convert with `Math.round(dollars * 100)` outbound and `amount_total / 100` inbound.
-- **`votes.polar_transaction_id` holds the Stripe session id.** The column keeps its old name; its unique constraint is the webhook's idempotency key, so a replayed delivery raises Postgres `23505` — treat that as success and return 200, or Stripe retries forever.
-- Return **500** on any other insert failure so Stripe retries rather than dropping a paid vote.
-- `stripe@22` types `apiVersion` to its own pinned `2026-08-26.dahlia`; both files cast to hold the wire version at `2024-12-18.acacia`.
-- Checkout return URLs are rebuilt from request headers, so no `NEXT_PUBLIC_SITE_URL` is required (it wins if set).
+- **The SDK is camelCase; the REST API is snake_case.** `@lemonsqueezy/lemonsqueezy.js` takes `customPrice`, `productOptions`, `checkoutData` — not `custom_price`, `checkout_data`. Docs and blog posts usually show the raw REST shape.
+- **Custom data comes back on `meta.custom_data`, not on the order attributes.** This is the most common way the integration silently breaks. Values must be strings.
+- **Credit `subtotal_usd`, never `total`.** As merchant of record Lemon Squeezy adds the buyer's tax to `total`; using it would inflate every battle pool. `subtotal_usd` is the chosen price, normalised to USD cents, so a EUR payer can't credit a EUR number into a dollar column. Note this is the gross pledge — LS's fee comes off what they remit, so the DB trigger's 10% creator commission is computed on the pledge, not on net receipts.
+- **Amounts are dollars in Postgres, cents at Lemon Squeezy.** Convert with `Math.round(dollars * 100)` outbound and `/ 100` inbound.
+- **`votes.polar_transaction_id` holds the Lemon Squeezy order id.** Legacy column name; its unique constraint is the webhook's idempotency key, so a replayed delivery raises Postgres `23505` — treat that as success and return 200, or deliveries retry forever.
+- Return **500** on any other insert failure so Lemon Squeezy retries rather than dropping a paid vote.
+- `timingSafeEqual` throws on length mismatch, so the signature check compares buffer lengths first. `Buffer.from(sig, "hex")` does not throw on non-hex input — it returns a short buffer, which the length check catches.
+- The SDK is configured lazily inside the action, not at module scope: a module-scope client that throws on a missing key breaks `next build` during page-data collection.
+- Checkout redirect URLs are rebuilt from request headers, so no `NEXT_PUBLIC_SITE_URL` is required (it wins if set). Lemon Squeezy has no cancel URL — only `productOptions.redirectUrl` after success.
 
-Both files construct `new Stripe(...)` at **module scope**, which Next evaluates while collecting page data, so `npm run build` fails with `Neither apiKey nor config.authenticator provided` whenever `STRIPE_SECRET_KEY` is unset or empty — it is currently empty in `.env.local`. Fill the key, or move the constructor inside the handler.
-
-`@polar-sh/sdk` is no longer imported anywhere and is safe to `npm uninstall`.
+`LS_VARIANT_CREATOR` ($10 room pass) and `LS_VARIANT_CONTENDER` ($5 add-contender) are provisioned in the environment but not wired up — those two flows still `alert()` a mock in [CreateClient](app/(HOME)/create/_components/CreateClient.tsx) and [AddContenderModal](app/global/[slug]/_components/AddContenderModal.tsx).
 
 ### Data is mostly still mocked
 

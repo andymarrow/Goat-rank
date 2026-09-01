@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
-// Postgres unique_violation. `votes.polar_transaction_id` is unique, so a
+// Postgres unique_violation. The transaction-id column is unique, so a
 // replayed delivery collides here instead of double-counting the pool.
 const UNIQUE_VIOLATION = "23505";
 
@@ -109,7 +109,9 @@ export async function POST(req: Request) {
   // out to room_contenders, rooms.total_pool, entities.lifetime_raised and the
   // creator's wallet. Never touch those aggregates from here.
   const { error } = await supabase.from("votes").insert({
-    polar_transaction_id: orderId, // column keeps its old name; holds the LS order id
+    // Legacy column name from an earlier payment provider; it holds the
+    // Lemon Squeezy order id and its unique constraint is our idempotency key.
+    polar_transaction_id: orderId,
     room_id: custom.room_id,
     contender_id: custom.contender_id,
     amount: amountCents / 100, // Lemon Squeezy sends cents, we store dollars
