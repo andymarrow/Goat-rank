@@ -26,6 +26,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
   const [amount, setAmount] = useState<number>(5);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -39,12 +40,15 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
     if (!isValidAmount || isSubmitting) return;
 
     setIsSubmitting(true);
+    setError(null);
 
     // Generate a random guest name for now (Phase 10 will link real auth)
     const randomGuest = ["Ridge", "Willow", "Thorn", "Fell"][Math.floor(Math.random() * 4)];
 
     try {
-      // Call our secure Server Action
+      // Call our secure Server Action. The DB ids travel to Lemon Squeezy as
+      // checkout custom data and come back on the webhook, so they never
+      // round-trip through the browser.
       const res = await createVoteCheckout({
         amount,
         roomId: battle.id,
@@ -54,16 +58,16 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
       });
 
       if (res.url) {
-        // Redirect user to Stripe Checkout to enter their card
+        // Hand off to Lemon Squeezy's hosted checkout
         window.location.href = res.url;
         return; // Leave the button disabled while the browser navigates away
       }
 
-      alert(res.error ?? "Checkout failed. Check console.");
+      setError(res.error ?? "Checkout failed. Please try again.");
     } catch (err) {
       // A thrown Server Action would otherwise strand the button on "INITIATING..."
       console.error("Checkout Error:", err);
-      alert("Checkout failed. Check console.");
+      setError("Could not reach the payment terminal. Please try again.");
     }
 
     setIsSubmitting(false);
@@ -171,6 +175,17 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
               <strong className="text-white">Impact:</strong> ${charityCut} of this vote goes directly to <strong className="text-white">{battle.charity}</strong>. No refunds on battle votes.
             </p>
           </div>
+
+          {/* Checkout Error — inline, so the failure stays inside the modal
+              the user is already looking at rather than in an OS alert. */}
+          {error && (
+            <p
+              role="alert"
+              className="cut-corner border border-battle-red/40 bg-battle-red/10 px-3 py-2 text-xs font-arcade text-battle-red"
+            >
+              {error}
+            </p>
+          )}
 
           {/* Checkout Button */}
           <button 

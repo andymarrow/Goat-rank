@@ -1,26 +1,37 @@
 "use server";
 
 import { headers } from "next/headers";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  // stripe@22 types this field to its own pinned version ("2026-08-26.dahlia"),
-  // so holding the wire format at acacia needs the cast. Delete this option
-  // entirely to run on the version the installed SDK was generated against.
-  apiVersion: "2024-12-18.acacia" as unknown as Stripe.LatestApiVersion,
-});
+import { createCheckout, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
 
 // Mirrors the minimum enforced by the VoteModal input. A Server Action is a
 // public HTTP endpoint, so the client-side `min` attribute proves nothing.
 const MIN_VOTE_USD = 3;
 
-// Stripe caps each metadata value at 500 characters.
-const MAX_METADATA_VALUE = 500;
+// Keeps a pasted essay out of the checkout payload and the DB.
+const MAX_CUSTOM_VALUE = 500;
 
 /**
- * Checkout runs on our own domain, so we can rebuild the absolute return URLs
- * from the incoming request instead of requiring a NEXT_PUBLIC_SITE_URL.
- * An explicit env var still wins when one is set (useful behind a proxy).
+ * The SDK holds its API key in module-global state, so this only needs to run
+ * once per server instance. It runs lazily inside the action rather than at
+ * module scope on purpose: a module-scope client that throws on a missing key
+ * breaks `next build`, which is exactly how the previous Stripe version failed.
+ */
+let isConfigured = false;
+function ensureConfigured() {
+  if (isConfigured) return;
+
+  lemonSqueezySetup({
+    apiKey: process.env.LEMONSQUEEZY_API_KEY,
+    onError: (error) => console.error("Lemon Squeezy SDK error:", error),
+  });
+
+  isConfigured = true;
+}
+
+/**
+ * Checkout runs on our own domain, so we can rebuild the absolute redirect URL
+ * from the incoming request instead of depending on NEXT_PUBLIC_SITE_URL.
+ * An explicit env var still wins when set (useful behind a proxy).
  */
 async function resolveOrigin() {
   const configured = process.env.NEXT_PUBLIC_SITE_URL;
@@ -46,48 +57,63 @@ export async function createVoteCheckout(data: {
     return { error: `Minimum vote is $${MIN_VOTE_USD}.` };
   }
 
+  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
+  const variantId = process.env.LS_VARIANT_VOTE;
+
+  if (!storeId || !variantId || !process.env.LEMONSQUEEZY_API_KEY) {
+    console.error("Lemon Squeezy env vars missing (store, variant or API key).");
+    return { error: "Payment terminal is not configured." };
+  }
+
   try {
+    ensureConfigured();
+
     const origin = await resolveOrigin();
 
-    // Stripe bills in the currency's smallest unit and rejects non-integers,
-    // so round rather than trusting float math on a custom dollar amount.
-    const unitAmount = Math.round(data.amount * 100);
+    // Pay-what-you-want: the variant's price is overridden per checkout.
+    // Lemon Squeezy wants a positive integer in cents, so round rather than
+    // trusting float math on a custom dollar amount.
+    const customPrice = Math.round(data.amount * 100);
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: "usd",
-            unit_amount: unitAmount,
-            product_data: {
-              name: "GOAT Rank Battle Vote",
-              description: "Backs your contender and grows the battle pool.",
-            },
-          },
-        },
-      ],
-      // IMPORTANT: our database IDs ride along in metadata so the webhook can
-      // attribute the vote without ever trusting the browser for them.
-      metadata: {
-        type: "battle_vote",
-        room_id: data.roomId,
-        contender_id: data.contenderId,
-        message: data.message.slice(0, MAX_METADATA_VALUE),
-        voter_name: data.voterName.slice(0, MAX_METADATA_VALUE),
+    const { data: checkout, error } = await createCheckout(storeId, variantId, {
+      customPrice,
+      productOptions: {
+        name: "GOAT Rank Battle Vote",
+        description: "Backs your contender and grows the battle pool.",
+        // Lemon Squeezy has no cancel URL — only a post-purchase redirect.
+        redirectUrl: `${origin}/battle/${data.roomId}?success=true`,
+        receiptButtonText: "Back to the arena",
       },
-      success_url: `${origin}/battle/${data.roomId}?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/battle/${data.roomId}?canceled=true`,
+      checkoutData: {
+        // IMPORTANT: our database IDs ride along here so the webhook can
+        // attribute the vote without ever trusting the browser for them.
+        // Lemon Squeezy returns this under `meta.custom_data`, not on the
+        // order attributes. Values must be strings — numbers and nested
+        // objects come back inconsistently.
+        custom: {
+          type: "battle_vote",
+          room_id: data.roomId,
+          contender_id: data.contenderId,
+          message: data.message.slice(0, MAX_CUSTOM_VALUE),
+          voter_name: data.voterName.slice(0, MAX_CUSTOM_VALUE),
+        },
+      },
     });
 
-    if (!session.url) {
-      return { error: "Stripe did not return a checkout URL." };
+    if (error) {
+      console.error("Lemon Squeezy Checkout Error:", error);
+      return { error: "Failed to initialize payment terminal." };
     }
 
-    return { url: session.url };
+    const url = checkout?.data.attributes.url;
+
+    if (!url) {
+      return { error: "Lemon Squeezy did not return a checkout URL." };
+    }
+
+    return { url };
   } catch (error) {
-    console.error("Stripe Checkout Error:", error);
+    console.error("Lemon Squeezy Checkout Error:", error);
     return { error: "Failed to initialize payment terminal." };
   }
 }
