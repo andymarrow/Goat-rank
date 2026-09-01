@@ -107,3 +107,181 @@ body {
   -webkit-text-stroke: 1.5px var(--primary);
   filter: drop-shadow(0 0 10px rgba(255, 122, 0, 0.3));
 }
+/* ============================================================
+   TEXTURE LAYER
+   All patterns are CSS-generated — no network requests, no image
+   assets. Colors come from --foreground/--primary so light and
+   dark both track. Apply to a dedicated absolutely-positioned
+   overlay div so nothing disturbs the existing stacking order:
+     <div className="absolute inset-0 pointer-events-none tex-grid" />
+   ============================================================ */
+
+/* Fine HUD grid — arena floors, hero panels, dashboard backdrops. */
+.tex-grid {
+  background-image:
+    linear-gradient(to right, var(--foreground) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--foreground) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.045;
+}
+.dark .tex-grid { opacity: 0.03; }
+
+/* CRT scanlines — reads as arcade cabinet, not as a bug, at 3px pitch. */
+.tex-scanlines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--foreground) 0px,
+    var(--foreground) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.05;
+}
+.dark .tex-scanlines { opacity: 0.035; }
+
+/* Diagonal hatch — echoes the -45deg rake of .striped-text. */
+.tex-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--foreground) 0px,
+    var(--foreground) 1px,
+    transparent 1px,
+    transparent 7px
+  );
+  opacity: 0.05;
+}
+.dark .tex-hatch { opacity: 0.04; }
+
+/* Pixel dot matrix — arcade board texture for cards and empty states. */
+.tex-dots {
+  background-image: radial-gradient(var(--foreground) 1px, transparent 1px);
+  background-size: 12px 12px;
+  opacity: 0.05;
+}
+.dark .tex-dots { opacity: 0.045; }
+
+/* Cinematic edge falloff. Pairs with the global grain overlay. */
+.tex-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgb(0 0 0 / 0.35) 100%
+  );
+}
+.dark .tex-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 45%,
+    rgb(0 0 0 / 0.6) 100%
+  );
+}
+
+/* Corner ticks — L-brackets that read as HUD framing. Inset past the
+   10px .cut-corner clip so the clip-path doesn't shear them off. */
+.corner-ticks {
+  position: relative;
+}
+.corner-ticks::before,
+.corner-ticks::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  border-color: var(--primary);
+  opacity: 0.45;
+}
+.corner-ticks::before {
+  top: 14px;
+  left: 14px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.corner-ticks::after {
+  right: 14px;
+  bottom: 14px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+/* ============================================================
+   INTERACTION LAYER
+   Transform/opacity only. Hover is gated behind a real pointer so
+   touch devices don't latch hover states after a tap.
+   ============================================================ */
+
+/* Immediate press acknowledgement. 90ms — below the 140ms ceiling
+   for repeated actions. */
+.pressable {
+  transition: transform 90ms ease-out, filter 90ms ease-out;
+}
+.pressable:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift {
+    transition: transform 160ms ease-out, border-color 160ms ease-out;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Light sweep across a filled button. */
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: translateX(-100%) skewX(-12deg);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 0.22),
+      transparent
+    );
+  }
+  .sheen:hover::after {
+    transform: translateX(100%) skewX(-12deg);
+    transition: transform 700ms ease-out;
+  }
+}
+
+/* The app sets outline-none on every input and never replaced it, so
+   keyboard users had no focus cue at all. Restore one in-theme. */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Ambient drift for the grain overlay — slow enough to read as film
+   grain rather than as movement. */
+@keyframes grain-drift {
+  0%,
+  100% { transform: translate(0, 0); }
+  25%  { transform: translate(-1.5%, 1%); }
+  50%  { transform: translate(1%, -1.5%); }
+  75%  { transform: translate(1.5%, 1.5%); }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   Drop movement and ambient loops; keep color, opacity and focus
+   cues, which still carry meaning.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .pressable:active,
+  .hover-lift:hover {
+    transform: none;
+  }
+  .sheen::after,
+  .sheen:hover::after {
+    display: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

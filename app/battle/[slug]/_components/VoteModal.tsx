@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, HeartHandshake, ShieldAlert } from "lucide-react";
 import Image from "next/image";
+import { createVoteCheckout } from "@/actions/checkout";
 
 interface VoteModalProps {
   isOpen: boolean;
@@ -18,14 +19,59 @@ const VOTE_TIERS = [
   { amount: 50, label: "NUKE" },
 ];
 
+// Keep in sync with MIN_VOTE_USD in actions/checkout.ts
+const MIN_VOTE = 3;
+
 export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: VoteModalProps) {
   const [amount, setAmount] = useState<number>(5);
   const [message, setMessage] = useState("");
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
   const contender = battle.contenders[contenderIndex];
   const charityCut = (amount * 0.30).toFixed(2); // 30% goes to charity
+
+  // The custom amount input can be emptied (NaN) or typed below the floor.
+  const isValidAmount = Number.isFinite(amount) && amount >= MIN_VOTE;
+
+  const handleCheckout = async () => {
+    if (!isValidAmount || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    // Generate a random guest name for now (Phase 10 will link real auth)
+    const randomGuest = ["Ridge", "Willow", "Thorn", "Fell"][Math.floor(Math.random() * 4)];
+
+    try {
+      // Call our secure Server Action. The DB ids travel to Lemon Squeezy as
+      // checkout custom data and come back on the webhook, so they never
+      // round-trip through the browser.
+      const res = await createVoteCheckout({
+        amount,
+        roomId: battle.id,
+        contenderId: contender.id,
+        message: message || "Settle the debate!",
+        voterName: randomGuest,
+      });
+
+      if (res.url) {
+        // Hand off to Lemon Squeezy's hosted checkout
+        window.location.href = res.url;
+        return; // Leave the button disabled while the browser navigates away
+      }
+
+      setError(res.error ?? "Checkout failed. Please try again.");
+    } catch (err) {
+      // A thrown Server Action would otherwise strand the button on "INITIATING..."
+      console.error("Checkout Error:", err);
+      setError("Could not reach the payment terminal. Please try again.");
+    }
+
+    setIsSubmitting(false);
+  };
 
   return (
     <AnimatePresence>
@@ -44,9 +90,12 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-lg bg-[#0A0A0C] border-2 cut-corner-lg p-6 shadow-2xl flex flex-col gap-6"
+          className="corner-ticks relative w-full max-w-lg bg-[#0A0A0C] border-2 cut-corner-lg p-6 shadow-2xl flex flex-col gap-6"
           style={{ borderColor: contender.color, boxShadow: `0 0 40px ${contender.color}20` }}
         >
+          {/* Panel texture. Behind every control — the modal's own children
+              stack above it in DOM order. */}
+          <div className="tex-dots absolute inset-0 pointer-events-none" />
           {/* Close Button */}
           <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
             <X className="w-6 h-6" />
@@ -73,7 +122,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
                 <button
                   key={tier.amount}
                   onClick={() => setAmount(tier.amount)}
-                  className={`cut-corner py-3 flex flex-col items-center justify-center gap-1 transition-all border ${
+                  className={`pressable cut-corner py-3 flex flex-col items-center justify-center gap-1 transition-all border ${
                     amount === tier.amount 
                       ? "bg-white/10 text-white shadow-lg" 
                       : "bg-black text-white/50 border-white/10 hover:bg-white/5"
@@ -127,15 +176,26 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
             </p>
           </div>
 
+          {/* Checkout Error — inline, so the failure stays inside the modal
+              the user is already looking at rather than in an OS alert. */}
+          {error && (
+            <p
+              role="alert"
+              className="cut-corner border border-battle-red/40 bg-battle-red/10 px-3 py-2 text-xs font-arcade text-battle-red"
+            >
+              {error}
+            </p>
+          )}
+
           {/* Checkout Button */}
           <button 
-            className="w-full cut-corner py-4 flex items-center justify-center gap-3 font-arcade font-bold text-lg hover:brightness-125 transition-all group relative overflow-hidden"
+            onClick={handleCheckout} // <-- Trigger the real function
+            disabled={isSubmitting || !isValidAmount} // <-- Disable while loading
+            className="sheen pressable w-full cut-corner py-4 flex items-center justify-center gap-3 font-arcade font-bold text-lg hover:brightness-125 transition-all group relative overflow-hidden disabled:opacity-50 disabled:cursor-wait"
             style={{ backgroundColor: contender.color, color: "#000" }}
           >
-            {/* Glossy shine effect */}
-            <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12" />
             <ShieldAlert className="w-5 h-5" />
-            <span>AUTHORIZE ${amount} STRIKE</span>
+            <span>{isSubmitting ? "INITIATING..." : `AUTHORIZE $${amount} STRIKE`}</span>
           </button>
 
         </motion.div>

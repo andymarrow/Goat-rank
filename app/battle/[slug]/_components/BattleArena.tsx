@@ -23,12 +23,14 @@ export default function BattleArena({ battle }: { battle: any }) {
              style={{ background: `radial-gradient(circle at 70% 50%, ${battle.contenders[1].color} 0%, transparent 60%)` }} />
       </div>
       
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 z-0 bg-[url('https://transparenttextures.com/patterns/cubes.png')] opacity-5 dark:opacity-[0.02] pointer-events-none mix-blend-overlay" />
+      {/* Arena floor. Was a remote transparenttextures.com PNG on every
+          load — now CSS-generated, so it costs no request and can't 404. */}
+      <div className="absolute inset-0 z-0 pointer-events-none tex-grid" />
+      <div className="absolute inset-0 z-0 pointer-events-none tex-hatch" />
 
       {/* --- TOP BAR (Nav & Timer) --- */}
       <div className="relative z-30 flex justify-between items-start p-4 md:p-8">
-        <Link href="/" className="cut-corner bg-card/80 backdrop-blur-md border border-border hover:bg-card/100 text-foreground px-4 py-2 flex items-center gap-2 font-arcade text-sm transition-all shadow-lg">
+        <Link href="/" className="pressable cut-corner bg-card/80 backdrop-blur-md border border-border hover:bg-card/100 text-foreground px-4 py-2 flex items-center gap-2 font-arcade text-sm transition-all shadow-lg">
           <ArrowLeft className="w-4 h-4" /> ARENA
         </Link>
         
@@ -84,7 +86,7 @@ export default function BattleArena({ battle }: { battle: any }) {
       <div className="relative z-30 w-full max-w-5xl mx-auto px-4 pb-8 md:pb-12 mt-auto">
         
         {/* The Glass Panel */}
-        <div className="bg-card/80 dark:bg-[#0A0A0C]/80 backdrop-blur-xl border border-border cut-corner-lg p-6 shadow-2xl flex flex-col gap-6">
+        <div className="corner-ticks bg-card/80 dark:bg-[#0A0A0C]/80 backdrop-blur-xl border border-border cut-corner-lg p-6 shadow-2xl flex flex-col gap-6">
           
           {/* Stats Row */}
           <div className="flex justify-between items-end">
@@ -134,6 +136,10 @@ export default function BattleArena({ battle }: { battle: any }) {
               transition={{ type: "spring", bounce: 0.2, duration: 1 }}
             />
             
+            {/* Scanlines over the fills, so the bar reads as a lit HUD
+                element rather than two flat blocks of colour. */}
+            <div className="tex-scanlines absolute inset-0 z-10 pointer-events-none" />
+
             {/* Center Divider Line (Skewed for motion) */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-full bg-foreground z-10 skew-x-12" />
           </div>

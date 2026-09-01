@@ -21,9 +21,9 @@ export default function AddContenderModal({ isOpen, onClose, roomTitle }: AddCon
 
   const handleDeploy = () => {
     setIsSubmitting(true);
-    // Fake network delay for Polar.sh
+    // Fake network delay for the checkout call
     setTimeout(() => {
-      alert("Redirecting to Polar.sh Checkout for $5...\n\n(Backend Integration coming soon!)");
+      alert("Redirecting to Checkout for $5...\n\n(Backend Integration coming soon: wire to LS_VARIANT_CONTENDER)");
       setIsSubmitting(false);
       onClose();
     }, 1500);
