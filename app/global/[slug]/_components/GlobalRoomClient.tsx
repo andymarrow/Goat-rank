@@ -6,40 +6,46 @@ import Link from "next/link";
 import { ArrowLeft, Timer, Flame, Trophy, Search, UserPlus, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import AddContenderModal from "./AddContenderModal";
+import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
 
-// Mock Data
-const MOCK_ROOM = {
-  id: "g1",
-  title: "The Soccer GOAT",
-  category: "Sports",
-  pool: "$240,500",
-  timeLeft: "48:12:00",
-  charity: "FIFA Foundation",
-  image: "https://images.unsplash.com/photo-1518605368461-1ee7e1634b6e?w=1600&q=80",
-};
-
-const MOCK_RANKINGS = [
-  { id: "e1", rank: 1, name: "Lionel Messi", amount: 120000, img: "/image/messi.png", color: "#3B82F6", trend: "up" },
-  { id: "e2", rank: 2, name: "Cristiano Ronaldo", amount: 95500, img: "/image/ronaldo.png", color: "#FF7A00", trend: "down" },
-  { id: "e3", rank: 3, name: "Pelé", amount: 15000, img: "https://images.unsplash.com/photo-1574629810360-7efbb6b0807e?w=400", color: "#00E676", trend: "same" },
-  { id: "e4", rank: 4, name: "Diego Maradona", amount: 8500, img: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=400", color: "#3B82F6", trend: "up" },
-  { id: "e5", rank: 5, name: "Zinedine Zidane", amount: 1500, img: "https://images.unsplash.com/photo-1518605368461-1ee7e1634b6e?w=400", color: "#3B82F6", trend: "down" },
-  { id: "e6", rank: 6, name: "Johan Cruyff", amount: 900, img: "https://images.unsplash.com/photo-1518605368461-1ee7e1634b6e?w=400", color: "#FF7A00", trend: "same" },
-];
-
-export default function GlobalRoomClient({ slug }: { slug: string }) {
+export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
+  // Initialize with live server data!
+  const [roomData, setRoomData] = useState(initialRoomData);
   const [search, setSearch] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Modal States
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
+  const [selectedContenderIndex, setSelectedContenderIndex] = useState(0);
 
-  const filteredRankings = MOCK_RANKINGS.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  // Filter and slice data for UI
+  const filteredRankings = roomData.rankings.filter((p: any) => p.name.toLowerCase().includes(search.toLowerCase()));
   const topThree = filteredRankings.slice(0, 3);
   const theRest = filteredRankings.slice(3);
 
-  // Helper for trend icons
   const getTrendIcon = (trend: string) => {
     if (trend === "up") return <TrendingUp className="w-4 h-4 text-battle-green" />;
     if (trend === "down") return <TrendingDown className="w-4 h-4 text-battle-red" />;
     return <Minus className="w-4 h-4 text-foreground/30" />;
+  };
+
+  // Safe handler to find the exact index in the main array even if search is active
+  const handleVoteClick = (entityId: string) => {
+    const actualIndex = roomData.rankings.findIndex((r: any) => r.id === entityId);
+    setSelectedContenderIndex(actualIndex);
+    setIsVoteModalOpen(true);
+  };
+
+  // Create a synthetic "battle" object to pass to our reusable VoteModal
+  const syntheticBattleForModal = {
+    id: roomData.id,
+    charity: roomData.charity,
+    contenders: roomData.rankings.map((r: any) => ({
+      id: r.contender_id, 
+      name: r.name,
+      color: r.color,
+      image: r.img
+    }))
   };
 
   return (
@@ -61,17 +67,17 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
           <div className="bg-card border border-border cut-corner-lg overflow-hidden flex flex-col shadow-xl">
             {/* Image Banner */}
             <div className="relative w-full h-48 bg-black">
-              <Image src={MOCK_ROOM.image} alt={MOCK_ROOM.title} fill className="object-cover opacity-60" />
+              <Image src={roomData.image} alt={roomData.title} fill className="object-cover opacity-60" />
               <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
               <div className="absolute top-4 right-4 cut-corner px-3 py-1 bg-primary text-primary-foreground font-arcade text-[10px] font-bold">
-                {MOCK_ROOM.category}
+                {roomData.category}
               </div>
             </div>
             
             {/* Details */}
             <div className="p-6 -mt-8 relative z-10">
               <h1 className="text-3xl md:text-4xl font-arcade font-black text-foreground uppercase tracking-wider mb-4 leading-none">
-                {MOCK_ROOM.title}
+                {roomData.title}
               </h1>
               
               <div className="flex flex-col gap-4">
@@ -80,7 +86,7 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
                     <Trophy className="w-5 h-5 text-battle-yellow" />
                     <span className="font-arcade text-foreground/50 text-xs">TOTAL POOL</span>
                   </div>
-                  <span className="text-xl font-arcade font-bold text-battle-yellow">{MOCK_ROOM.pool}</span>
+                  <span className="text-xl font-arcade font-bold text-battle-yellow">${roomData.totalPool.toLocaleString()}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-background border border-border cut-corner">
@@ -88,12 +94,13 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
                     <Timer className="w-5 h-5 text-primary" />
                     <span className="font-arcade text-foreground/50 text-xs">TIME LEFT</span>
                   </div>
-                  <span className="text-lg font-arcade font-bold text-foreground">{MOCK_ROOM.timeLeft}</span>
+                  {/* For now, just showing LIVE, but you can format roomData.timeLeft here */}
+                  <span className="text-lg font-arcade font-bold text-foreground">LIVE</span> 
                 </div>
               </div>
               
               <p className="mt-6 text-xs text-foreground/50 font-sans border-l-2 border-battle-pink pl-3">
-                30% of total pool proceeds will be donated to <strong className="text-foreground">{MOCK_ROOM.charity}</strong>.
+                30% of total pool proceeds will be donated to <strong className="text-foreground">{roomData.charity}</strong>.
               </p>
             </div>
           </div>
@@ -112,12 +119,12 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
             </div>
             
             <button 
-  onClick={() => setIsModalOpen(true)} // <-- Add this
-  className="w-full cut-corner border border-primary/50 hover:bg-primary hover:text-primary-foreground px-6 py-3 flex items-center justify-center gap-2 text-primary font-arcade text-xs transition-all group shadow-[0_0_15px_rgba(255,122,0,0.1)]"
->
-  <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-  ADD MISSING CONTENDER ($5)
-</button>
+              onClick={() => setIsAddModalOpen(true)}
+              className="w-full cut-corner border border-primary/50 hover:bg-primary hover:text-primary-foreground px-6 py-3 flex items-center justify-center gap-2 text-primary font-arcade text-xs transition-all group shadow-[0_0_15px_rgba(255,122,0,0.1)]"
+            >
+              <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              ADD MISSING CONTENDER ($5)
+            </button>
           </div>
 
         </div>
@@ -138,7 +145,7 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {topThree.map((entity, index) => {
+                {topThree.map((entity: any, index: number) => {
                   const isFirst = index === 0;
                   return (
                     <motion.div 
@@ -172,7 +179,11 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
                         </span>
                       </div>
 
-                      <button className="w-full cut-corner py-3 font-arcade font-bold text-xs transition-all hover:brightness-110 relative z-10" style={{ backgroundColor: entity.color, color: "#000" }}>
+                      <button 
+                        onClick={() => handleVoteClick(entity.id)}
+                        className="w-full cut-corner py-3 font-arcade font-bold text-xs transition-all hover:brightness-110 relative z-10" 
+                        style={{ backgroundColor: entity.color, color: "#000" }}
+                      >
                         BACK CONTENDER
                       </button>
                     </motion.div>
@@ -192,7 +203,7 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                {theRest.map((entity, index) => (
+                {theRest.map((entity: any, index: number) => (
                   <motion.div 
                     initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}
                     key={entity.id}
@@ -218,10 +229,18 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
                       <div className="w-4 flex justify-center">
                         {getTrendIcon(entity.trend)}
                       </div>
-                      <button className="hidden md:block cut-corner px-6 py-2 font-arcade font-bold text-xs transition-all hover:brightness-110" style={{ backgroundColor: entity.color, color: "#000" }}>
+                      <button 
+                        onClick={() => handleVoteClick(entity.id)}
+                        className="hidden md:block cut-corner px-6 py-2 font-arcade font-bold text-xs transition-all hover:brightness-110" 
+                        style={{ backgroundColor: entity.color, color: "#000" }}
+                      >
                         VOTE
                       </button>
-                      <button className="md:hidden cut-corner p-2 font-arcade font-bold text-xs transition-all hover:brightness-110" style={{ backgroundColor: entity.color, color: "#000" }}>
+                      <button 
+                        onClick={() => handleVoteClick(entity.id)}
+                        className="md:hidden cut-corner p-2 font-arcade font-bold text-xs transition-all hover:brightness-110" 
+                        style={{ backgroundColor: entity.color, color: "#000" }}
+                      >
                         +
                       </button>
                     </div>
@@ -232,25 +251,33 @@ export default function GlobalRoomClient({ slug }: { slug: string }) {
           )}
 
           {filteredRankings.length === 0 && (
-  <div className="text-center py-16 bg-card border border-border cut-corner">
-    <p className="text-foreground/40 font-arcade text-sm mb-4">NO CONTENDER FOUND.</p>
-    <button 
-      onClick={() => setIsModalOpen(true)} // <-- Add this
-      className="cut-corner border border-primary text-primary px-6 py-2 font-arcade text-xs hover:bg-primary hover:text-primary-foreground transition-colors"
-    >
-      ADD THEM TO THE ARENA ($5)
-    </button>
-  </div>
-)}
+            <div className="text-center py-16 bg-card border border-border cut-corner">
+              <p className="text-foreground/40 font-arcade text-sm mb-4">NO CONTENDER FOUND.</p>
+              <button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="cut-corner border border-primary text-primary px-6 py-2 font-arcade text-xs hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                ADD THEM TO THE ARENA ($5)
+              </button>
+            </div>
+          )}
 
         </div>
 
       </div>
 
+      {/* --- MODALS --- */}
       <AddContenderModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        roomTitle={MOCK_ROOM.title} 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        roomTitle={roomData.title} 
+      />
+
+      <VoteModal 
+        isOpen={isVoteModalOpen} 
+        onClose={() => setIsVoteModalOpen(false)} 
+        battle={syntheticBattleForModal}
+        contenderIndex={selectedContenderIndex}
       />
       
     </div>
