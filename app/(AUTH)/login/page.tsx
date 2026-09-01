@@ -1,19 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react"; // <-- IMPORT Suspense
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // <-- IMPORT useSearchParams
 import { Mail, Lock, ShieldAlert, Loader2, User } from "lucide-react";
 
-export default function LoginPage() {
+// Wrap the actual form in a sub-component so we can use useSearchParams safely
+function LoginForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState(""); // Only used for sign up
+  const [username, setUsername] = useState(""); 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextRoute = searchParams.get('next') ?? "/dashboard"; // <-- GET THE NEXT ROUTE!
+
   const supabase = createClient();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -23,28 +27,26 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        // Sign Up Flow
         if (!username) throw new Error("Username is required.");
         
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { username }, // This triggers our Postgres function to save the username!
+            data: { username },
           }
         });
         if (error) throw error;
-        
         alert("Success! Check your email to verify your account.");
       } else {
-        // Log In Flow
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
         
-        router.push("/dashboard");
+        // REDIRECT TO THE NEXT ROUTE (e.g. /create instead of always /dashboard)
+        router.push(nextRoute); 
         router.refresh();
       }
     } catch (err: any) {
@@ -58,7 +60,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${nextRoute}`, // <-- PASS NEXT TO CALLBACK
       },
     });
     if (error) setError(error.message);
@@ -66,7 +68,8 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md bg-card border border-border cut-corner-lg p-8 shadow-2xl relative overflow-hidden group">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors duration-700" />
+       {/* ... keep the rest of your form HTML exactly the same ... */}
+       <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors duration-700" />
       
       <div className="relative z-10">
         <h1 className="text-3xl font-arcade font-black text-foreground uppercase tracking-wider mb-2">
@@ -161,5 +164,14 @@ export default function LoginPage() {
 
       </div>
     </div>
+  );
+}
+
+// Next.js requires us to wrap useSearchParams inside a Suspense boundary
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
