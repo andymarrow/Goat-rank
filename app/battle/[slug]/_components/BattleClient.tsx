@@ -5,20 +5,11 @@ import BattleArena from "./BattleArena";
 import BattleChat from "./BattleChat"; 
 import VoteModal from "./VoteModal"; 
 
-const MOCK_BATTLE = {
-  id: "b1",
-  title: "The GOAT Battle",
-  category: "Soccer",
-  timeLeft: "12:45:00",
-  charity: "Save The Children",
-  contenders: [
-    { id: "c1", name: "Ronaldo", image: "/image/ronaldo.png", color: "#F9F8F3", amount: 12450 },
-    { id: "c2", name: "Messi", image: "/image/messi.png", color: "#3B82F6", amount: 9800 }
-  ]
-};
+// REMOVE the MOCK_BATTLE const completely!
 
-export default function BattleClient({ slug }: { slug: any }) {
-  const [battleData, setBattleData] = useState(MOCK_BATTLE);
+export default function BattleClient({ initialBattleData }: { initialBattleData: any }) {
+  // Initialize state with the real data from Supabase
+  const [battleData, setBattleData] = useState(initialBattleData);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedContender, setSelectedContender] = useState(0);
