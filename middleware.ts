@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
-  // We need to manage cookies across the request/response lifecycle securely
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -28,29 +27,38 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Call getUser() to securely verify the session token with the Supabase API
-  const { data: { user } } = await supabase.auth.getUser()
+  // IMPORTANT: Do NOT run code between createServerClient and
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug issues with users being randomly logged out.
 
-  const url = new URL(request.url)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  // --- PROTECTED ROUTES LOGIC ---
-  // If the user is NOT logged in and tries to access /dashboard or /create...
-  if (!user && (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/create'))) {
-    // Redirect them to login, and pass a ?next parameter so we can send them back after!
-    return NextResponse.redirect(new URL(`/login?next=${url.pathname}`, request.url))
+  // 1. PROTECTED ROUTES: Redirect to /login if they are not logged in
+  if (
+    !user &&
+    (request.nextUrl.pathname.startsWith('/dashboard') ||
+     request.nextUrl.pathname.startsWith('/create'))
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
-  // --- AUTH ROUTE LOGIC ---
-  // If the user IS logged in and tries to go to the login page, redirect them to dashboard.
-  if (user && url.pathname.startsWith('/login')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // 2. AUTH ROUTES: Redirect to /dashboard if they ARE logged in and try to go to /login
+  if (
+    user &&
+    (request.nextUrl.pathname.startsWith('/login'))
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
   }
 
-  // Return the original response (or the updated one with new cookies)
   return supabaseResponse
 }
 
-// This config ensures the middleware only runs on specific routes, saving server processing time
+// Ensure the middleware only runs on actual pages, not static files, images, or API routes
 export const config = {
   matcher: [
     /*
@@ -58,8 +66,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - api/webhooks (don't block our LemonSqueezy webhooks!)
+     * - api/webhooks (Allow Lemonsqueezy webhooks to bypass auth)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api/webhooks).*)',
   ],
 }

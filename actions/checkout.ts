@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 import { headers } from "next/headers";
 import { createCheckout, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
+import { createClient } from "@/utils/supabase/server";
 
 // Mirrors the minimum enforced by the VoteModal input. A Server Action is a
 // public HTTP endpoint, so the client-side `min` attribute proves nothing.
@@ -124,8 +125,16 @@ export async function createRoomCheckout(data: {
   category: string;
   roomType: string;
   contenders: any[];
-  creatorId?: string; // We will enforce auth later, optional for now
 }): Promise<{ url?: string; error?: string }> {
+  
+  // 1. Verify the user is actually logged in before creating the checkout!
+  const supabaseAuth = await createClient();
+  const { data: { user } } = await supabaseAuth.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be logged in to deploy an arena." };
+  }
+
   const storeId = process.env.LEMONSQUEEZY_STORE_ID;
   const variantId = process.env.LS_VARIANT_CREATOR;
 
@@ -137,17 +146,17 @@ export async function createRoomCheckout(data: {
     ensureConfigured();
     const supabase = createAdminClient();
 
-    // 1. Pre-build the room in Supabase as 'pending_payment'
+    // 2. Use the verified user.id as the creator_id!
     const { data: room, error: roomError } = await supabase
       .from("rooms")
       .insert({
         title: data.title.slice(0, 100),
         category: data.category,
         room_type: data.roomType,
-        status: "pending_payment", // <--- Crucial! Will be hidden from UI until paid.
-        charity_name: "Pending Charity", // Can be customized later
-        creator_id: data.creatorId || null,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+        status: "pending_payment", 
+        charity_name: "Pending Charity",
+        creator_id: user.id, // <--- Securely links the 10% commission to them!
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       })
       .select("id")
       .single();
