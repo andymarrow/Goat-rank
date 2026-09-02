@@ -5,6 +5,7 @@ import BattleArena from "./BattleArena";
 import BattleChat from "./BattleChat"; 
 import VoteModal from "./VoteModal"; 
 import { createClient } from "@/utils/supabase/client"; // <-- Import the client!
+import { onBrand } from "@/lib/color";
 
 export default function BattleClient({ initialBattleData }: { initialBattleData: any }) {
   const [battleData, setBattleData] = useState(initialBattleData);
@@ -84,10 +85,10 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
       </div>
 
       <div className="lg:hidden fixed bottom-16 left-0 w-full bg-card border-t border-border p-4 z-50 flex gap-2">
-         <button onClick={() => handleVoteClick(0)} className="flex-1 cut-corner py-3 font-arcade font-bold text-xs shadow-lg" style={{ backgroundColor: battleData.contenders[0].color, color: "#000" }}>
+         <button onClick={() => handleVoteClick(0)} className="flex-1 cut-corner py-3 font-arcade font-bold text-xs shadow-lg" style={{ backgroundColor: battleData.contenders[0].color, color: onBrand(battleData.contenders[0].color) }}>
             VOTE {battleData.contenders[0].name}
          </button>
-         <button onClick={() => handleVoteClick(1)} className="flex-1 cut-corner py-3 font-arcade font-bold text-xs shadow-lg text-white" style={{ backgroundColor: battleData.contenders[1].color }}>
+         <button onClick={() => handleVoteClick(1)} className="flex-1 cut-corner py-3 font-arcade font-bold text-xs shadow-lg text-white" style={{ backgroundColor: battleData.contenders[1].color, color: onBrand(battleData.contenders[1].color) }}>
             VOTE {battleData.contenders[1].name}
          </button>
       </div>

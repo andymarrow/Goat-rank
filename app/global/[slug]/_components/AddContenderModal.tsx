@@ -54,7 +54,7 @@ export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={!isSubmitting ? onClose : undefined}
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+          className="absolute inset-0 bg-background/80 backdrop-blur-sm"
         />
 
         {/* Modal Content */}
@@ -137,7 +137,7 @@ export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }
             style={{ backgroundColor: isFormValid ? color : undefined, color: "#000" }}
           >
             {/* Glossy shine effect */}
-            {isFormValid && <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12" />}
+            {isFormValid && <div className="absolute inset-0 bg-foreground/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12" />}
             
             <ShieldAlert className="w-4 h-4" />
             <span>{isSubmitting ? "INITIATING UPLINK..." : "PAY $5 TO INJECT"}</span>

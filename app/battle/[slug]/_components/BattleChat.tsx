@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { MessageSquare, Flame, Zap, ChevronRight } from "lucide-react";
+import { onBrand } from "@/lib/color";
 import Image from "next/image";
 
 export default function BattleChat({ 
@@ -89,12 +90,12 @@ export default function BattleChat({
         </div>
         
         <div className="flex flex-col gap-2">
-          <button onClick={() => onVoteClick(0)} className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md" style={{ backgroundColor: battle.contenders[0].color, color: "#000" }}>
+          <button onClick={() => onVoteClick(0)} className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md" style={{ backgroundColor: battle.contenders[0].color, color: onBrand(battle.contenders[0].color) }}>
             <span>VOTE {battle.contenders[0].name.toUpperCase()}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
           
-          <button onClick={() => onVoteClick(1)} className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md text-white" style={{ backgroundColor: battle.contenders[1].color }}>
+          <button onClick={() => onVoteClick(1)} className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md" style={{ backgroundColor: battle.contenders[1].color, color: onBrand(battle.contenders[1].color) }}>
             <span>VOTE {battle.contenders[1].name.toUpperCase()}</span>
             <ChevronRight className="w-4 h-4" />
           </button>

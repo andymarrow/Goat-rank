@@ -1,6 +1,9 @@
 "use client";
 
-import { ArrowLeft, ShieldAlert, CheckCircle2, Zap, Users } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, ShieldAlert, CheckCircle2, Zap, Users, ImageOff } from "lucide-react";
+import { readableBrand, onBrand } from "@/lib/color";
+import { useIsDark } from "@/lib/useIsDark";
 
 export default function ReviewStep({ 
   formData, 
@@ -14,6 +17,7 @@ export default function ReviewStep({
   isSubmitting: boolean;
 }) {
   
+  const isDark = useIsDark();
   const is1v1 = formData.roomType === "1v1";
   const contenders = formData.contenders;
 
@@ -38,24 +42,81 @@ export default function ReviewStep({
             
             {is1v1 ? (
               /* 1V1 Preview */
-              <div className="flex items-center justify-between relative">
-                <div className="flex flex-col items-start w-[40%]">
-                  <div className="w-full h-2 mb-2 cut-corner" style={{ backgroundColor: contenders[0].color }} />
-                  <span className="font-arcade text-foreground text-sm truncate w-full">{contenders[0].name}</span>
-                </div>
-                <span className="font-arcade text-foreground/30 italic text-xl">VS</span>
-                <div className="flex flex-col items-end w-[40%]">
-                  <div className="w-full h-2 mb-2 cut-corner" style={{ backgroundColor: contenders[1].color }} />
-                  <span className="font-arcade text-foreground text-sm truncate w-full text-right">{contenders[1].name}</span>
-                </div>
+              <div className="flex items-stretch justify-between gap-3 relative">
+                {[0, 1].map((i) => (
+                  <div key={i} className={`flex flex-col w-[42%] ${i === 1 ? "items-end" : "items-start"}`}>
+                    {/* Portrait preview — this is the image that will front the arena */}
+                    <div
+                      className="relative w-full aspect-[3/4] bg-background border border-border cut-corner overflow-hidden mb-2"
+                      style={{ borderColor: `${contenders[i].color}55` }}
+                    >
+                      {contenders[i].image ? (
+                        <Image
+                          src={contenders[i].image}
+                          alt={contenders[i].name || `Contender ${i + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 40vw, 180px"
+                          className="object-contain object-bottom"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-foreground/25">
+                          <ImageOff className="w-5 h-5" />
+                          <span className="font-arcade text-[9px] uppercase tracking-widest">No image</span>
+                        </div>
+                      )}
+                      <span
+                        className="absolute bottom-0 inset-x-0 h-1.5"
+                        style={{ backgroundColor: contenders[i].color }}
+                      />
+                    </div>
+
+                    <span
+                      className={`font-arcade text-sm font-bold truncate w-full ${i === 1 ? "text-right" : ""}`}
+                      style={{ color: readableBrand(contenders[i].color, isDark) }}
+                    >
+                      {contenders[i].name || "Unnamed"}
+                    </span>
+                  </div>
+                ))}
+
+                <span className="absolute top-1/3 left-1/2 -translate-x-1/2 font-arcade text-foreground/30 italic text-xl select-none">
+                  VS
+                </span>
               </div>
             ) : (
               /* Global Preview */
               <div className="flex flex-col gap-2">
                 {contenders.map((c: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between bg-background border border-border cut-corner p-2 px-3" style={{ borderLeftColor: c.color, borderLeftWidth: '3px' }}>
-                    <span className="font-arcade text-sm text-foreground">{c.name}</span>
-                    <span className="font-arcade text-[10px] text-foreground/30">SEED #{i+1}</span>
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 bg-background border border-border cut-corner p-2 px-3"
+                    style={{ borderLeftColor: c.color, borderLeftWidth: "3px" }}
+                  >
+                    <div className="relative w-9 h-9 shrink-0 bg-card border border-border cut-corner overflow-hidden">
+                      {c.image ? (
+                        <Image
+                          src={c.image}
+                          alt={c.name || `Contender ${i + 1}`}
+                          fill
+                          sizes="36px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="w-full h-full flex items-center justify-center font-arcade text-[11px] font-bold"
+                          style={{ backgroundColor: c.color, color: onBrand(c.color) }}
+                        >
+                          {(c.name || "?").charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="font-arcade text-sm text-foreground truncate flex-1">
+                      {c.name || "Unnamed"}
+                    </span>
+                    <span className="font-arcade text-[10px] text-foreground/30 shrink-0">
+                      SEED #{i + 1}
+                    </span>
                   </div>
                 ))}
                 <div className="text-center font-arcade text-[10px] text-primary mt-2">

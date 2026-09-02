@@ -199,8 +199,10 @@ export async function createRoomCheckout(data: {
       productOptions: {
         name: `Deploy Arena: ${data.title}`,
         description: `Unlocks 1 of your 3 Creator passes. 10% commission enabled.`,
-        redirectUrl: `${origin}/dashboard?success=true`,
-        receiptButtonText: "Go to Command Center",
+        // Land the creator in the arena they just paid for, not on the
+        // dashboard. 1v1 and global rooms live on different routes.
+        redirectUrl: `${origin}${data.roomType === "global" ? "/global" : "/battle"}/${room.id}?success=true`,
+        receiptButtonText: "Enter your arena",
       },
       checkoutData: {
         custom: {
