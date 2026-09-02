@@ -4,6 +4,7 @@ import GlobalLeaderboardsRow from "./_components/GlobalLeaderboardsRow";
 import FaceOffsRow from "./_components/FaceOffsRow";
 import ArenaFilters from "./_components/ArenaFilters";
 import { getActive1v1Rooms, getLiveCategories } from "@/actions/getRooms";
+import { getFeaturedRooms, getGlobalRooms } from "@/actions/getLanding";
 import { isRoomSort } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +20,11 @@ export default async function HomePage({
   const sort = isRoomSort(params.sort) ? params.sort : "hot";
   const category = params.category ?? "all";
 
-  const [live1v1Battles, categories] = await Promise.all([
+  const [live1v1Battles, categories, featured, globalRooms] = await Promise.all([
     getActive1v1Rooms(sort, category),
     getLiveCategories(),
+    getFeaturedRooms(),
+    getGlobalRooms(),
   ]);
 
   return (
@@ -37,10 +40,10 @@ export default async function HomePage({
           </p>
         </div>
 
-        <HeroCarousel />
+        <HeroCarousel rooms={featured} />
       </div>
 
-      <GlobalLeaderboardsRow />
+      <GlobalLeaderboardsRow rooms={globalRooms} />
 
       <section className="w-full max-w-[1920px] mx-auto px-6 md:px-12 pt-4">
         {/* useSearchParams needs a Suspense boundary during streaming. */}
