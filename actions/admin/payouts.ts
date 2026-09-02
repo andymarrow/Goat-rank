@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireAdmin, adminError, type AdminResult } from "@/utils/supabase/admin-auth";
+import { sendPayoutPaid } from "@/lib/email/send";
 
 export type AdminPayout = {
   id: string;
@@ -127,6 +128,25 @@ export async function setPayoutStatus(
       .neq("status", "paid");
 
     if (error) throw error;
+
+    // Tell the creator their money is moving. Best-effort: a failed email
+    // must not undo a payout that has already been marked paid.
+    if (status === "paid") {
+      const { data: authUser } = await supabase.auth.admin.getUserById(payout.profile_id);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", payout.profile_id)
+        .single();
+
+      if (authUser?.user?.email) {
+        await sendPayoutPaid(authUser.user.email, {
+          name: profile?.username ?? "creator",
+          amount: Number(payout.amount) || 0,
+          reference,
+        });
+      }
+    }
 
     revalidatePath("/admin");
     return { ok: true };

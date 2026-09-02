@@ -35,37 +35,68 @@ export default function ContenderStep({
   );
 
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // --- SUPABASE STORAGE UPLOAD HANDLER ---
+  const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5MB
+  const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
   const handleImageUpload = async (file: File, contenderId: string, is1v1: boolean) => {
     if (!file) return;
+
+    setUploadError(null);
+
+    // Validate before spending a round-trip. The file picker's `accept` is a
+    // hint the OS is free to ignore, so it proves nothing.
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setUploadError(`"${file.name}" is ${file.type || "an unknown type"}. Use PNG, JPEG or WebP.`);
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setUploadError(
+        `"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)}MB. The limit is 5MB.`
+      );
+      return;
+    }
+
     setUploadingId(contenderId);
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const fileExt = file.name.split(".").pop()?.toLowerCase() ?? "png";
+    const filePath = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
-    // Upload to 'contenders' bucket
-    const { error: uploadError, data } = await supabase.storage
-      .from('contenders')
-      .upload(filePath, file);
+    const { error: storageError } = await supabase.storage
+      .from("contenders")
+      .upload(filePath, file, { cacheControl: "3600", upsert: false, contentType: file.type });
 
-    if (uploadError) {
-      alert("Error uploading image!");
+    if (storageError) {
+      // Surface the real reason instead of a blank "Error uploading image!".
+      // A missing bucket and a denied RLS policy are very different fixes.
+      const reason = /bucket/i.test(storageError.message)
+        ? "The 'contenders' storage bucket does not exist yet."
+        : /policy|denied|unauthorized/i.test(storageError.message)
+        ? "Storage rejected the upload — check the bucket's INSERT policy."
+        : storageError.message;
+
+      console.error("Supabase Storage upload failed:", storageError);
+      setUploadError(reason);
       setUploadingId(null);
       return;
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage.from('contenders').getPublicUrl(filePath);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("contenders").getPublicUrl(filePath);
 
-    // Update the correct state
     if (is1v1) {
       if (contenderId === "c1") setC1({ ...c1, image: publicUrl });
       if (contenderId === "c2") setC2({ ...c2, image: publicUrl });
     } else {
-      setGlobalContenders(globalContenders.map((c: any) => c.id === contenderId ? { ...c, image: publicUrl } : c));
+      setGlobalContenders(
+        globalContenders.map((c: any) => (c.id === contenderId ? { ...c, image: publicUrl } : c))
+      );
     }
+
     setUploadingId(null);
   };
 
@@ -125,7 +156,7 @@ export default function ContenderStep({
               
               {/* UPLOAD UI */}
               <label className="w-full h-32 bg-background border border-border border-dashed cut-corner flex flex-col items-center justify-center text-foreground/30 cursor-pointer hover:text-foreground/60 relative overflow-hidden">
-                <input type="file" accept="image/png, image/jpeg" className="hidden" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], "c1", true)} />
+                <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], "c1", true)} />
                 {uploadingId === "c1" ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : c1.image ? <Image src={c1.image} alt="Preview" fill className="object-contain p-2" /> : <><Upload className="w-6 h-6 mb-2" /><span className="font-arcade text-[10px]">UPLOAD PNG</span></>}
               </label>
             </div>
@@ -143,7 +174,7 @@ export default function ContenderStep({
 
                {/* UPLOAD UI */}
               <label className="w-full h-32 bg-background border border-border border-dashed cut-corner flex flex-col items-center justify-center text-foreground/30 cursor-pointer hover:text-foreground/60 relative overflow-hidden">
-                <input type="file" accept="image/png, image/jpeg" className="hidden" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], "c2", true)} />
+                <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], "c2", true)} />
                 {uploadingId === "c2" ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : c2.image ? <Image src={c2.image} alt="Preview" fill className="object-contain p-2" /> : <><Upload className="w-6 h-6 mb-2" /><span className="font-arcade text-[10px]">UPLOAD PNG</span></>}
               </label>
             </div>
@@ -157,7 +188,7 @@ export default function ContenderStep({
                 
                 {/* UPLOAD UI for GLOBAL */}
                 <label className="w-12 h-12 bg-background border border-border cut-corner flex items-center justify-center text-foreground/50 hover:text-foreground transition-colors cursor-pointer relative overflow-hidden" title="Upload Image">
-                   <input type="file" accept="image/png, image/jpeg" className="hidden" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], c.id, false)} />
+                   <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], c.id, false)} />
                    {uploadingId === c.id ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : c.image ? <Image src={c.image} alt="Preview" fill className="object-cover" /> : <Upload className="w-4 h-4" />}
                 </label>
 
@@ -170,7 +201,17 @@ export default function ContenderStep({
       </AnimatePresence>
 
       <div className="mt-auto flex justify-between items-center pt-4 border-t border-border">
-        <button onClick={onPrev} className="text-foreground/50 hover:text-foreground font-arcade text-sm flex items-center gap-2 transition-colors"><ArrowLeft className="w-4 h-4" /> BACK</button>
+        {uploadError && (
+          <p
+            role="alert"
+            className="w-full mb-4 cut-corner border border-battle-red/40 bg-battle-red/10 px-3 py-2
+                       text-xs font-sans text-battle-red"
+          >
+            {uploadError}
+          </p>
+        )}
+
+        <button onClick={onPrev} className="pressable text-foreground/50 hover:text-foreground font-arcade text-sm flex items-center gap-2 transition-colors"><ArrowLeft className="w-4 h-4" /> BACK</button>
         <button onClick={handleContinue} disabled={!isFormValid} className={`cut-corner px-8 py-3 font-arcade font-bold flex items-center gap-3 transition-all ${isFormValid ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:translate-x-1' : 'bg-card text-foreground/20 cursor-not-allowed border border-border'}`}>
           <span>REVIEW DEPLOYMENT</span><ArrowRight className="w-5 h-5" />
         </button>

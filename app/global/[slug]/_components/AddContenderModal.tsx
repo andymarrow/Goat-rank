@@ -3,30 +3,44 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, ShieldAlert, Zap, UserPlus } from "lucide-react";
+import { createContenderCheckout } from "@/actions/checkout";
 
 interface AddContenderModalProps {
   isOpen: boolean;
   onClose: () => void;
   roomTitle: string;
+  roomId: string;
 }
 
 const COLORS = ["#FF5C5C", "#3B82F6", "#00E676", "#FACC15", "#FF8080", "#F9F8F3"];
 
-export default function AddContenderModal({ isOpen, onClose, roomTitle }: AddContenderModalProps) {
+export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }: AddContenderModalProps) {
   const [name, setName] = useState("");
   const [color, setColor] = useState(COLORS[1]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [error, setError] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
-  const handleDeploy = () => {
+  const handleDeploy = async () => {
     setIsSubmitting(true);
-    // Fake network delay for the checkout call
-    setTimeout(() => {
-      alert("Redirecting to Checkout for $5...\n\n(Backend Integration coming soon: wire to LS_VARIANT_CONTENDER)");
-      setIsSubmitting(false);
-      onClose();
-    }, 1500);
+    setError(null);
+
+    try {
+      const res = await createContenderCheckout({ roomId, name, color });
+
+      if (res.url) {
+        window.location.href = res.url;
+        return; // leave the button disabled while the browser navigates
+      }
+
+      setError(res.error ?? "Could not start checkout.");
+    } catch (err) {
+      console.error("Contender checkout failed:", err);
+      setError("Could not reach the payment terminal.");
+    }
+
+    setIsSubmitting(false);
   };
 
   const isFormValid = name.trim().length > 0;

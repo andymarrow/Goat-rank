@@ -218,3 +218,95 @@ export async function createRoomCheckout(data: {
     return { error: "System failure." };
   }
 }
+
+/**
+ * $5 contender injection into an existing global arena.
+ *
+ * The entity is created immediately with moderation_status 'pending' so it is
+ * invisible on the public board, and only linked into the room by the webhook
+ * once the payment actually clears. That ordering means an abandoned checkout
+ * leaves an unreviewed entity behind, never a free contender on the board.
+ */
+export async function createContenderCheckout(data: {
+  roomId: string;
+  name: string;
+  color: string;
+  imageUrl?: string;
+}): Promise<{ url?: string; error?: string }> {
+  const supabaseAuth = await createClient();
+  const {
+    data: { user },
+  } = await supabaseAuth.auth.getUser();
+
+  if (!user) return { error: "You must be logged in to add a contender." };
+
+  const name = data.name?.trim();
+  if (!name) return { error: "Contender name is required." };
+
+  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
+  const variantId = process.env.LS_VARIANT_CONTENDER;
+
+  if (!storeId || !variantId) return { error: "Payment terminal is not configured." };
+
+  try {
+    ensureConfigured();
+    const supabase = createAdminClient();
+
+    const { data: room, error: roomError } = await supabase
+      .from("rooms")
+      .select("id, title, category, status, room_type")
+      .eq("id", data.roomId)
+      .single();
+
+    if (roomError || !room) return { error: "Arena not found." };
+    if (room.status !== "active") return { error: "This arena is not accepting contenders." };
+    if (room.room_type !== "global") return { error: "Contenders can only be added to global arenas." };
+
+    const { data: entity, error: entityError } = await supabase
+      .from("entities")
+      .insert({
+        name: name.slice(0, 80),
+        category: room.category,
+        brand_color: /^#[0-9a-fA-F]{6}$/.test(data.color) ? data.color : "#FFFFFF",
+        image_url: data.imageUrl?.trim() || null,
+        moderation_status: "pending",
+        submitted_by: user.id,
+        submitted_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (entityError || !entity) {
+      console.error("Contender entity insert failed:", entityError);
+      return { error: "Failed to stage the contender." };
+    }
+
+    const origin = await resolveOrigin();
+
+    const { data: checkout, error } = await createCheckout(storeId, variantId, {
+      productOptions: {
+        name: `Inject ${name}`,
+        description: `Adds ${name} to "${room.title}".`,
+        redirectUrl: `${origin}/global/${data.roomId}?success=true`,
+        receiptButtonText: "Back to the arena",
+      },
+      checkoutData: {
+        custom: {
+          type: "contender_add",
+          room_id: data.roomId,
+          entity_id: entity.id,
+        },
+      },
+    });
+
+    if (error) {
+      console.error("Lemon Squeezy Checkout Error:", error);
+      return { error: "Failed to initialize payment terminal." };
+    }
+
+    return { url: checkout?.data.attributes.url };
+  } catch (error) {
+    console.error("Lemon Squeezy Checkout Error:", error);
+    return { error: "System failure." };
+  }
+}
