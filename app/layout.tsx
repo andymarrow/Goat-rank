@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Orbitron } from "next/font/google"; 
 import NoiseOverlay from "@/components/ui/NoiseOverlay";
+import SiteBanner from "@/components/SiteBanner";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
@@ -46,7 +47,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <NoiseOverlay />
-          
+
+          {/* Global megaphone, pushed from /admin -> Config. Renders nothing
+              when no banner is live. */}
+          <SiteBanner />
+
           <main className="flex-1 relative z-10 w-full max-w-[1920px] mx-auto">
             {children}
           </main>
