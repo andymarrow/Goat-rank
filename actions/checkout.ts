@@ -70,6 +70,28 @@ export async function createVoteCheckout(data: {
   try {
     ensureConfigured();
 
+    // Resolve the room server-side. VoteModal is shared by 1v1 battles and
+    // global arenas, and the two live on different routes — hardcoding
+    // /battle sent every global voter to the wrong page after paying.
+    // Looked up rather than passed in, so the browser cannot mis-state it.
+    const supabase = await createClient();
+    const { data: room, error: roomError } = await supabase
+      .from("rooms")
+      .select("id, room_type, status")
+      .eq("id", data.roomId)
+      .single();
+
+    if (roomError || !room) {
+      console.error("createVoteCheckout: room lookup failed", roomError);
+      return { error: "Arena not found." };
+    }
+
+    // Never take money for a contest that has already closed.
+    if (room.status !== "active") {
+      return { error: "This arena is no longer accepting votes." };
+    }
+
+    const roomPath = room.room_type === "global" ? "global" : "battle";
     const origin = await resolveOrigin();
 
     // Pay-what-you-want: the variant's price is overridden per checkout.
@@ -83,7 +105,7 @@ export async function createVoteCheckout(data: {
         name: "GOAT Rank Battle Vote",
         description: "Backs your contender and grows the battle pool.",
         // Lemon Squeezy has no cancel URL — only a post-purchase redirect.
-        redirectUrl: `${origin}/battle/${data.roomId}?success=true`,
+        redirectUrl: `${origin}/${roomPath}/${data.roomId}?success=true`,
         receiptButtonText: "Back to the arena",
       },
       checkoutData: {

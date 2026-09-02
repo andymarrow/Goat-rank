@@ -67,23 +67,33 @@ export async function sendWelcome(to: string, name: string) {
 
 export async function sendVoteReceipt(
   to: string,
-  args: { voterName: string; contender: string; amount: number; roomTitle: string; roomId: string }
+  args: {
+    voterName: string;
+    contender: string;
+    amount: number;
+    roomTitle: string;
+    roomId: string;
+    /** 1v1 battles and global arenas live on different routes. */
+    roomType?: string;
+  }
 ) {
+  const path = args.roomType === "global" ? "global" : "battle";
   const { subject, html } = voteReceiptEmail({
     ...args,
-    roomUrl: `${siteUrl()}/battle/${args.roomId}`,
+    roomUrl: `${siteUrl()}/${path}/${args.roomId}`,
   });
   return send(to, subject, html);
 }
 
 export async function sendRoomLive(
   to: string,
-  args: { title: string; roomId: string; expiresAt: string }
+  args: { title: string; roomId: string; expiresAt: string; roomType?: string }
 ) {
+  const path = args.roomType === "global" ? "global" : "battle";
   const { subject, html } = roomLiveEmail({
     title: args.title,
     expiresAt: args.expiresAt,
-    roomUrl: `${siteUrl()}/battle/${args.roomId}`,
+    roomUrl: `${siteUrl()}/${path}/${args.roomId}`,
   });
   return send(to, subject, html);
 }

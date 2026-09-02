@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     if (attributes.user_email) {
       const { data: room } = await supabase
         .from("rooms")
-        .select("title")
+        .select("title, room_type")
         .eq("id", custom.room_id)
         .single();
 
@@ -146,6 +146,7 @@ export async function POST(req: Request) {
         amount: amountCents / 100,
         roomTitle: room?.title ?? "the arena",
         roomId: custom.room_id,
+        roomType: room?.room_type,
       });
     }
 
@@ -176,7 +177,7 @@ export async function POST(req: Request) {
     if (attributes.user_email) {
       const { data: room } = await supabase
         .from("rooms")
-        .select("title, expires_at")
+        .select("title, expires_at, room_type")
         .eq("id", custom.room_id)
         .single();
 
@@ -185,6 +186,7 @@ export async function POST(req: Request) {
           title: room.title,
           roomId: custom.room_id,
           expiresAt: room.expires_at,
+          roomType: room.room_type,
         });
       }
     }
