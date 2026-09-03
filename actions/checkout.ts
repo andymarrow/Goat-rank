@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { createAdminClient } from "@/utils/supabase/admin";
 import { headers } from "next/headers";
 import { createCheckout, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
@@ -91,6 +93,28 @@ export async function createVoteCheckout(data: {
       return { error: "This arena is no longer accepting votes." };
     }
 
+    // Attribute the vote to the signed-in account. The browser previously
+    // invented a random alias ("Ridge"/"Willow"/...), so paid battle cries
+    // carried a fake name and could not link back to anyone.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let voterId = "";
+    let voterName = data.voterName?.trim() || "Anonymous";
+
+    if (user) {
+      voterId = user.id;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .single();
+
+      voterName = profile?.username || user.email?.split("@")[0] || voterName;
+    }
+
     const roomPath = room.room_type === "global" ? "global" : "battle";
     const origin = await resolveOrigin();
 
@@ -119,7 +143,8 @@ export async function createVoteCheckout(data: {
           room_id: data.roomId,
           contender_id: data.contenderId,
           message: data.message.slice(0, MAX_CUSTOM_VALUE),
-          voter_name: data.voterName.slice(0, MAX_CUSTOM_VALUE),
+          voter_name: voterName.slice(0, MAX_CUSTOM_VALUE),
+          voter_id: voterId,
         },
       },
     });
@@ -147,7 +172,7 @@ export async function createRoomCheckout(data: {
   category: string;
   roomType: string;
   contenders: any[];
-}): Promise<{ url?: string; error?: string }> {
+}): Promise<{ url?: string; error?: string; usedCredit?: boolean; roomId?: string; creditsLeft?: number }> {
   
   // 1. Verify the user is actually logged in before creating the checkout!
   const supabaseAuth = await createClient();
@@ -168,6 +193,15 @@ export async function createRoomCheckout(data: {
     ensureConfigured();
     const supabase = createAdminClient();
 
+    // A $10 pass grants 5 deployments. Spend one before falling back to
+    // checkout, otherwise creators are charged $10 every single time —
+    // exactly what the pass is supposed to prevent.
+    // consume_room_credit decrements conditionally in one statement, so two
+    // concurrent deploys cannot both spend the same last credit.
+    const { data: creditSpent } = await supabase.rpc("consume_room_credit", {
+      uid: user.id,
+    });
+
     // 2. Use the verified user.id as the creator_id!
     const { data: room, error: roomError } = await supabase
       .from("rooms")
@@ -175,7 +209,7 @@ export async function createRoomCheckout(data: {
         title: data.title.slice(0, 100),
         category: data.category,
         room_type: data.roomType,
-        status: "pending_payment", 
+        status: creditSpent ? "active" : "pending_payment",
         charity_name: "Pending Charity",
         creator_id: user.id, // <--- Securely links the 10% commission to them!
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -212,6 +246,25 @@ export async function createRoomCheckout(data: {
           seed_index: i,
         });
       }
+    }
+
+    // Credit already paid for this deployment — skip checkout entirely.
+    if (creditSpent) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("room_credits")
+        .eq("id", user.id)
+        .single();
+
+      revalidatePath("/dashboard");
+      revalidatePath("/");
+
+      return {
+        usedCredit: true,
+        roomId: room.id,
+        creditsLeft: profile?.room_credits ?? 0,
+        url: `/${data.roomType === "global" ? "global" : "battle"}/${room.id}?deployed=true`,
+      };
     }
 
     // 3. Request LemonSqueezy Checkout
@@ -286,6 +339,10 @@ export async function createContenderCheckout(data: {
     if (room.status !== "active") return { error: "This arena is not accepting contenders." };
     if (room.room_type !== "global") return { error: "Contenders can only be added to global arenas." };
 
+    const { data: creditSpent } = await supabase.rpc("consume_contender_credit", {
+      uid: user.id,
+    });
+
     const { data: entity, error: entityError } = await supabase
       .from("entities")
       .insert({
@@ -305,6 +362,28 @@ export async function createContenderCheckout(data: {
       return { error: "Failed to stage the contender." };
     }
 
+    // Prepaid injection — link it in now and skip checkout.
+    if (creditSpent) {
+      const { count } = await supabase
+        .from("room_contenders")
+        .select("id", { count: "exact", head: true })
+        .eq("room_id", data.roomId);
+
+      const { error: linkError } = await supabase.from("room_contenders").insert({
+        room_id: data.roomId,
+        entity_id: entity.id,
+        seed_index: count ?? 0,
+      });
+
+      if (linkError) {
+        console.error("Prepaid contender link failed:", linkError);
+        return { error: "Could not add the contender." };
+      }
+
+      revalidatePath(`/global/${data.roomId}`);
+      return { url: `/global/${data.roomId}?added=true` };
+    }
+
     const origin = await resolveOrigin();
 
     const { data: checkout, error } = await createCheckout(storeId, variantId, {
@@ -319,6 +398,7 @@ export async function createContenderCheckout(data: {
           type: "contender_add",
           room_id: data.roomId,
           entity_id: entity.id,
+          buyer_id: user.id,
         },
       },
     });

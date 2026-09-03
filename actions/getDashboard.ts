@@ -41,6 +41,8 @@ export type DashboardData = {
   battles: DashboardBattle[];
   ledger: DashboardLedgerRow[];
   pendingPayout: number;
+  roomCredits: number;
+  contenderCredits: number;
 };
 
 /**
@@ -64,7 +66,7 @@ export async function getDashboard(): Promise<DashboardData | null> {
   const [profileRes, roomsRes, votesRes, payoutsRes] = await Promise.all([
     admin
       .from("profiles")
-      .select("username, avatar_url, wallet_balance, total_earned, is_banned")
+      .select("username, avatar_url, wallet_balance, total_earned, is_banned, room_credits, contender_credits")
       .eq("id", user.id)
       .single(),
     admin
@@ -149,6 +151,8 @@ export async function getDashboard(): Promise<DashboardData | null> {
     ledger: [...commissions, ...payouts]
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .slice(0, 40),
+    roomCredits: Number(profile?.room_credits) || 0,
+    contenderCredits: Number(profile?.contender_credits) || 0,
     pendingPayout: payoutRows
       .filter((p) => p.status === "requested" || p.status === "approved")
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0),

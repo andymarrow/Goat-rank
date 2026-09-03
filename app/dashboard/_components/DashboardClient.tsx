@@ -134,8 +134,16 @@ export default function DashboardClient({
             </div>
             <div className="bg-card border border-border cut-corner p-4 flex flex-col gap-2">
               <Swords className="w-4 h-4 text-battle-yellow" />
-              <span className="font-arcade text-[10px] text-foreground/50 tracking-widest">ACTIVE ROOMS</span>
-              <span className="font-arcade text-xl font-bold text-foreground">{data.activeBattles}</span>
+              <span className="font-arcade text-[10px] text-foreground/50 tracking-widest">DEPLOYS LEFT</span>
+              <span className="font-arcade text-xl font-bold text-foreground">
+                {data.roomCredits}
+                <span className="text-foreground/30 text-sm"> / 5</span>
+              </span>
+              <span className="text-[10px] text-foreground/40 font-sans leading-snug">
+                {data.roomCredits > 0
+                  ? "Free with your pass"
+                  : "Next deploy costs $10 (buys 5)"}
+              </span>
             </div>
           </div>
 

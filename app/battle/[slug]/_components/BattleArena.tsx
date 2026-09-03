@@ -4,14 +4,9 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Timer, ArrowLeft, HeartHandshake } from "lucide-react";
 import Link from "next/link";
-import { readableBrand } from "@/lib/color";
-import { useIsDark } from "@/lib/useIsDark";
-import { useCountdown } from "@/lib/useCountdown";
-import { formatAbsolute } from "@/lib/time";
+import Countdown from "@/components/ui/Countdown";
 
 export default function BattleArena({ battle }: { battle: any }) {
-  const isDark = useIsDark();
-  const countdown = useCountdown(battle.expiresAt);
   const totalPool = battle.contenders[0].amount + battle.contenders[1].amount;
   const leftPercentage = (battle.contenders[0].amount / totalPool) * 100;
   const rightPercentage = (battle.contenders[1].amount / totalPool) * 100;
@@ -43,12 +38,7 @@ export default function BattleArena({ battle }: { battle: any }) {
         <div className="flex flex-col items-end gap-2">
           <div className="cut-corner bg-card/90 border border-border backdrop-blur-md px-6 py-2 flex items-center gap-3 shadow-xl">
             <Timer className="w-5 h-5 text-primary animate-pulse" />
-            <span
-              className="font-arcade text-xl text-foreground tracking-widest tabular-nums"
-              title={`Closes ${formatAbsolute(battle.expiresAt)}`}
-            >
-              {countdown}
-            </span>
+            <Countdown target={battle.expiresAt} size="md" />
           </div>
           <div className="flex items-center gap-2 text-xs font-arcade text-foreground/70 bg-background/80 px-3 py-1 cut-corner border border-border">
             <HeartHandshake className="w-3 h-3 text-battle-pink" />
@@ -75,9 +65,19 @@ export default function BattleArena({ battle }: { battle: any }) {
           className="relative w-1/2 h-[85%] flex items-end justify-start pl-4 md:pl-16 z-10"
         >
           {/* maskImage creates a smooth fade at the bottom so they don't clip harshly into the HUD */}
-          <div className="relative w-full max-w-[500px] h-full" style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }}>
-            <Image src={battle.contenders[0].image} alt={battle.contenders[0].name} fill className="object-contain object-bottom drop-shadow-2xl" />
-          </div>
+          <Link
+            href={`/profile/${battle.contenders[0].entityId}`}
+            aria-label={`View ${battle.contenders[0].name}'s profile`}
+            className="pointer-events-auto relative w-full max-w-[500px] h-full block group/contender"
+            style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }}
+          >
+            <Image
+              src={battle.contenders[0].image}
+              alt={battle.contenders[0].name}
+              fill
+              className="object-contain object-bottom drop-shadow-2xl transition-transform duration-300 group-hover/contender:scale-[1.03]"
+            />
+          </Link>
         </motion.div>
 
         {/* Player 2 */}
@@ -87,9 +87,19 @@ export default function BattleArena({ battle }: { battle: any }) {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="relative w-1/2 h-[85%] flex items-end justify-end pr-4 md:pr-16 z-10"
         >
-          <div className="relative w-full max-w-[500px] h-full" style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }}>
-            <Image src={battle.contenders[1].image} alt={battle.contenders[1].name} fill className="object-contain object-bottom drop-shadow-2xl" />
-          </div>
+          <Link
+            href={`/profile/${battle.contenders[1].entityId}`}
+            aria-label={`View ${battle.contenders[1].name}'s profile`}
+            className="pointer-events-auto relative w-full max-w-[500px] h-full block group/contender"
+            style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }}
+          >
+            <Image
+              src={battle.contenders[1].image}
+              alt={battle.contenders[1].name}
+              fill
+              className="object-contain object-bottom drop-shadow-2xl transition-transform duration-300 group-hover/contender:scale-[1.03]"
+            />
+          </Link>
         </motion.div>
       </div>
 
@@ -97,12 +107,15 @@ export default function BattleArena({ battle }: { battle: any }) {
       <div className="relative z-30 w-full max-w-5xl mx-auto px-4 pb-8 md:pb-12 mt-auto">
         
         {/* The Glass Panel */}
-        <div className="corner-ticks bg-card/80 dark:bg-[#0A0A0C]/80 backdrop-blur-xl border border-border cut-corner-lg p-6 shadow-2xl flex flex-col gap-6">
+        <div className="corner-ticks bg-card/95 dark:bg-[#0A0A0C]/85 backdrop-blur-xl border border-border cut-corner-lg p-6 shadow-2xl flex flex-col gap-6">
           
           {/* Stats Row */}
           <div className="flex justify-between items-end">
             <div className="flex flex-col items-start">
-              <h2 className="text-3xl md:text-5xl font-arcade font-black tracking-wider uppercase mb-1 drop-shadow-md" style={{ color: readableBrand(battle.contenders[0].color, isDark) }}>
+              <h2
+                className="brand-text text-3xl md:text-5xl font-arcade font-black tracking-wider uppercase mb-1"
+                style={{ "--brand": battle.contenders[0].color } as React.CSSProperties}
+              >
                 {battle.contenders[0].name}
               </h2>
               <span className="text-xl md:text-3xl font-arcade font-bold text-foreground drop-shadow-md">
@@ -117,7 +130,10 @@ export default function BattleArena({ battle }: { battle: any }) {
             </div>
 
             <div className="flex flex-col items-end">
-              <h2 className="text-3xl md:text-5xl font-arcade font-black tracking-wider uppercase mb-1 drop-shadow-md text-right" style={{ color: readableBrand(battle.contenders[1].color, isDark) }}>
+              <h2
+                className="brand-text text-3xl md:text-5xl font-arcade font-black tracking-wider uppercase mb-1 text-right"
+                style={{ "--brand": battle.contenders[1].color } as React.CSSProperties}
+              >
                 {battle.contenders[1].name}
               </h2>
               <span className="text-xl md:text-3xl font-arcade font-bold text-foreground drop-shadow-md">

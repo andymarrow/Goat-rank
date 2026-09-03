@@ -23,7 +23,7 @@ export default async function HomePage({
   const [live1v1Battles, categories, featured, globalRooms] = await Promise.all([
     getActive1v1Rooms(sort, category),
     getLiveCategories(),
-    getFeaturedRooms(),
+    getFeaturedRooms(4), // hero shows exactly four
     getGlobalRooms(),
   ]);
 

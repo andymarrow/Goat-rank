@@ -8,8 +8,7 @@ import { motion } from "framer-motion";
 import AddContenderModal from "./AddContenderModal";
 import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
 import GlobalFeed from "./GlobalFeed";
-import { useCountdown } from "@/lib/useCountdown";
-import { formatAbsolute } from "@/lib/time";
+import Countdown from "@/components/ui/Countdown";
 
 export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
   // Initialize with live server data!
@@ -19,7 +18,6 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
-  const countdown = useCountdown(roomData.expiresAt);
   const [selectedContenderIndex, setSelectedContenderIndex] = useState(0);
 
   // Filter and slice data for UI
@@ -98,12 +96,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                     <Timer className="w-5 h-5 text-primary" />
                     <span className="font-arcade text-foreground/50 text-xs">TIME LEFT</span>
                   </div>
-                  <span
-                    className="text-lg font-arcade font-bold text-foreground tabular-nums"
-                    title={`Closes ${formatAbsolute(roomData.expiresAt)}`}
-                  >
-                    {countdown}
-                  </span>
+                  <Countdown target={roomData.expiresAt} size="sm" />
                 </div>
               </div>
               

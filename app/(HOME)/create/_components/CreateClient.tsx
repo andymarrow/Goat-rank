@@ -10,6 +10,7 @@ import { createRoomCheckout } from "@/actions/checkout";
 export default function CreateClient({ categories }: { categories: string[] }) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     roomType: "1v1", // <-- Add this! "1v1" or "global"
@@ -37,7 +38,7 @@ export default function CreateClient({ categories }: { categories: string[] }) {
     if (res.url) {
       window.location.href = res.url;
     } else {
-      alert(res.error || "Checkout failed. Check console.");
+      setError(res.error || "Checkout failed. Please try again.");
       setIsSubmitting(false);
     }
   };

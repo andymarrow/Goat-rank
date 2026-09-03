@@ -285,3 +285,35 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ============================================================
+   BRAND COLOUR CONTRAST (CSS-only)
+
+   Contender colours are author-chosen and several were picked against the
+   pitch-black theme — Ronaldo's #F9F8F3 is effectively white, which vanished
+   on the light theme's HUD panel.
+
+   Doing this in CSS rather than JS matters: the JS helper needs to know the
+   active theme, and before hydration it has to guess, so light-mode users saw
+   a flash of unreadable text. These rules never guess.
+
+   Usage: <span className="brand-text" style={{ "--brand": color }}>
+   ============================================================ */
+.brand-text {
+  color: var(--brand, currentColor);
+}
+
+/* Light theme: mix the brand toward black so any near-white stays legible. */
+:root:not(.dark) .brand-text {
+  color: color-mix(in srgb, var(--brand, currentColor) 62%, #000 38%);
+}
+
+/* Dark theme: lift very dark brands off a near-black background. */
+.dark .brand-text {
+  color: color-mix(in srgb, var(--brand, currentColor) 92%, #fff 8%);
+}
+
+/* Filled surfaces: keep the fill exact, flip only the label. */
+.brand-fill {
+  background-color: var(--brand, transparent);
+}

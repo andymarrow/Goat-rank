@@ -7,6 +7,10 @@ import { sendVoteReceipt, sendRoomLive } from "@/lib/email/send";
 // replayed delivery collides here instead of double-counting the pool.
 const UNIQUE_VIOLATION = "23505";
 
+// What each prepaid pass is worth.
+const ROOMS_PER_PASS = 5;
+const CONTENDERS_PER_PASS = 5;
+
 /**
  * Lemon Squeezy signs the raw request body with HMAC-SHA256 and sends the hex
  * digest in `X-Signature`.
@@ -110,6 +114,7 @@ export async function POST(req: Request) {
       polar_transaction_id: orderId,
       room_id: custom.room_id,
       contender_id: custom.contender_id,
+      voter_id: custom.voter_id || null,
       amount: amountCents / 100, 
       voter_name: voterName,
       message: custom.message || null,
@@ -163,15 +168,37 @@ export async function POST(req: Request) {
     }
 
     // Set the room status to 'active' so it shows up on the homepage!
-    const { error } = await supabase
+    // The .eq on pending_payment doubles as replay protection: a redelivered
+    // webhook matches no rows, so credits are granted exactly once below.
+    const { data: activated, error } = await supabase
       .from("rooms")
       .update({ status: "active" })
       .eq("id", custom.room_id)
-      .eq("status", "pending_payment"); // Extra safety check
+      .eq("status", "pending_payment")
+      .select("id, creator_id");
 
     if (error) {
       console.error("Room Activation Error:", error);
       return NextResponse.json({ error: "DB Error" }, { status: 500 });
+    }
+
+    // A $10 pass buys 5 deployments. This one consumed the first, so grant
+    // the remaining 4. Only runs when the update actually flipped a row.
+    const creatorId = activated?.[0]?.creator_id;
+
+    if (creatorId) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("room_credits")
+        .eq("id", creatorId)
+        .single();
+
+      const { error: creditError } = await supabase
+        .from("profiles")
+        .update({ room_credits: (profile?.room_credits ?? 0) + ROOMS_PER_PASS - 1 })
+        .eq("id", creatorId);
+
+      if (creditError) console.error("Credit grant failed:", creditError);
     }
 
     if (attributes.user_email) {
@@ -221,6 +248,22 @@ export async function POST(req: Request) {
       }
       console.error("Contender Link Error:", error);
       return NextResponse.json({ error: "DB Error" }, { status: 500 });
+    }
+
+    // $5 buys 5 injections; this one used the first, so bank the other 4.
+    if (custom.buyer_id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("contender_credits")
+        .eq("id", custom.buyer_id)
+        .single();
+
+      await supabase
+        .from("profiles")
+        .update({
+          contender_credits: (profile?.contender_credits ?? 0) + CONTENDERS_PER_PASS - 1,
+        })
+        .eq("id", custom.buyer_id);
     }
 
     return NextResponse.json({ received: true, action: "contender_added" }, { status: 200 });
