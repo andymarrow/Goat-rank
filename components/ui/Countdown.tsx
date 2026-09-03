@@ -34,7 +34,8 @@ export default function Countdown({
   size = "md",
 }: {
   target: string | Date | null | undefined;
-  size?: "sm" | "md" | "lg";
+  /** "auto" scales with the viewport — use it anywhere space is tight. */
+  size?: "sm" | "md" | "lg" | "auto";
 }) {
   const [parts, setParts] = useState<Parts>(() => split(target));
 
@@ -55,6 +56,13 @@ export default function Countdown({
     sm: { box: "px-1.5 py-1 min-w-[30px]", num: "text-sm", lab: "text-[7px]" },
     md: { box: "px-2 py-1.5 min-w-[40px]", num: "text-lg", lab: "text-[8px]" },
     lg: { box: "px-3 py-2 min-w-[54px]", num: "text-2xl md:text-3xl", lab: "text-[9px]" },
+    // Narrow phones cannot fit four md cells plus separators without
+    // overflowing the viewport, so start small and grow.
+    auto: {
+      box: "px-1 py-0.5 min-w-[26px] sm:px-1.5 sm:py-1 sm:min-w-[32px] md:px-2 md:py-1.5 md:min-w-[40px]",
+      num: "text-xs sm:text-sm md:text-lg",
+      lab: "text-[6px] sm:text-[7px] md:text-[8px]",
+    },
   }[size];
 
   if (parts.done) {

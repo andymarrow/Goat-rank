@@ -84,13 +84,29 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
         <BattleChat battle={battleData} onVoteClick={handleVoteClick} />
       </div>
 
-      <div className="lg:hidden fixed bottom-16 left-0 w-full bg-card border-t border-border p-4 z-50 flex gap-2">
-         <button onClick={() => handleVoteClick(0)} className="flex-1 cut-corner py-3 font-arcade font-bold text-xs shadow-lg" style={{ backgroundColor: battleData.contenders[0].color, color: onBrand(battleData.contenders[0].color) }}>
-            VOTE {battleData.contenders[0].name}
-         </button>
-         <button onClick={() => handleVoteClick(1)} className="flex-1 cut-corner py-3 font-arcade font-bold text-xs shadow-lg text-white" style={{ backgroundColor: battleData.contenders[1].color, color: onBrand(battleData.contenders[1].color) }}>
-            VOTE {battleData.contenders[1].name}
-         </button>
+      {/* Mobile vote bar. Sits directly above the 64px tab bar and respects the
+          home-indicator inset; long contender names truncate instead of
+          forcing the two buttons to different heights. */}
+      <div
+        className="lg:hidden fixed bottom-16 inset-x-0 bg-card/95 backdrop-blur-md border-t border-border
+                   px-3 py-2.5 z-[52] flex gap-2"
+        style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}
+      >
+        {[0, 1].map((i) => (
+          <button
+            key={i}
+            onClick={() => handleVoteClick(i)}
+            className="pressable flex-1 min-w-0 cut-corner py-3 px-2 font-arcade font-bold text-[11px] xs:text-xs
+                       shadow-lg flex items-center justify-center gap-1 uppercase"
+            style={{
+              backgroundColor: battleData.contenders[i].color,
+              color: onBrand(battleData.contenders[i].color),
+            }}
+          >
+            <span className="opacity-70 shrink-0">Vote</span>
+            <span className="truncate">{battleData.contenders[i].name}</span>
+          </button>
+        ))}
       </div>
 
       <VoteModal 

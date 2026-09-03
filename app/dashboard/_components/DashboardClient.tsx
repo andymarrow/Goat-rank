@@ -37,25 +37,25 @@ export default function DashboardClient({
       
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 md:w-24 md:h-24 cut-corner bg-background border border-border p-2 shadow-lg">
+        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+          <div className="w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0 cut-corner bg-background border border-border p-1.5 sm:p-2 shadow-lg">
             <Image src={data.avatar} alt={data.name} width={96} height={96} className="w-full h-full object-cover" />
           </div>
           <div>
             <span className="font-arcade text-xs text-foreground/50 tracking-widest block mb-1">COMMAND CENTER</span>
-            <h1 className="text-3xl md:text-5xl font-arcade font-bold text-foreground uppercase tracking-wider">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-arcade font-bold text-foreground uppercase tracking-wider truncate">
               {data.name}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <ProfileEditor
           currentName={data.name}
           currentAvatar={data.avatar}
           avatars={avatars}
         />
-        <Link href="/create" className="pressable cut-corner bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 font-arcade font-bold text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,122,0,0.3)]">
+        <Link href="/create" className="pressable cut-corner bg-primary text-primary-foreground hover:bg-primary/90 px-4 sm:px-6 py-3 font-arcade font-bold text-[10px] sm:text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,122,0,0.3)] whitespace-nowrap">
           <Swords className="w-4 h-4" /> DEPLOY NEW BATTLE
         </Link>
         </div>
@@ -80,7 +80,7 @@ export default function DashboardClient({
             </div>
 
             <div className="mb-8 relative z-10">
-              <div className="text-5xl md:text-6xl font-arcade font-black text-foreground tracking-wider striped-text">
+              <div className="text-4xl sm:text-5xl md:text-6xl font-arcade font-black text-foreground tracking-wider striped-text break-all">
                 {money(data.walletBalance)}
               </div>
               <span className="text-xs text-foreground/40 font-sans mt-2 block">

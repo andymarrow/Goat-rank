@@ -44,6 +44,10 @@
 
   --font-sans: var(--font-outfit);
   --font-arcade: var(--font-arcade);
+
+  /* Small-phone breakpoint. Tailwind ships nothing below sm (40rem), which
+     leaves 320-380px devices — a real slice of traffic — unaddressable. */
+  --breakpoint-xs: 24rem;
 }
 
 /* Global resets for a premium app feel */
@@ -160,24 +164,10 @@ body {
 }
 .dark .tex-dots { opacity: 0.045; }
 
-/* Cinematic edge falloff. Pairs with the global grain overlay. */
-.tex-vignette {
-  background: radial-gradient(
-    ellipse at center,
-    transparent 55%,
-    rgb(0 0 0 / 0.35) 100%
-  );
-}
-.dark .tex-vignette {
-  background: radial-gradient(
-    ellipse at center,
-    transparent 45%,
-    rgb(0 0 0 / 0.6) 100%
-  );
-}
+/* NOTE: a .tex-vignette utility used to live here. It layered a radial
+   dark gradient over the whole viewport, which read as a grey smear across
+   the mobile tab bar. Removed deliberately — do not reintroduce. */
 
-/* Corner ticks — L-brackets that read as HUD framing. Inset past the
-   10px .cut-corner clip so the clip-path doesn't shear them off. */
 .corner-ticks {
   position: relative;
 }

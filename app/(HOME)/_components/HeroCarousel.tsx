@@ -97,7 +97,7 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                       ) : (
                         <div className="w-full h-full flex items-end justify-center pb-8">
                           <span
-                            className="font-arcade text-4xl font-black opacity-40"
+                            className="font-arcade text-2xl sm:text-3xl md:text-4xl font-black opacity-40"
                             style={{ color: c.brand_color ?? "#FFFFFF" }}
                           >
                             {c.name.charAt(0).toUpperCase()}
