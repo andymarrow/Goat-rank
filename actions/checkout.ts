@@ -70,6 +70,28 @@ export async function createVoteCheckout(data: {
   try {
     ensureConfigured();
 
+    // Resolve the room server-side. VoteModal is shared by 1v1 battles and
+    // global arenas, and the two live on different routes — hardcoding
+    // /battle sent every global voter to the wrong page after paying.
+    // Looked up rather than passed in, so the browser cannot mis-state it.
+    const supabase = await createClient();
+    const { data: room, error: roomError } = await supabase
+      .from("rooms")
+      .select("id, room_type, status")
+      .eq("id", data.roomId)
+      .single();
+
+    if (roomError || !room) {
+      console.error("createVoteCheckout: room lookup failed", roomError);
+      return { error: "Arena not found." };
+    }
+
+    // Never take money for a contest that has already closed.
+    if (room.status !== "active") {
+      return { error: "This arena is no longer accepting votes." };
+    }
+
+    const roomPath = room.room_type === "global" ? "global" : "battle";
     const origin = await resolveOrigin();
 
     // Pay-what-you-want: the variant's price is overridden per checkout.
@@ -83,7 +105,7 @@ export async function createVoteCheckout(data: {
         name: "GOAT Rank Battle Vote",
         description: "Backs your contender and grows the battle pool.",
         // Lemon Squeezy has no cancel URL — only a post-purchase redirect.
-        redirectUrl: `${origin}/battle/${data.roomId}?success=true`,
+        redirectUrl: `${origin}/${roomPath}/${data.roomId}?success=true`,
         receiptButtonText: "Back to the arena",
       },
       checkoutData: {
@@ -199,8 +221,10 @@ export async function createRoomCheckout(data: {
       productOptions: {
         name: `Deploy Arena: ${data.title}`,
         description: `Unlocks 1 of your 3 Creator passes. 10% commission enabled.`,
-        redirectUrl: `${origin}/dashboard?success=true`,
-        receiptButtonText: "Go to Command Center",
+        // Land the creator in the arena they just paid for, not on the
+        // dashboard. 1v1 and global rooms live on different routes.
+        redirectUrl: `${origin}${data.roomType === "global" ? "/global" : "/battle"}/${room.id}?success=true`,
+        receiptButtonText: "Enter your arena",
       },
       checkoutData: {
         custom: {
@@ -213,6 +237,98 @@ export async function createRoomCheckout(data: {
     if (error) return { error: "Failed to initialize payment terminal." };
     return { url: checkout?.data.attributes.url };
     
+  } catch (error) {
+    console.error("Lemon Squeezy Checkout Error:", error);
+    return { error: "System failure." };
+  }
+}
+
+/**
+ * $5 contender injection into an existing global arena.
+ *
+ * The entity is created immediately with moderation_status 'pending' so it is
+ * invisible on the public board, and only linked into the room by the webhook
+ * once the payment actually clears. That ordering means an abandoned checkout
+ * leaves an unreviewed entity behind, never a free contender on the board.
+ */
+export async function createContenderCheckout(data: {
+  roomId: string;
+  name: string;
+  color: string;
+  imageUrl?: string;
+}): Promise<{ url?: string; error?: string }> {
+  const supabaseAuth = await createClient();
+  const {
+    data: { user },
+  } = await supabaseAuth.auth.getUser();
+
+  if (!user) return { error: "You must be logged in to add a contender." };
+
+  const name = data.name?.trim();
+  if (!name) return { error: "Contender name is required." };
+
+  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
+  const variantId = process.env.LS_VARIANT_CONTENDER;
+
+  if (!storeId || !variantId) return { error: "Payment terminal is not configured." };
+
+  try {
+    ensureConfigured();
+    const supabase = createAdminClient();
+
+    const { data: room, error: roomError } = await supabase
+      .from("rooms")
+      .select("id, title, category, status, room_type")
+      .eq("id", data.roomId)
+      .single();
+
+    if (roomError || !room) return { error: "Arena not found." };
+    if (room.status !== "active") return { error: "This arena is not accepting contenders." };
+    if (room.room_type !== "global") return { error: "Contenders can only be added to global arenas." };
+
+    const { data: entity, error: entityError } = await supabase
+      .from("entities")
+      .insert({
+        name: name.slice(0, 80),
+        category: room.category,
+        brand_color: /^#[0-9a-fA-F]{6}$/.test(data.color) ? data.color : "#FFFFFF",
+        image_url: data.imageUrl?.trim() || null,
+        moderation_status: "pending",
+        submitted_by: user.id,
+        submitted_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (entityError || !entity) {
+      console.error("Contender entity insert failed:", entityError);
+      return { error: "Failed to stage the contender." };
+    }
+
+    const origin = await resolveOrigin();
+
+    const { data: checkout, error } = await createCheckout(storeId, variantId, {
+      productOptions: {
+        name: `Inject ${name}`,
+        description: `Adds ${name} to "${room.title}".`,
+        redirectUrl: `${origin}/global/${data.roomId}?success=true`,
+        receiptButtonText: "Back to the arena",
+      },
+      checkoutData: {
+        custom: {
+          type: "contender_add",
+          room_id: data.roomId,
+          entity_id: entity.id,
+        },
+      },
+    });
+
+    if (error) {
+      console.error("Lemon Squeezy Checkout Error:", error);
+      return { error: "Failed to initialize payment terminal." };
+    }
+
+    return { url: checkout?.data.attributes.url };
   } catch (error) {
     console.error("Lemon Squeezy Checkout Error:", error);
     return { error: "System failure." };

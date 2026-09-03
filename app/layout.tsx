@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Orbitron } from "next/font/google"; 
 import NoiseOverlay from "@/components/ui/NoiseOverlay";
+import SiteBanner from "@/components/SiteBanner";
+import LayoutChrome from "@/components/LayoutChrome";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
@@ -46,10 +48,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <NoiseOverlay />
-          
-          <main className="flex-1 relative z-10 w-full max-w-[1920px] mx-auto">
-            {children}
-          </main>
+
+          {/* Global megaphone, pushed from /admin -> Config. Renders nothing
+              when no banner is live. */}
+          <SiteBanner />
+
+          {/* Navigation is global. LayoutChrome opts /admin and the auth pages
+              out; every other route now has a way back. */}
+          <LayoutChrome>{children}</LayoutChrome>
         </ThemeProvider>
       </body>
     </html>

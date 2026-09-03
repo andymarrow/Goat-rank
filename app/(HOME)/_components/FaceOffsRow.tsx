@@ -6,7 +6,21 @@ import { ChevronRight, Timer } from "lucide-react";
 
 export default function FaceOffsRow({ liveBattles }: { liveBattles: any[] }) {
   
-  if (!liveBattles || liveBattles.length === 0) return null;
+  if (!liveBattles || liveBattles.length === 0) {
+    return (
+      <section className="w-full max-w-[1920px] mx-auto px-6 md:px-12 py-8">
+        <div className="corner-ticks relative border border-dashed border-border cut-corner py-14 text-center overflow-hidden">
+          <div className="tex-hatch absolute inset-0 pointer-events-none" />
+          <p className="relative font-arcade text-xs uppercase tracking-widest text-foreground/40">
+            No arenas match this filter
+          </p>
+          <p className="relative mt-2 text-sm text-foreground/35 font-sans">
+            Try another sort, or deploy the first one.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full max-w-[1920px] mx-auto px-6 md:px-12 py-8">

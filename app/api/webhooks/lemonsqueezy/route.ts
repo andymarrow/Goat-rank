@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { sendVoteReceipt, sendRoomLive } from "@/lib/email/send";
 
 // Postgres unique_violation. The transaction-id column is unique, so a
 // replayed delivery collides here instead of double-counting the pool.
@@ -36,6 +37,8 @@ type LemonSqueezyOrderPayload = {
       status?: string;
       subtotal_usd?: number;
       total_usd?: number;
+      user_email?: string;
+      user_name?: string;
     };
   };
 };
@@ -121,6 +124,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "DB Error" }, { status: 500 });
     }
 
+    // Receipt. Deliberately not awaited into the response contract: a Resend
+    // outage must never turn a paid vote into a 500 and a webhook retry.
+    if (attributes.user_email) {
+      const { data: room } = await supabase
+        .from("rooms")
+        .select("title, room_type")
+        .eq("id", custom.room_id)
+        .single();
+
+      const { data: contender } = await supabase
+        .from("room_contenders")
+        .select("entities ( name )")
+        .eq("id", custom.contender_id)
+        .single();
+
+      await sendVoteReceipt(attributes.user_email, {
+        voterName,
+        contender:
+          (contender?.entities as unknown as { name?: string } | null)?.name ?? "your contender",
+        amount: amountCents / 100,
+        roomTitle: room?.title ?? "the arena",
+        roomId: custom.room_id,
+        roomType: room?.room_type,
+      });
+    }
+
     return NextResponse.json({ received: true, action: "vote_processed" }, { status: 200 });
   }
 
@@ -145,7 +174,56 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "DB Error" }, { status: 500 });
     }
 
+    if (attributes.user_email) {
+      const { data: room } = await supabase
+        .from("rooms")
+        .select("title, expires_at, room_type")
+        .eq("id", custom.room_id)
+        .single();
+
+      if (room) {
+        await sendRoomLive(attributes.user_email, {
+          title: room.title,
+          roomId: custom.room_id,
+          expiresAt: room.expires_at,
+          roomType: room.room_type,
+        });
+      }
+    }
+
     return NextResponse.json({ received: true, action: "room_activated" }, { status: 200 });
+  }
+
+  // ==========================================
+  // SCENARIO 3: A USER INJECTED A CONTENDER ($5)
+  // ==========================================
+  if (custom.type === "contender_add") {
+    if (!custom.room_id || !custom.entity_id) {
+      return NextResponse.json({ received: true, ignored: "invalid contender payload" }, { status: 200 });
+    }
+
+    // seed_index decides display order, so continue the existing sequence
+    // rather than colliding on 0.
+    const { count } = await supabase
+      .from("room_contenders")
+      .select("id", { count: "exact", head: true })
+      .eq("room_id", custom.room_id);
+
+    const { error } = await supabase.from("room_contenders").insert({
+      room_id: custom.room_id,
+      entity_id: custom.entity_id,
+      seed_index: count ?? 0,
+    });
+
+    if (error) {
+      if (error.code === UNIQUE_VIOLATION) {
+        return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+      }
+      console.error("Contender Link Error:", error);
+      return NextResponse.json({ error: "DB Error" }, { status: 500 });
+    }
+
+    return NextResponse.json({ received: true, action: "contender_added" }, { status: 200 });
   }
 
   // Fallback for unknown types

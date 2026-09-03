@@ -271,6 +271,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         roomTitle={roomData.title} 
+        roomId={roomData.id}
       />
 
       <VoteModal 

@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, HeartHandshake, ShieldAlert } from "lucide-react";
 import Image from "next/image";
 import { createVoteCheckout } from "@/actions/checkout";
+import { readableBrand, onBrand } from "@/lib/color";
+import { useIsDark } from "@/lib/useIsDark";
 
 interface VoteModalProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isDark = useIsDark();
 
   if (!isOpen) return null;
 
@@ -82,7 +85,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+          className="absolute inset-0 bg-background/80 backdrop-blur-sm"
         />
 
         {/* Modal Content */}
@@ -90,25 +93,25 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="corner-ticks relative w-full max-w-lg bg-[#0A0A0C] border-2 cut-corner-lg p-6 shadow-2xl flex flex-col gap-6"
+          className="corner-ticks relative w-full max-w-lg bg-card border-2 cut-corner-lg p-6 shadow-2xl flex flex-col gap-6"
           style={{ borderColor: contender.color, boxShadow: `0 0 40px ${contender.color}20` }}
         >
           {/* Panel texture. Behind every control — the modal's own children
               stack above it in DOM order. */}
           <div className="tex-dots absolute inset-0 pointer-events-none" />
           {/* Close Button */}
-          <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+          <button onClick={onClose} className="absolute top-4 right-4 text-foreground/50 hover:text-foreground transition-colors">
             <X className="w-6 h-6" />
           </button>
 
           {/* Header */}
-          <div className="flex items-center gap-4 border-b border-white/10 pb-4">
-            <div className="relative w-16 h-16 bg-black cut-corner border border-white/20 overflow-hidden">
+          <div className="flex items-center gap-4 border-b border-border pb-4">
+            <div className="relative w-16 h-16 bg-background cut-corner border border-border overflow-hidden">
               <Image src={contender.image} alt={contender.name} fill className="object-cover object-top" />
             </div>
             <div>
-              <h3 className="text-white/60 font-arcade text-xs tracking-widest">BACKING CONTENDER</h3>
-              <h2 className="text-2xl md:text-3xl font-arcade font-bold uppercase" style={{ color: contender.color }}>
+              <h3 className="text-foreground/60 font-arcade text-xs tracking-widest">BACKING CONTENDER</h3>
+              <h2 className="text-2xl md:text-3xl font-arcade font-bold uppercase" style={{ color: readableBrand(contender.color, isDark) }}>
                 {contender.name}
               </h2>
             </div>
@@ -116,7 +119,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
 
           {/* Voting Power (Amount) */}
           <div>
-            <label className="text-white/60 font-arcade text-xs tracking-widest mb-2 block">SELECT FIREPOWER</label>
+            <label className="text-foreground/60 font-arcade text-xs tracking-widest mb-2 block">SELECT FIREPOWER</label>
             <div className="grid grid-cols-3 gap-3">
               {VOTE_TIERS.map((tier) => (
                 <button
@@ -124,8 +127,8 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
                   onClick={() => setAmount(tier.amount)}
                   className={`pressable cut-corner py-3 flex flex-col items-center justify-center gap-1 transition-all border ${
                     amount === tier.amount 
-                      ? "bg-white/10 text-white shadow-lg" 
-                      : "bg-black text-white/50 border-white/10 hover:bg-white/5"
+                      ? "bg-foreground/10 text-foreground shadow-lg" 
+                      : "bg-background text-foreground/50 border-border hover:bg-foreground/5"
                   }`}
                   style={{ borderColor: amount === tier.amount ? contender.color : '' }}
                 >
@@ -136,22 +139,22 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
             </div>
             
             {/* Custom Amount */}
-            <div className="mt-3 flex items-center bg-black border border-white/10 cut-corner px-4 py-2 focus-within:border-white/40 transition-colors">
-              <span className="font-arcade text-white/50 mr-2">$</span>
+            <div className="mt-3 flex items-center bg-background border border-border cut-corner px-4 py-2 focus-within:border-border transition-colors">
+              <span className="font-arcade text-foreground/50 mr-2">$</span>
               <input 
                 type="number" 
                 min="3"
                 placeholder="Custom Amount (Min $3)" 
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full bg-transparent outline-none text-white font-arcade placeholder:text-white/20"
+                className="w-full bg-transparent outline-none text-foreground font-arcade placeholder:text-foreground/20"
               />
             </div>
           </div>
 
           {/* Battle Cry / Message */}
           <div>
-            <label className="text-white/60 font-arcade text-xs tracking-widest mb-2 block flex items-center gap-2">
+            <label className="text-foreground/60 font-arcade text-xs tracking-widest mb-2 block flex items-center gap-2">
               <Zap className="w-3 h-3 text-primary" />
               BATTLE CRY (PUBLIC)
             </label>
@@ -161,18 +164,18 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
               placeholder={`"Messi could never!"`}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full bg-black border border-white/10 cut-corner p-3 text-white font-sans text-sm outline-none focus:border-white/40 transition-colors resize-none"
+              className="w-full bg-background border border-border cut-corner p-3 text-foreground font-sans text-sm outline-none focus:border-border transition-colors resize-none"
             />
-            <div className="text-right mt-1 text-[10px] font-arcade text-white/40">
+            <div className="text-right mt-1 text-[10px] font-arcade text-foreground/40">
               {message.length}/150
             </div>
           </div>
 
           {/* Charity Impact Info */}
-          <div className="bg-black/40 border border-white/5 p-3 cut-corner flex items-start gap-3">
+          <div className="bg-background/40 border border-border p-3 cut-corner flex items-start gap-3">
             <HeartHandshake className="w-5 h-5 text-battle-pink shrink-0 mt-0.5" />
-            <p className="text-xs text-white/70 leading-relaxed font-sans">
-              <strong className="text-white">Impact:</strong> ${charityCut} of this vote goes directly to <strong className="text-white">{battle.charity}</strong>. No refunds on battle votes.
+            <p className="text-xs text-foreground/70 leading-relaxed font-sans">
+              <strong className="text-foreground">Impact:</strong> ${charityCut} of this vote goes directly to <strong className="text-foreground">{battle.charity}</strong>. No refunds on battle votes.
             </p>
           </div>
 
@@ -192,7 +195,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
             onClick={handleCheckout} // <-- Trigger the real function
             disabled={isSubmitting || !isValidAmount} // <-- Disable while loading
             className="sheen pressable w-full cut-corner py-4 flex items-center justify-center gap-3 font-arcade font-bold text-lg hover:brightness-125 transition-all group relative overflow-hidden disabled:opacity-50 disabled:cursor-wait"
-            style={{ backgroundColor: contender.color, color: "#000" }}
+            style={{ backgroundColor: contender.color, color: onBrand(contender.color) }}
           >
             <ShieldAlert className="w-5 h-5" />
             <span>{isSubmitting ? "INITIATING..." : `AUTHORIZE $${amount} STRIKE`}</span>

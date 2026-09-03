@@ -4,8 +4,11 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Timer, ArrowLeft, HeartHandshake } from "lucide-react";
 import Link from "next/link";
+import { readableBrand } from "@/lib/color";
+import { useIsDark } from "@/lib/useIsDark";
 
 export default function BattleArena({ battle }: { battle: any }) {
+  const isDark = useIsDark();
   const totalPool = battle.contenders[0].amount + battle.contenders[1].amount;
   const leftPercentage = (battle.contenders[0].amount / totalPool) * 100;
   const rightPercentage = (battle.contenders[1].amount / totalPool) * 100;
@@ -91,7 +94,7 @@ export default function BattleArena({ battle }: { battle: any }) {
           {/* Stats Row */}
           <div className="flex justify-between items-end">
             <div className="flex flex-col items-start">
-              <h2 className="text-3xl md:text-5xl font-arcade font-black tracking-wider uppercase mb-1 drop-shadow-md" style={{ color: battle.contenders[0].color }}>
+              <h2 className="text-3xl md:text-5xl font-arcade font-black tracking-wider uppercase mb-1 drop-shadow-md" style={{ color: readableBrand(battle.contenders[0].color, isDark) }}>
                 {battle.contenders[0].name}
               </h2>
               <span className="text-xl md:text-3xl font-arcade font-bold text-foreground drop-shadow-md">
@@ -106,7 +109,7 @@ export default function BattleArena({ battle }: { battle: any }) {
             </div>
 
             <div className="flex flex-col items-end">
-              <h2 className="text-3xl md:text-5xl font-arcade font-black tracking-wider uppercase mb-1 drop-shadow-md text-right" style={{ color: battle.contenders[1].color }}>
+              <h2 className="text-3xl md:text-5xl font-arcade font-black tracking-wider uppercase mb-1 drop-shadow-md text-right" style={{ color: readableBrand(battle.contenders[1].color, isDark) }}>
                 {battle.contenders[1].name}
               </h2>
               <span className="text-xl md:text-3xl font-arcade font-bold text-foreground drop-shadow-md">
