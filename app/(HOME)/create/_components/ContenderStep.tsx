@@ -6,24 +6,27 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client"; // <-- Supabase Client
 import Image from "next/image";
 
-const CATEGORIES = ["Soccer", "Basketball", "Tech", "Gaming", "Movies", "Music"];
+// Categories come from the DB (managed in /admin -> Config) via CreateClient.
 const COLORS = ["#FF5C5C", "#3B82F6", "#00E676", "#FACC15", "#FF8080", "#F9F8F3"];
 
 export default function ContenderStep({ 
   formData, 
   setFormData, 
   onNext, 
-  onPrev 
+  onPrev,
+  categories,
 }: { 
   formData: any, 
   setFormData: any, 
   onNext: () => void, 
-  onPrev: () => void 
+  onPrev: () => void,
+  categories: string[],
 }) {
+  const CATEGORIES = categories;
   const supabase = createClient();
   const [roomType, setRoomType] = useState(formData.roomType || "1v1");
   const [title, setTitle] = useState(formData.title || "");
-  const [category, setCategory] = useState(formData.category || "Soccer");
+  const [category, setCategory] = useState(formData.category || categories[0] || "Sports");
   
   const [c1, setC1] = useState(formData.contenders[0] || { name: "", color: COLORS[0], image: null });
   const [c2, setC2] = useState(formData.contenders[1] || { name: "", color: COLORS[1], image: null });

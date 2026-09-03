@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Upload, ShieldAlert, Zap, UserPlus } from "lucide-react";
+import Image from "next/image";
+import { X, Upload, ShieldAlert, Zap, UserPlus, Loader2 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 import { createContenderCheckout } from "@/actions/checkout";
 
 interface AddContenderModalProps {
@@ -19,6 +21,53 @@ export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }
   const [color, setColor] = useState(COLORS[1]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [image, setImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+  const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    setError(null);
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setError(`"${file.name}" is ${file.type || "an unknown type"}. Use PNG, JPEG or WebP.`);
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)}MB. The limit is 5MB.`);
+      return;
+    }
+
+    setUploading(true);
+    const supabase = createClient();
+
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+    const path = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
+
+    const { error: storageError } = await supabase.storage
+      .from("contenders")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+
+    if (storageError) {
+      console.error("Supabase Storage upload failed:", storageError);
+      setError(
+        /policy|denied|unauthorized/i.test(storageError.message)
+          ? "Storage rejected the upload — you may need to sign in again."
+          : storageError.message
+      );
+      setUploading(false);
+      return;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("contenders").getPublicUrl(path);
+
+    setImage(publicUrl);
+    setUploading(false);
+  };
 
   if (!isOpen) return null;
 
@@ -27,7 +76,7 @@ export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }
     setError(null);
 
     try {
-      const res = await createContenderCheckout({ roomId, name, color });
+      const res = await createContenderCheckout({ roomId, name, color, imageUrl: image ?? undefined });
 
       if (res.url) {
         window.location.href = res.url;
@@ -118,17 +167,43 @@ export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }
 
             <div>
               <label className="text-foreground/60 font-arcade text-[10px] tracking-widest mb-2 block">TRANSPARENT PNG IMAGE</label>
-              <div className="w-full h-24 bg-background border border-border border-dashed cut-corner flex flex-col items-center justify-center text-foreground/30 hover:text-foreground/60 hover:border-foreground/40 transition-all cursor-pointer">
-                <Upload className="w-5 h-5 mb-1" />
-                <span className="font-arcade text-[10px]">CLICK TO UPLOAD</span>
-              </div>
+              <label className="relative w-full h-24 bg-background border border-border border-dashed cut-corner flex flex-col items-center justify-center text-foreground/30 hover:text-foreground/60 hover:border-foreground/40 transition-all cursor-pointer overflow-hidden">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  disabled={uploading || isSubmitting}
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                />
+
+                {uploading ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                ) : image ? (
+                  <Image src={image} alt="Contender preview" fill className="object-contain p-2" />
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 mb-1" />
+                    <span className="font-arcade text-[10px]">CLICK TO UPLOAD</span>
+                  </>
+                )}
+              </label>
             </div>
           </div>
+
+          {error && (
+            <p
+              role="alert"
+              className="cut-corner border border-battle-red/40 bg-battle-red/10 px-3 py-2
+                         text-xs font-sans text-battle-red"
+            >
+              {error}
+            </p>
+          )}
 
           {/* Checkout Button */}
           <button 
             onClick={handleDeploy}
-            disabled={!isFormValid || isSubmitting}
+            disabled={!isFormValid || isSubmitting || uploading}
             className={`w-full cut-corner py-4 flex items-center justify-center gap-3 font-arcade font-bold text-sm transition-all group relative overflow-hidden ${
               isFormValid 
                 ? 'hover:brightness-125' 

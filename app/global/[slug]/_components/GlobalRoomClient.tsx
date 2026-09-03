@@ -7,6 +7,9 @@ import { ArrowLeft, Timer, Flame, Trophy, Search, UserPlus, TrendingUp, Trending
 import { motion } from "framer-motion";
 import AddContenderModal from "./AddContenderModal";
 import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
+import GlobalFeed from "./GlobalFeed";
+import { useCountdown } from "@/lib/useCountdown";
+import { formatAbsolute } from "@/lib/time";
 
 export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
   // Initialize with live server data!
@@ -16,6 +19,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
+  const countdown = useCountdown(roomData.expiresAt);
   const [selectedContenderIndex, setSelectedContenderIndex] = useState(0);
 
   // Filter and slice data for UI
@@ -94,8 +98,12 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                     <Timer className="w-5 h-5 text-primary" />
                     <span className="font-arcade text-foreground/50 text-xs">TIME LEFT</span>
                   </div>
-                  {/* For now, just showing LIVE, but you can format roomData.timeLeft here */}
-                  <span className="text-lg font-arcade font-bold text-foreground">LIVE</span> 
+                  <span
+                    className="text-lg font-arcade font-bold text-foreground tabular-nums"
+                    title={`Closes ${formatAbsolute(roomData.expiresAt)}`}
+                  >
+                    {countdown}
+                  </span>
                 </div>
               </div>
               
@@ -265,6 +273,9 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
         </div>
 
       </div>
+
+      {/* Paid battle cries — collected by VoteModal, previously never shown. */}
+      <GlobalFeed feed={roomData.feed ?? []} />
 
       {/* --- MODALS --- */}
       <AddContenderModal 

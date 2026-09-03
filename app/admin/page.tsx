@@ -5,6 +5,7 @@ import { listEntities } from "@/actions/admin/roster";
 import { listRecentVotes, listProfiles } from "@/actions/admin/moderation";
 import { listPayoutRequests, listCharityLedger } from "@/actions/admin/payouts";
 import { listCategories, listCharities, listBanners } from "@/actions/admin/config";
+import { listAdminAvatars } from "@/actions/admin/avatars";
 import AdminShell from "./_components/AdminShell";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function AdminPage() {
     categories,
     charities,
     banners,
+    avatars,
   ] = await Promise.all([
     getAdminOverview(),
     listRooms(),
@@ -38,6 +40,7 @@ export default async function AdminPage() {
     listCategories(),
     listCharities(),
     listBanners(),
+    listAdminAvatars(),
   ]);
 
   return (
@@ -53,6 +56,7 @@ export default async function AdminPage() {
       categories={categories}
       charities={charities}
       banners={banners}
+      avatars={avatars}
     />
   );
 }

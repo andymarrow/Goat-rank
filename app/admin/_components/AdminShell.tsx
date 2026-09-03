@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Activity, Swords, Hammer, Users, MessageSquare, Wallet, Settings,
-  ArrowLeft, ShieldCheck,
+  ArrowLeft, ShieldCheck, Smile,
 } from "lucide-react";
 
 import type { AdminOverview } from "@/actions/admin/analytics";
@@ -14,6 +14,7 @@ import type { AdminEntity } from "@/actions/admin/roster";
 import type { AdminVote, AdminProfile } from "@/actions/admin/moderation";
 import type { AdminPayout, CharityRow } from "@/actions/admin/payouts";
 import type { Category, Charity, SiteBanner } from "@/actions/admin/config";
+import type { AdminAvatar } from "@/actions/admin/avatars";
 
 import GodEyePanel from "./GodEyePanel";
 import ArenaPanel from "./ArenaPanel";
@@ -22,6 +23,7 @@ import RosterPanel from "./RosterPanel";
 import FeedPanel from "./FeedPanel";
 import LedgerPanel from "./LedgerPanel";
 import ConfigPanel from "./ConfigPanel";
+import AvatarPanel from "./AvatarPanel";
 
 type Props = {
   adminName: string;
@@ -35,6 +37,7 @@ type Props = {
   categories: Category[];
   charities: Charity[];
   banners: SiteBanner[];
+  avatars: AdminAvatar[];
 };
 
 export default function AdminShell(props: Props) {
@@ -52,6 +55,7 @@ export default function AdminShell(props: Props) {
     { id: "roster", label: "Roster", icon: Users, badge: pendingEntities },
     { id: "feed", label: "Feed", icon: MessageSquare },
     { id: "ledger", label: "Ledger", icon: Wallet, badge: pendingPayouts },
+    { id: "avatars", label: "Avatars", icon: Smile },
     { id: "config", label: "Config", icon: Settings },
   ];
 
@@ -142,6 +146,7 @@ export default function AdminShell(props: Props) {
         {tab === "ledger" && (
           <LedgerPanel payouts={props.payouts} charityLedger={props.charityLedger} />
         )}
+        {tab === "avatars" && <AvatarPanel avatars={props.avatars} />}
         {tab === "config" && (
           <ConfigPanel
             categories={props.categories}

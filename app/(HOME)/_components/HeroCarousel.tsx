@@ -131,7 +131,7 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
 
               {/* Overlay */}
               <motion.div
-                className="absolute inset-0 p-6 md:p-8 flex flex-col justify-between z-10"
+                className="absolute inset-0 p-6 md:p-8 flex flex-col justify-between z-10 pointer-events-none"
                 animate={{ opacity: isActive ? 1 : 0.5 }}
               >
                 <div className="flex justify-between items-start">
@@ -152,12 +152,9 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                     className="corner-ticks w-full max-w-2xl mx-auto bg-black/40 backdrop-blur-xl border border-white/10 p-6 cut-corner flex flex-col gap-4"
                   >
                     <div className="flex justify-between items-end gap-4">
-                      <Link
-                        href={href}
-                        className="text-white text-2xl md:text-3xl font-arcade uppercase font-bold tracking-wider hover:text-primary transition-colors min-w-0 truncate"
-                      >
+                      <h2 className="text-white text-2xl md:text-3xl font-arcade uppercase font-bold tracking-wider min-w-0 truncate group-hover:text-primary transition-colors">
                         {room.title}
-                      </Link>
+                      </h2>
                       <div className="flex items-center gap-2 text-white/80 font-arcade shrink-0">
                         <Timer className="w-4 h-4" />
                         <span>{countdown(room.expires_at)}</span>
@@ -209,8 +206,10 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                 )}
               </motion.div>
 
-              {/* Whole-panel link, under the interactive overlay above. */}
-              <Link href={href} aria-label={room.title} className="absolute inset-0 z-[5]" />
+              {/* Whole-panel link. Sits above the overlay (which is made
+                  pointer-events-none) so a click anywhere on the card opens
+                  the arena, not just the title. */}
+              <Link href={href} aria-label={room.title} className="absolute inset-0 z-20" />
             </motion.div>
           );
         })}

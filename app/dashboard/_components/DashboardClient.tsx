@@ -3,7 +3,10 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Wallet, Swords, Clock, TrendingUp, History, Download, Loader2 } from "lucide-react";
+import { Wallet, Swords, Clock, TrendingUp, History, Download, Loader2, ArrowUpRight, ImageOff } from "lucide-react";
+import ProfileEditor from "./ProfileEditor";
+import type { AvatarOption } from "@/actions/profile";
+import { formatCountdown, formatSince, formatAbsolute } from "@/lib/time";
 
 import type { DashboardData } from "@/actions/getDashboard";
 import { requestPayout } from "@/actions/requestPayout";
@@ -12,24 +15,13 @@ import { MIN_PAYOUT_USD } from "@/lib/constants";
 const money = (n: number) =>
   `$${(Number(n) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const timeLeft = (iso: string) => {
-  const ms = new Date(iso).getTime() - Date.now();
-  if (ms <= 0) return "ENDED";
-  const hours = Math.floor(ms / 3_600_000);
-  if (hours < 24) return `${hours}h ${Math.floor((ms % 3_600_000) / 60_000)}m`;
-  return `${Math.floor(hours / 24)}d ${hours % 24}h`;
-};
-
-const since = (iso: string) => {
-  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-};
-
-export default function DashboardClient({ data }: { data: DashboardData }) {
+export default function DashboardClient({
+  data,
+  avatars,
+}: {
+  data: DashboardData;
+  avatars: AvatarOption[];
+}) {
   const [activeTab, setActiveTab] = useState("overview");
   const [payoutState, setPayoutState] = useState<{ ok?: boolean; error?: string }>({});
   const [pending, startTransition] = useTransition();
@@ -57,9 +49,16 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           </div>
         </div>
 
-        <Link href="/create" className="cut-corner bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 font-arcade font-bold text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,122,0,0.3)]">
+        <div className="flex items-center gap-3">
+        <ProfileEditor
+          currentName={data.name}
+          currentAvatar={data.avatar}
+          avatars={avatars}
+        />
+        <Link href="/create" className="pressable cut-corner bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 font-arcade font-bold text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,122,0,0.3)]">
           <Swords className="w-4 h-4" /> DEPLOY NEW BATTLE
         </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -154,13 +153,13 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               onClick={() => setActiveTab("overview")}
               className={`px-6 py-3 font-arcade text-sm font-bold transition-colors ${activeTab === "overview" ? "text-primary border-b-2 border-primary" : "text-foreground/50 hover:text-foreground"}`}
             >
-              MY BATTLES
+              MY ARENAS
             </button>
             <button 
               onClick={() => setActiveTab("ledger")}
               className={`px-6 py-3 font-arcade text-sm font-bold transition-colors ${activeTab === "ledger" ? "text-primary border-b-2 border-primary" : "text-foreground/50 hover:text-foreground"}`}
             >
-              FINANCIAL LEDGER
+              EARNINGS HISTORY
             </button>
           </div>
 
@@ -168,32 +167,83 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
           {activeTab === "overview" && (
             <div className="flex flex-col gap-4">
               {data.battles.map((battle) => (
-                <div key={battle.id} className="bg-card border border-border cut-corner p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-primary/50 transition-colors">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${battle.status === "active" ? "bg-battle-green animate-pulse" : "bg-foreground/20"}`} />
-                      <span className="font-arcade text-[10px] text-foreground/50 uppercase">{battle.status}</span>
+                <Link
+                  key={battle.id}
+                  href={`/${battle.room_type === "global" ? "global" : "battle"}/${battle.id}`}
+                  className="pressable hover-lift corner-ticks relative bg-card border border-border cut-corner p-5
+                             flex flex-col md:flex-row md:items-center justify-between gap-4
+                             hover:border-primary/50 transition-colors overflow-hidden group"
+                >
+                  <div className="tex-dots absolute inset-0 pointer-events-none" />
+
+                  <div className="relative flex items-center gap-4 min-w-0">
+                    {/* Contender art — overlapped, so an arena reads as a match-up */}
+                    <div className="flex shrink-0">
+                      {battle.contenders.length === 0 ? (
+                        <div className="w-12 h-12 bg-background border border-border cut-corner flex items-center justify-center text-foreground/20">
+                          <ImageOff className="w-4 h-4" />
+                        </div>
+                      ) : (
+                        battle.contenders.map((c, i) => (
+                          <div
+                            key={i}
+                            className="relative w-12 h-12 bg-background border border-border cut-corner overflow-hidden"
+                            style={{ marginLeft: i === 0 ? 0 : -14, zIndex: 10 - i }}
+                          >
+                            {c.image_url ? (
+                              <Image src={c.image_url} alt={c.name} fill sizes="48px" className="object-cover" />
+                            ) : (
+                              <span
+                                className="w-full h-full flex items-center justify-center font-arcade text-sm font-bold"
+                                style={{ backgroundColor: c.brand_color ?? "#333", color: "#000" }}
+                              >
+                                {c.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
-                    <Link href={`/battle/${battle.id}`} className="font-arcade text-xl font-bold text-foreground hover:text-primary transition-colors">
-                      {battle.title}
-                    </Link>
+
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${battle.status === "active" ? "bg-battle-green animate-pulse" : "bg-foreground/20"}`} />
+                        <span className="font-arcade text-[10px] text-foreground/50 uppercase">
+                          {battle.status.replace("_", " ")}
+                        </span>
+                        <span className="font-arcade text-[10px] text-foreground/30 uppercase">
+                          {battle.room_type === "global" ? "Global" : "1v1"}
+                        </span>
+                      </div>
+                      <span className="font-arcade text-xl font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                        {battle.title}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:flex items-center gap-6 md:gap-12 bg-background border border-border cut-corner p-3 md:p-4">
+                  <div className="relative grid grid-cols-2 md:flex items-center gap-6 md:gap-12 bg-background border border-border cut-corner p-3 md:p-4 shrink-0">
                     <div className="flex flex-col">
                       <span className="font-arcade text-[10px] text-foreground/40 mb-1">TOTAL POOL</span>
                       <span className="font-arcade text-foreground font-bold">{money(battle.total_pool)}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-arcade text-[10px] text-primary mb-1">YOUR CUT (10%)</span>
+                      <span className="font-arcade text-[10px] text-primary mb-1">YOU EARNED (10%)</span>
                       <span className="font-arcade text-primary font-bold">{money(battle.my_cut)}</span>
                     </div>
-                    <div className="flex flex-col hidden md:flex">
-                      <span className="font-arcade text-[10px] text-foreground/40 mb-1 flex items-center gap-1"><Clock className="w-3 h-3"/> TIME</span>
-                      <span className="font-arcade text-foreground font-bold">{timeLeft(battle.expires_at)}</span>
+                    <div className="hidden md:flex flex-col">
+                      <span className="font-arcade text-[10px] text-foreground/40 mb-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> CLOSES IN
+                      </span>
+                      <span
+                        className="font-arcade text-foreground font-bold tabular-nums"
+                        title={formatAbsolute(battle.expires_at)}
+                      >
+                        {formatCountdown(battle.expires_at)}
+                      </span>
                     </div>
+                    <ArrowUpRight className="hidden md:block w-4 h-4 text-foreground/30 group-hover:text-primary transition-colors" />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -203,22 +253,58 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
             <div className="bg-card border border-border cut-corner overflow-hidden flex flex-col">
               <div className="bg-background border-b border-border p-4 flex items-center gap-2">
                 <History className="w-4 h-4 text-foreground/50" />
-                <span className="font-arcade text-xs text-foreground/50 tracking-widest">TRANSACTION HISTORY</span>
+                <div className="flex flex-col">
+                  <span className="font-arcade text-xs text-foreground/70 tracking-widest">WHERE YOUR MONEY CAME FROM</span>
+                  <span className="text-[11px] text-foreground/40 font-sans mt-0.5">
+                    Your 10% commission on every vote, plus withdrawals. Tap a row to open the arena.
+                  </span>
+                </div>
               </div>
               
               <div className="flex flex-col">
-                {data.ledger.map((tx, index) => (
-                  <div key={tx.id} className={`flex items-center justify-between p-4 ${index !== data.ledger.length - 1 ? 'border-b border-border' : ''}`}>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-sans text-sm text-foreground font-medium">{tx.label}</span>
-                      <span className="font-arcade text-[10px] text-foreground/40">{since(tx.created_at)}</span>
+                {data.ledger.map((tx, index) => {
+                  const border = index !== data.ledger.length - 1 ? "border-b border-border" : "";
+                  const body = (
+                    <>
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <span className="font-sans text-sm text-foreground font-medium truncate">
+                          {tx.type === "commission" ? `Your 10% from ${tx.label}` : tx.label}
+                        </span>
+                        <span
+                          className="font-arcade text-[10px] text-foreground/40"
+                          title={formatAbsolute(tx.created_at)}
+                        >
+                          {formatSince(tx.created_at)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`font-arcade font-bold ${tx.amount >= 0 ? "text-battle-green" : "text-foreground"}`}>
+                          {tx.amount >= 0 ? "+" : "-"}{money(Math.abs(tx.amount))}
+                        </span>
+                        {tx.room_id && (
+                          <ArrowUpRight className="w-3.5 h-3.5 text-foreground/30 group-hover:text-primary transition-colors" />
+                        )}
+                      </div>
+                    </>
+                  );
+
+                  // Commission rows link back to the arena that produced them,
+                  // so the number can actually be cross-checked.
+                  return tx.room_id ? (
+                    <Link
+                      key={tx.id}
+                      href={`/${tx.room_type === "global" ? "global" : "battle"}/${tx.room_id}`}
+                      className={`group flex items-center justify-between gap-3 p-4 hover:bg-foreground/[0.03] transition-colors ${border}`}
+                    >
+                      {body}
+                    </Link>
+                  ) : (
+                    <div key={tx.id} className={`flex items-center justify-between gap-3 p-4 ${border}`}>
+                      {body}
                     </div>
-                    
-                    <div className={`font-arcade font-bold ${tx.amount >= 0 ? 'text-battle-green' : 'text-foreground'}`}>
-                      {tx.amount >= 0 ? "+" : "-"}{money(Math.abs(tx.amount))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

@@ -6,9 +6,12 @@ import { Timer, ArrowLeft, HeartHandshake } from "lucide-react";
 import Link from "next/link";
 import { readableBrand } from "@/lib/color";
 import { useIsDark } from "@/lib/useIsDark";
+import { useCountdown } from "@/lib/useCountdown";
+import { formatAbsolute } from "@/lib/time";
 
 export default function BattleArena({ battle }: { battle: any }) {
   const isDark = useIsDark();
+  const countdown = useCountdown(battle.expiresAt);
   const totalPool = battle.contenders[0].amount + battle.contenders[1].amount;
   const leftPercentage = (battle.contenders[0].amount / totalPool) * 100;
   const rightPercentage = (battle.contenders[1].amount / totalPool) * 100;
@@ -40,7 +43,12 @@ export default function BattleArena({ battle }: { battle: any }) {
         <div className="flex flex-col items-end gap-2">
           <div className="cut-corner bg-card/90 border border-border backdrop-blur-md px-6 py-2 flex items-center gap-3 shadow-xl">
             <Timer className="w-5 h-5 text-primary animate-pulse" />
-            <span className="font-arcade text-xl text-foreground tracking-widest">{battle.timeLeft}</span>
+            <span
+              className="font-arcade text-xl text-foreground tracking-widest tabular-nums"
+              title={`Closes ${formatAbsolute(battle.expiresAt)}`}
+            >
+              {countdown}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-xs font-arcade text-foreground/70 bg-background/80 px-3 py-1 cut-corner border border-border">
             <HeartHandshake className="w-3 h-3 text-battle-pink" />

@@ -7,7 +7,7 @@ import ContenderStep from "./ContenderStep";
 import ReviewStep from "./ReviewStep"; // <-- ADD IMPORT
 import { createRoomCheckout } from "@/actions/checkout";
 
-export default function CreateClient() {
+export default function CreateClient({ categories }: { categories: string[] }) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -68,7 +68,7 @@ export default function CreateClient() {
           )}
           {step === 2 && (
             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="h-full">
-              <ContenderStep formData={formData} setFormData={setFormData} onNext={nextStep} onPrev={prevStep} />
+              <ContenderStep formData={formData} setFormData={setFormData} onNext={nextStep} onPrev={prevStep} categories={categories} />
             </motion.div>
           )}
           {step === 3 && (

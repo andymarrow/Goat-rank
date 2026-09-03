@@ -3,6 +3,11 @@ import "server-only";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
+type RawContender = {
+  seed_index: number;
+  entities: { name: string; image_url: string | null; brand_color: string | null } | null;
+};
+
 export type DashboardBattle = {
   id: string;
   title: string;
@@ -11,6 +16,8 @@ export type DashboardBattle = {
   total_pool: number;
   my_cut: number;
   expires_at: string;
+  /** Contender art, so the listing reads as arenas rather than table rows. */
+  contenders: { name: string; image_url: string | null; brand_color: string | null }[];
 };
 
 export type DashboardLedgerRow = {
@@ -19,6 +26,9 @@ export type DashboardLedgerRow = {
   amount: number;
   label: string;
   created_at: string;
+  /** Present on commission rows so the ledger can link to the arena. */
+  room_id?: string;
+  room_type?: string;
 };
 
 export type DashboardData = {
@@ -59,12 +69,15 @@ export async function getDashboard(): Promise<DashboardData | null> {
       .single(),
     admin
       .from("rooms")
-      .select("id, title, status, room_type, total_pool, expires_at")
+      .select(
+        `id, title, status, room_type, total_pool, expires_at,
+         room_contenders ( seed_index, entities ( name, image_url, brand_color ) )`
+      )
       .eq("creator_id", user.id)
       .order("created_at", { ascending: false }),
     admin
       .from("votes")
-      .select("id, amount, created_at, room_id, rooms!inner ( title, creator_id )")
+      .select("id, amount, created_at, room_id, rooms!inner ( title, creator_id, room_type )")
       .eq("rooms.creator_id", user.id)
       .eq("refunded", false)
       .order("created_at", { ascending: false })
@@ -90,6 +103,15 @@ export async function getDashboard(): Promise<DashboardData | null> {
     total_pool: Number(r.total_pool) || 0,
     my_cut: (Number(r.total_pool) || 0) * 0.1,
     expires_at: r.expires_at,
+    contenders: ((r as unknown as { room_contenders?: RawContender[] }).room_contenders ?? [])
+      .filter((rc) => rc.entities)
+      .sort((a, b) => a.seed_index - b.seed_index)
+      .slice(0, 4)
+      .map((rc) => ({
+        name: rc.entities!.name,
+        image_url: rc.entities!.image_url,
+        brand_color: rc.entities!.brand_color,
+      })),
   }));
 
   const commissions: DashboardLedgerRow[] = (votesRes.data ?? []).map((v) => ({
@@ -98,6 +120,8 @@ export async function getDashboard(): Promise<DashboardData | null> {
     amount: (Number(v.amount) || 0) * 0.1,
     label: (v.rooms as unknown as { title?: string } | null)?.title ?? "Arena",
     created_at: v.created_at,
+    room_id: v.room_id,
+    room_type: (v.rooms as unknown as { room_type?: string } | null)?.room_type,
   }));
 
   const payoutRows = payoutsRes.data ?? [];

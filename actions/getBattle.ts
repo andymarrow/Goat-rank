@@ -66,7 +66,8 @@ export async function getBattleData(roomId: string) {
     category: room.category,
     charity: room.charity_name,
     totalPool: room.total_pool,
-    timeLeft: new Date(room.expires_at).toISOString(), // We will format this on the client
+    // Raw timestamp; the client formats and ticks it via useCountdown.
+    expiresAt: room.expires_at,
     contenders: sortedContenders.map((c: any) => ({
       id: c.id, // The room_contender ID
       entityId: c.entities.id,
