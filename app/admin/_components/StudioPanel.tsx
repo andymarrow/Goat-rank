@@ -1,34 +1,25 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Rocket, Sprout, Pin } from "lucide-react";
 
 import type { AdminRoom } from "@/actions/admin/rooms";
 import type { Category, Charity } from "@/actions/admin/config";
-import { deployHouseArena, seedGlobalRoom, type SeedContender } from "@/actions/admin/studio";
+import type { AdminEntity } from "@/actions/admin/roster";
+import { deployHouseArena, seedGlobalRoom } from "@/actions/admin/studio";
 import { Panel, ActionButton, Field, inputClass, EmptyState, Badge } from "./AdminPrimitives";
-
-/** Client-side mirror of parseSeedList, so the preview updates as you type. */
-function parseLines(raw: string): SeedContender[] {
-  return raw
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [name, color, image] = line.split("|").map((p) => p?.trim());
-      return { name, color: color || undefined, image: image || undefined };
-    })
-    .filter((c) => c.name);
-}
+import ContenderPicker, { type PickedContender } from "./ContenderPicker";
 
 export default function StudioPanel({
   rooms,
   categories,
   charities,
+  roster,
 }: {
   rooms: AdminRoom[];
   categories: Category[];
   charities: Charity[];
+  roster: AdminEntity[];
 }) {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(categories[0]?.label ?? "Sports");
@@ -36,13 +27,13 @@ export default function StudioPanel({
   const [charityId, setCharityId] = useState("");
   const [days, setDays] = useState(7);
   const [featured, setFeatured] = useState(true);
-  const [roster, setRoster] = useState("");
+  const [lineup, setLineup] = useState<PickedContender[]>([]);
 
   const [seedTarget, setSeedTarget] = useState("");
-  const [seedRoster, setSeedRoster] = useState("");
+  const [seedLineup, setSeedLineup] = useState<PickedContender[]>([]);
 
-  const parsed = useMemo(() => parseLines(roster), [roster]);
-  const parsedSeed = useMemo(() => parseLines(seedRoster), [seedRoster]);
+  const parsed = lineup;
+  const parsedSeed = seedLineup;
 
   const globalRooms = rooms.filter((r) => r.room_type === "global");
   const chosenCharity = charities.find((c) => c.id === charityId);
@@ -134,26 +125,18 @@ export default function StudioPanel({
             </div>
           </div>
 
-          <Field
-            label={
-              roomType === "1v1"
-                ? "Contenders — exactly 2, one per line"
-                : "Contenders — up to 100, one per line"
-            }
-          >
-            <textarea
-              rows={7}
-              value={roster}
-              onChange={(e) => setRoster(e.target.value)}
-              placeholder={"Ronaldo | #F9F8F3\nMessi | #3B82F6"}
-              className={`${inputClass} resize-y font-mono text-xs`}
+          <div>
+            <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-2">
+              {roomType === "1v1" ? "Contenders — exactly 2" : "Contenders — 2 to 100"}
+            </span>
+            <ContenderPicker
+              roster={roster}
+              picked={lineup}
+              onChange={setLineup}
+              max={roomType === "1v1" ? 2 : 100}
+              category={category}
             />
-          </Field>
-
-          <p className="text-[11px] text-foreground/40 font-sans -mt-2">
-            Format: <code>Name | #RRGGBB | image-url</code> — colour and image optional. Colours
-            are auto-assigned from the arcade palette when omitted.
-          </p>
+          </div>
 
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -194,7 +177,7 @@ export default function StudioPanel({
                 });
                 if (res.ok) {
                   setTitle("");
-                  setRoster("");
+                  setLineup([]);
                 }
                 return res;
               }}
@@ -229,15 +212,13 @@ export default function StudioPanel({
               </select>
             </Field>
 
-            <Field label="Contenders — one per line">
-              <textarea
-                rows={14}
-                value={seedRoster}
-                onChange={(e) => setSeedRoster(e.target.value)}
-                placeholder={"VS Code\nNeovim | #00E676\nZed | #3B82F6"}
-                className={`${inputClass} resize-y font-mono text-xs`}
-              />
-            </Field>
+            <ContenderPicker
+              roster={roster}
+              picked={seedLineup}
+              onChange={setSeedLineup}
+              max={100}
+              category={rooms.find((r) => r.id === seedTarget)?.category}
+            />
 
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
               <div className="flex items-center gap-2">
@@ -254,7 +235,7 @@ export default function StudioPanel({
                 disabled={!seedTarget || parsedSeed.length === 0 || parsedSeed.length > 100}
                 onRun={async () => {
                   const res = await seedGlobalRoom(seedTarget, parsedSeed);
-                  if (res.ok) setSeedRoster("");
+                  if (res.ok) setSeedLineup([]);
                   return res;
                 }}
               >

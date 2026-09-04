@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
+import { generatedAvatar } from "@/lib/avatar";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendVoteReceipt, sendRoomLive } from "@/lib/email/send";
 
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
       amount: amountCents / 100, 
       voter_name: voterName,
       message: custom.message || null,
-      voter_avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(voterName)}`,
+      voter_avatar: generatedAvatar(voterName),
     });
 
     if (error) {

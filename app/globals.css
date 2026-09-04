@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Tailwind v4 resolves `dark:` against prefers-color-scheme by default, but
+   this app themes by class (next-themes, attribute="class"). Without this
+   every dark: utility followed the OS instead of the in-app toggle — which is
+   why the arena HUD stayed dark on the light theme for anyone whose system
+   was set to dark. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   /* LIGHT MODE (Clean, textured paper vibe) */
   --background: #F4F3ED;

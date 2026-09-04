@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Image from "next/image";
+import Avatar from "@/components/ui/Avatar";
 import Link from "next/link";
 import { Zap, Loader2, ChevronDown, MessageSquare } from "lucide-react";
 
@@ -76,21 +76,11 @@ export default function FeedList({
               compact ? "p-2.5" : "p-3 md:p-4"
             }`}
           >
-            <div
-              className={`relative shrink-0 bg-background border border-border cut-corner overflow-hidden ${
-                compact ? "w-7 h-7" : "w-9 h-9 md:w-10 md:h-10"
-              }`}
-            >
-              {entry.voter_avatar && (
-                <Image
-                  src={entry.voter_avatar}
-                  alt={entry.voter_name}
-                  fill
-                  sizes="40px"
-                  className="object-cover"
-                />
-              )}
-            </div>
+            <Avatar
+              src={entry.voter_avatar}
+              name={entry.voter_name}
+              size={compact ? 28 : 38}
+            />
 
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">

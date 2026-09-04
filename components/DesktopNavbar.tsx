@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Swords, Zap, Sun, Moon, LogIn, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Swords, Zap, Sun, Moon, LogIn } from "lucide-react";
 import { useTheme } from "next-themes";
 import { createClient } from "@/utils/supabase/client";
+import AccountMenu from "@/components/AccountMenu";
 
 /**
  * Only routes that actually exist are linked. The previous version pointed at
@@ -25,9 +25,11 @@ export default function DesktopNavbar() {
 
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<{ id: string } | null>(null);
-  const [profile, setProfile] = useState<{ avatar_url: string | null; is_admin?: boolean } | null>(
-    null
-  );
+  const [profile, setProfile] = useState<{
+    username: string | null;
+    avatar_url: string | null;
+    is_admin?: boolean;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -43,7 +45,7 @@ export default function DesktopNavbar() {
       if (user) {
         const { data } = await supabase
           .from("profiles")
-          .select("avatar_url, is_admin")
+          .select("username, avatar_url, is_admin")
           .eq("id", user.id)
           .single();
         setProfile(data);
@@ -113,19 +115,6 @@ export default function DesktopNavbar() {
           </button>
         )}
 
-        {mounted && profile?.is_admin && (
-          <Link
-            href="/admin"
-            title="Admin console"
-            className="pressable cut-corner border border-border bg-background px-3 py-2
-                       font-arcade text-[10px] font-bold uppercase tracking-widest
-                       text-foreground/60 hover:text-primary hover:border-primary transition-colors
-                       inline-flex items-center gap-1.5"
-          >
-            <ShieldCheck className="w-3.5 h-3.5" /> Admin
-          </Link>
-        )}
-
         <Link
           href="/create"
           className="pressable sheen cut-corner relative overflow-hidden flex items-center gap-2
@@ -137,24 +126,12 @@ export default function DesktopNavbar() {
         </Link>
 
         {mounted && user ? (
-          <Link
-            href="/dashboard"
-            title="Your command centre"
-            className="pressable w-9 h-9 cut-corner bg-background border border-border overflow-hidden
-                       hover:border-primary transition-colors flex items-center justify-center"
-          >
-            {profile?.avatar_url ? (
-              <Image
-                src={profile.avatar_url}
-                alt="Your profile"
-                width={36}
-                height={36}
-                className="object-cover w-full h-full"
-              />
-            ) : (
-              <LayoutDashboard className="w-4 h-4 text-foreground/70" />
-            )}
-          </Link>
+          <AccountMenu
+            userId={user.id}
+            username={profile?.username ?? "Operator"}
+            avatarUrl={profile?.avatar_url ?? null}
+            isAdmin={Boolean(profile?.is_admin)}
+          />
         ) : (
           mounted && (
             <Link

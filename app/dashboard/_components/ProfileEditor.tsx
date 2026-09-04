@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
+import Avatar from "@/components/ui/Avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, Loader2, Check, Pencil } from "lucide-react";
 
@@ -134,11 +135,7 @@ export default function ProfileEditor({
 
               {/* Current */}
               <div className="relative flex items-center gap-4">
-                <div className="relative w-16 h-16 shrink-0 bg-background border border-border cut-corner overflow-hidden">
-                  {avatar && (
-                    <Image src={avatar} alt="Your avatar" fill sizes="64px" className="object-cover" />
-                  )}
-                </div>
+                <Avatar src={avatar} name={currentName} size={64} />
                 <div className="flex-1 min-w-0">
                   <label className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-1.5">
                     Display name

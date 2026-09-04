@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/utils/supabase/server";
+import { generatedAvatar } from "@/lib/avatar";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 type RawContender = {
@@ -142,7 +143,7 @@ export async function getDashboard(): Promise<DashboardData | null> {
     name: profile?.username ?? user.email?.split("@")[0] ?? "Operator",
     avatar:
       profile?.avatar_url ??
-      `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(user.id)}`,
+      generatedAvatar(user.id),
     walletBalance: Number(profile?.wallet_balance) || 0,
     totalEarned: Number(profile?.total_earned) || 0,
     activeBattles: rooms.filter((r) => r.status === "active").length,
