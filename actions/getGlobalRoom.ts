@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { bannerFor } from "@/lib/banners";
+import { getRoomFeed } from "./getFeed";
 
 export async function getGlobalRoomData(roomId: string) {
   const supabase = await createClient();
@@ -49,19 +51,8 @@ export async function getGlobalRoomData(roomId: string) {
 
   // Battle cries. Global arenas collected these through the shared VoteModal
   // but never fetched or rendered them — every paid message was invisible.
-  const { data: votes } = await supabase
-    .from("votes")
-    .select("id, amount, voter_name, voter_avatar, message, upvote_count, created_at, contender_id")
-    .eq("room_id", roomId)
-    .eq("message_hidden", false)
-    .eq("refunded", false)
-    .not("message", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const contenderNames = new Map(
-    room.room_contenders.map((c: any) => [c.id, c.entities?.name ?? null])
-  );
+  // First page only — FeedList pulls the rest with a keyset cursor.
+  const feedPage = await getRoomFeed(roomId);
 
   return {
     id: room.id,
@@ -70,18 +61,22 @@ export async function getGlobalRoomData(roomId: string) {
     charity: room.charity_name,
     totalPool: room.total_pool,
     expiresAt: room.expires_at,
-    // We don't have a specific room image in DB schema yet, so we generate a consistent gradient based on the ID
-    image: `https://images.unsplash.com/photo-1518605368461-1ee7e1634b6e?w=1600&q=80`, 
+    // Rooms have no cover column. Lead with the current leader's portrait —
+    // it is the most meaningful image the room has — and fall back to a
+    // category banner when the top contender has no art yet.
+    image: rankedContenders[0]?.img ?? bannerFor(room.category, room.id),
+    leader: rankedContenders[0]
+      ? {
+          name: rankedContenders[0].name,
+          img: rankedContenders[0].img,
+          color: rankedContenders[0].color,
+          amount: rankedContenders[0].amount,
+          entityId: rankedContenders[0].id,
+        }
+      : null,
     rankings: rankedContenders,
-    feed: (votes ?? []).map((v: any) => ({
-      id: v.id,
-      amount: Number(v.amount) || 0,
-      voter_name: v.voter_name,
-      voter_avatar: v.voter_avatar,
-      message: v.message,
-      upvote_count: v.upvote_count ?? 0,
-      created_at: v.created_at,
-      backing: contenderNames.get(v.contender_id) ?? null,
-    })),
+    feed: feedPage.items,
+    feedCursor: feedPage.nextCursor,
+    feedHasMore: feedPage.hasMore,
   };
 }

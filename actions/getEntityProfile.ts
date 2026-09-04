@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { bannerFor } from "@/lib/banners";
 
 export async function getEntityProfileData(entityId: string) {
   const supabase = await createClient();
@@ -56,8 +57,9 @@ export async function getEntityProfileData(entityId: string) {
     totalRaised: entity.lifetime_raised,
     battles: entity.total_battles,
     image: entity.image_url,
-    // Provide a dynamic fallback banner for now
-    banner: "https://images.unsplash.com/photo-1518605368461-1ee7e1634b6e?w=1600&q=80",
+    // Category-matched banner, stable per entity. Every profile previously
+    // shared one hardcoded stadium photo.
+    banner: bannerFor(entity.category, entity.id),
     rank: 1, // We will calculate true global rank later in the aggregation phase
     winRate: "TBD", // We will calculate true win rate later
     topCharity: "Multiple",

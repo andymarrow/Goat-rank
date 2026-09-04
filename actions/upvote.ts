@@ -1,27 +1,120 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
-export async function addTestimonialUpvote(voteId: string) {
+const COOKIE = "gr_uid";
+const UNIQUE_VIOLATION = "23505";
+
+/**
+ * A stable identity for upvote deduplication.
+ *
+ * Signed in: the account id, so the limit follows them across devices.
+ * Anonymous: a random id pinned in an httpOnly cookie. Not unforgeable —
+ * clearing cookies earns another vote — but it stops the actual problem,
+ * which was that every click counted as a new person.
+ */
+async function getFingerprint(): Promise<string> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // In a full production environment, we would generate a stable fingerprint 
-  // based on the user's IP or Session ID to prevent them from voting twice.
-  // For this MVP, we will generate a random string, meaning they can upvote multiple times,
-  // but it proves the database connection works.
-  const tempFingerprint = Math.random().toString(36).substring(7);
+  if (user) return `u:${user.id}`;
 
-  const { error } = await supabase
-    .from("testimonial_upvotes")
-    .insert({
+  const jar = await cookies();
+  const existing = jar.get(COOKIE)?.value;
+  if (existing) return `a:${existing}`;
+
+  const id = crypto.randomUUID();
+
+  // Server Actions can write cookies (unlike Server Components).
+  jar.set(COOKIE, id, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+  });
+
+  return `a:${id}`;
+}
+
+export type UpvoteResult = {
+  success: boolean;
+  upvoted?: boolean;
+  count?: number;
+  error?: string;
+};
+
+/**
+ * Toggle the caller's upvote on a testimonial.
+ *
+ * The unique index on (vote_id, user_fingerprint) is the real guarantee — a
+ * read-then-insert check loses to two concurrent clicks, so a 23505 collision
+ * is treated as "already upvoted" rather than an error.
+ */
+export async function toggleTestimonialUpvote(voteId: string): Promise<UpvoteResult> {
+  if (!voteId) return { success: false, error: "Missing vote id." };
+
+  try {
+    const fingerprint = await getFingerprint();
+    const supabase = createAdminClient();
+
+    const { data: existing } = await supabase
+      .from("testimonial_upvotes")
+      .select("id")
+      .eq("vote_id", voteId)
+      .eq("user_fingerprint", fingerprint)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("testimonial_upvotes")
+        .delete()
+        .eq("id", existing.id);
+
+      if (error) throw error;
+      return { success: true, upvoted: false };
+    }
+
+    const { error } = await supabase.from("testimonial_upvotes").insert({
       vote_id: voteId,
-      user_fingerprint: tempFingerprint,
+      user_fingerprint: fingerprint,
     });
 
-  if (error) {
-    console.error("Error inserting upvote:", error);
-    return { success: false, error: error.message };
-  }
+    if (error) {
+      // Raced with another click from the same person — already counted.
+      if ((error as { code?: string }).code === UNIQUE_VIOLATION) {
+        return { success: true, upvoted: true };
+      }
+      throw error;
+    }
 
-  return { success: true };
+    return { success: true, upvoted: true };
+  } catch (error) {
+    console.error("toggleTestimonialUpvote failed:", error);
+    return { success: false, error: "Could not register that upvote." };
+  }
+}
+
+/** Which of these testimonials the caller has already upvoted. */
+export async function getMyUpvotes(voteIds: string[]): Promise<string[]> {
+  if (voteIds.length === 0) return [];
+
+  try {
+    const fingerprint = await getFingerprint();
+
+    const { data } = await createAdminClient()
+      .from("testimonial_upvotes")
+      .select("vote_id")
+      .eq("user_fingerprint", fingerprint)
+      .in("vote_id", voteIds);
+
+    return (data ?? []).map((r) => r.vote_id);
+  } catch (error) {
+    console.error("getMyUpvotes failed:", error);
+    return [];
+  }
 }

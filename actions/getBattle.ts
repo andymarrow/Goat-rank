@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { getRoomFeed } from "./getFeed";
 
 export async function getBattleData(roomId: string) {
   const supabase = await createClient();
@@ -56,6 +57,8 @@ export async function getBattleData(roomId: string) {
     console.error("Error fetching votes:", votesError);
   }
 
+  const feedPage = await getRoomFeed(roomId);
+
   // 3. Format the data perfectly for our UI components
   // Sort contenders so index 0 is left, index 1 is right
   const sortedContenders = room.room_contenders.sort((a: any, b: any) => a.seed_index - b.seed_index);
@@ -77,5 +80,9 @@ export async function getBattleData(roomId: string) {
       amount: c.current_votes,
     })),
     recentVotes: votes || [],
+    // First page of battle cries; the sidebar pages the rest on demand.
+    feed: feedPage.items,
+    feedCursor: feedPage.nextCursor,
+    feedHasMore: feedPage.hasMore,
   };
 }

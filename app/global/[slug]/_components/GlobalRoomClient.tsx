@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Timer, Flame, Trophy, Search, UserPlus, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
+import { ArrowLeft, Timer, Flame, Trophy, Search, UserPlus, TrendingUp, TrendingDown, Minus, Users, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import AddContenderModal from "./AddContenderModal";
 import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
-import GlobalFeed from "./GlobalFeed";
+import FeedList from "@/components/ui/FeedList";
 import Countdown from "@/components/ui/Countdown";
 
 export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
@@ -68,12 +68,59 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
           {/* Room Identity Card */}
           <div className="bg-card border border-border cut-corner-lg overflow-hidden flex flex-col shadow-xl">
             {/* Image Banner */}
-            <div className="relative w-full h-48 bg-black">
-              <Image src={roomData.image} alt={roomData.title} fill className="object-cover opacity-60" />
-              <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-              <div className="absolute top-4 right-4 cut-corner px-3 py-1 bg-primary text-primary-foreground font-arcade text-[10px] font-bold">
+            <div className="relative w-full h-40 sm:h-48 bg-black">
+              <Image
+                src={roomData.image}
+                alt={roomData.leader?.name ?? roomData.title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover opacity-70"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+              <div className="tex-scanlines absolute inset-0 pointer-events-none" />
+
+              <div className="absolute top-3 right-3 cut-corner px-3 py-1 bg-primary text-primary-foreground font-arcade text-[10px] font-bold">
                 {roomData.category}
               </div>
+
+              {/* Who is actually winning. The card used to show one generic
+                  stock photo, which said nothing about the room. */}
+              {roomData.leader && (
+                <Link
+                  href={`/profile/${roomData.leader.entityId}`}
+                  className="pressable absolute bottom-3 left-3 flex items-center gap-2 bg-black/60
+                             backdrop-blur-md border border-white/15 cut-corner pl-1.5 pr-3 py-1.5
+                             hover:border-primary/60 transition-colors group/leader max-w-[90%]"
+                >
+                  <span className="relative w-8 h-8 shrink-0 cut-corner overflow-hidden bg-background">
+                    {roomData.leader.img ? (
+                      <Image
+                        src={roomData.leader.img}
+                        alt={roomData.leader.name}
+                        fill
+                        sizes="32px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span
+                        className="w-full h-full flex items-center justify-center font-arcade text-xs font-bold text-black"
+                        style={{ backgroundColor: roomData.leader.color ?? "#FF7A00" }}
+                      >
+                        {roomData.leader.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </span>
+
+                  <span className="flex flex-col min-w-0">
+                    <span className="font-arcade text-[8px] uppercase tracking-widest text-battle-yellow leading-none">
+                      Leading
+                    </span>
+                    <span className="font-arcade text-xs font-bold text-white truncate group-hover/leader:text-primary transition-colors">
+                      {roomData.leader.name}
+                    </span>
+                  </span>
+                </Link>
+              )}
             </div>
             
             {/* Details */}
@@ -267,8 +314,22 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
 
       </div>
 
-      {/* Paid battle cries — collected by VoteModal, previously never shown. */}
-      <GlobalFeed feed={roomData.feed ?? []} />
+      {/* Paid battle cries. Paged — an arena with thousands of messages must
+          not ship all of them in the initial payload. */}
+      <section className="w-full max-w-5xl mx-auto px-4 md:px-0 py-8 md:py-10">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <h2 className="font-arcade text-base md:text-xl font-bold uppercase tracking-widest text-foreground">
+            Battle cries
+          </h2>
+        </div>
+        <FeedList
+          roomId={roomData.id}
+          initialItems={roomData.feed ?? []}
+          initialCursor={roomData.feedCursor ?? null}
+          initialHasMore={roomData.feedHasMore ?? false}
+        />
+      </section>
 
       {/* --- MODALS --- */}
       <AddContenderModal 
