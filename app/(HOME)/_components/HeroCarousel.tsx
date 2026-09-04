@@ -130,10 +130,15 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
               <div className="tex-dots absolute inset-0 z-0 pointer-events-none" />
               {isActive && <div className="tex-scanlines absolute inset-0 z-0 pointer-events-none" />}
 
+              {/* Legibility scrim. Titles previously sat straight on the
+                  artwork and were unreadable over a bright photo. */}
+              <div className="absolute inset-x-0 bottom-0 h-2/3 z-[1] pointer-events-none
+                              bg-gradient-to-t from-black via-black/70 to-transparent" />
+
               {/* Overlay */}
               <motion.div
-                className="absolute inset-0 p-6 md:p-8 flex flex-col justify-between z-10 pointer-events-none"
-                animate={{ opacity: isActive ? 1 : 0.5 }}
+                className="absolute inset-0 p-4 md:p-8 flex flex-col justify-between z-10 pointer-events-none"
+                animate={{ opacity: 1 }}
               >
                 <div className="flex justify-between items-start">
                   <span className="cut-corner px-4 py-1.5 text-xs font-arcade font-bold uppercase text-white bg-white/15 backdrop-blur-md border border-white/10">
@@ -146,22 +151,40 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                   )}
                 </div>
 
+                <div className="w-full max-w-2xl mx-auto flex flex-col gap-3">
+                  {/* Always visible — a card you cannot read is a dead card. */}
+                  <div className="flex justify-between items-end gap-3">
+                    <h2
+                      className="text-white text-lg sm:text-2xl md:text-3xl font-arcade uppercase font-bold
+                                 tracking-wider min-w-0 truncate group-hover:text-primary transition-colors"
+                      style={{ textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}
+                    >
+                      {room.title}
+                    </h2>
+                    <div
+                      className="flex items-center gap-1.5 text-white font-arcade text-[11px] md:text-sm shrink-0"
+                      style={{ textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}
+                    >
+                      <Timer className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      <span>{countdown(room.expires_at)}</span>
+                    </div>
+                  </div>
+
+                  {!isActive && (
+                    <span
+                      className="font-arcade text-sm font-bold text-battle-yellow"
+                      style={{ textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}
+                    >
+                      {money(room.total_pool)} pool
+                    </span>
+                  )}
+
                 {isActive && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="corner-ticks w-full max-w-2xl mx-auto bg-black/40 backdrop-blur-xl border border-white/10 p-6 cut-corner flex flex-col gap-4"
+                    className="corner-ticks w-full bg-black/60 backdrop-blur-xl border border-white/10 p-4 md:p-6 cut-corner flex flex-col gap-4"
                   >
-                    <div className="flex justify-between items-end gap-4">
-                      <h2 className="text-white text-2xl md:text-3xl font-arcade uppercase font-bold tracking-wider min-w-0 truncate group-hover:text-primary transition-colors">
-                        {room.title}
-                      </h2>
-                      <div className="flex items-center gap-2 text-white/80 font-arcade shrink-0">
-                        <Timer className="w-4 h-4" />
-                        <span>{countdown(room.expires_at)}</span>
-                      </div>
-                    </div>
-
                     {is1v1 && left && right ? (
                       <div className="w-full">
                         <div className="flex justify-between text-xs md:text-sm font-arcade mb-2 gap-3">
@@ -205,6 +228,7 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                     )}
                   </motion.div>
                 )}
+                </div>
               </motion.div>
 
               {/* Whole-panel link. Sits above the overlay (which is made

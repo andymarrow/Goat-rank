@@ -5,13 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Bomb, Undo2, Gavel, ShieldCheck, ShieldOff, Search, ArrowLeft,
-  MessageSquare, ExternalLink, Swords,
+  MessageSquare, ExternalLink, Mail, UserPlus,
 } from "lucide-react";
 
 import type { AdminVote, AdminProfile } from "@/actions/admin/moderation";
-import { nukeMessage, setUserBanned, setUserAdmin } from "@/actions/admin/moderation";
+import { nukeMessage, setUserBanned, setUserAdmin, inviteAdminByEmail } from "@/actions/admin/moderation";
 import type { AdminRoom } from "@/actions/admin/rooms";
 import { Panel, ActionButton, Badge, EmptyState, inputClass, money } from "./AdminPrimitives";
+import ContenderStack from "./ContenderStack";
 import { formatSince } from "@/lib/time";
 
 /**
@@ -37,6 +38,8 @@ export default function FeedPanel({
   const [userQuery, setUserQuery] = useState("");
   const [reason, setReason] = useState<Record<string, string>>({});
   const [hideNuked, setHideNuked] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteNote, setInviteNote] = useState<string | null>(null);
 
   // Group messages by room so each row can show real counts.
   const byRoom = useMemo(() => {
@@ -132,9 +135,11 @@ export default function FeedPanel({
                                  bg-background border border-border cut-corner text-left
                                  hover:border-primary/50 transition-colors group"
                     >
-                      <div className="min-w-0">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <ContenderStack contenders={room.room_contenders ?? []} size={34} />
+
+                        <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Swords className="w-3.5 h-3.5 text-foreground/30 shrink-0" />
                           <span className="font-arcade text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
                             {room.title}
                           </span>
@@ -146,6 +151,7 @@ export default function FeedPanel({
                           {messages.length} message{messages.length === 1 ? "" : "s"}
                           {nuked > 0 && ` · ${nuked} nuked`} · {money(room.total_pool)} pool
                         </span>
+                        </div>
                       </div>
 
                       <MessageSquare className="w-4 h-4 text-foreground/25 group-hover:text-primary transition-colors shrink-0" />
@@ -264,6 +270,67 @@ export default function FeedPanel({
                 </li>
               ))}
             </ul>
+          )}
+        </Panel>
+      )}
+
+      {/* ------------------------------------------------- GRANT BY EMAIL */}
+      {view === "users" && (
+        <Panel
+          title="Grant admin access"
+          subtitle="Promote someone by email and send them a notification."
+        >
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[220px]">
+              <label className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-1.5">
+                Email address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="teammate@example.com"
+                  className={`${inputClass} pl-8`}
+                />
+              </div>
+            </div>
+
+            <ActionButton
+              variant="primary"
+              disabled={!inviteEmail.trim()}
+              confirm="Grant admin?"
+              onRun={async () => {
+                setInviteNote(null);
+                const res = await inviteAdminByEmail(inviteEmail);
+
+                if (res.ok) {
+                  setInviteNote(
+                    res.data.emailed
+                      ? `${res.data.username} is now an admin and has been emailed.`
+                      : `${res.data.username} is now an admin, but the email could not be sent.`
+                  );
+                  setInviteEmail("");
+                }
+
+                return res;
+              }}
+            >
+              <UserPlus className="w-3 h-3" /> Grant admin
+            </ActionButton>
+          </div>
+
+          <p className="mt-3 text-[11px] leading-relaxed text-foreground/40 font-sans">
+            The person must already have a GOAT Rank account — this grants access to an existing
+            user, it cannot create one. Admins can settle arenas, release payouts and moderate
+            messages, so grant it sparingly.
+          </p>
+
+          {inviteNote && (
+            <p role="status" className="mt-2 text-[11px] text-battle-green font-sans">
+              {inviteNote}
+            </p>
           )}
         </Panel>
       )}

@@ -18,7 +18,11 @@ export type AdminRoom = {
   created_at: string;
   settled_at: string | null;
   creator_id: string | null;
-  room_contenders: { entities: { name: string } | null }[];
+  room_contenders: {
+    current_votes: number | string;
+    seed_index: number;
+    entities: { name: string; image_url: string | null; brand_color: string | null } | null;
+  }[];
 };
 
 /** Read side — imported by the admin page, not callable from the browser. */
@@ -30,7 +34,7 @@ export async function listRooms(): Promise<AdminRoom[]> {
     .select(
       `id, title, category, room_type, status, total_pool, charity_name,
        is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
-       room_contenders ( entities ( name ) )`
+       room_contenders ( current_votes, seed_index, entities ( name, image_url, brand_color ) )`
     )
     .order("created_at", { ascending: false })
     .limit(200);

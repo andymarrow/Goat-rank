@@ -7,6 +7,7 @@ import {
   roomLiveEmail,
   payoutPaidEmail,
   roomSettledEmail,
+  adminGrantedEmail,
 } from "./template";
 
 /**
@@ -113,6 +114,17 @@ export async function sendRoomSettled(
   const { subject, html } = roomSettledEmail({
     ...args,
     roomUrl: `${siteUrl()}/battle/${args.roomId}`,
+  });
+  return send(to, subject, html);
+}
+
+export async function sendAdminGranted(
+  to: string,
+  args: { name: string; grantedBy: string }
+) {
+  const { subject, html } = adminGrantedEmail({
+    ...args,
+    consoleUrl: `${siteUrl()}/admin`,
   });
   return send(to, subject, html);
 }

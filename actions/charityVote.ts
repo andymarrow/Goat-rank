@@ -121,7 +121,15 @@ export async function setCharityPreference(
         { onConflict: "room_id,fingerprint" }
       );
 
-    if (error) throw error;
+    if (error) {
+      // 42P01 = undefined_table. Say so plainly instead of a generic failure —
+      // this feature needs migration 0008 and the message should point there.
+      if ((error as { code?: string }).code === "42P01") {
+        console.error("room_charity_votes is missing — run migration 0008.");
+        return { ok: false, error: "Charity voting isn't switched on yet." };
+      }
+      throw error;
+    }
 
     revalidatePath(`/${room.room_type === "global" ? "global" : "battle"}/${roomId}`);
     return { ok: true };

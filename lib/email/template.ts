@@ -215,6 +215,26 @@ export function payoutPaidEmail(args: { name: string; amount: number; reference?
   };
 }
 
+export function adminGrantedEmail(args: { name: string; grantedBy: string; consoleUrl: string }) {
+  return {
+    subject: "You now have admin access on GOAT Rank",
+    html: shell({
+      preheader: "Your account can now reach the command console.",
+      eyebrow: "Access granted",
+      heading: "You're an admin",
+      body: `<p style="margin:0 0 14px;">${escapeHtml(
+        args.grantedBy
+      )} gave your account administrator access on GOAT Rank.</p>
+             <p style="margin:0 0 14px;">You can now settle arenas, moderate battle cries, approve
+             contender submissions and release creator payouts. These actions affect real money and
+             other people's contests — take the care that implies.</p>
+             <p style="margin:0;font-size:13px;color:${T.muted};">If you weren't expecting this,
+             reply to this email and we'll revoke it.</p>`,
+      button: { label: "Open the console", url: args.consoleUrl },
+    }),
+  };
+}
+
 export function roomSettledEmail(args: {
   title: string;
   winner: string;

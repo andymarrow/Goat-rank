@@ -127,3 +127,27 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     volumeSeries: [...buckets.entries()].map(([day, amount]) => ({ day, amount })),
   };
 }
+
+/**
+ * Counts for the sidebar badges.
+ *
+ * head:true count-only queries — the nav needs two numbers, not two full
+ * datasets, and this runs on every admin page load.
+ */
+export async function getAdminBadges(): Promise<{ roster: number; ledger: number }> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const [entities, payouts] = await Promise.all([
+    supabase
+      .from("entities")
+      .select("id", { count: "exact", head: true })
+      .eq("moderation_status", "pending"),
+    supabase
+      .from("payout_requests")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["requested", "approved"]),
+  ]);
+
+  return { roster: entities.count ?? 0, ledger: payouts.count ?? 0 };
+}

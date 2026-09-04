@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAdminUser } from "@/utils/supabase/admin-auth";
+import { getAdminBadges } from "@/actions/admin/analytics";
+import AdminSidebar from "./_components/AdminSidebar";
 
 export const metadata = {
   title: "GOAT Rank | Command",
@@ -16,5 +18,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // /admin is a real route.
   if (!admin) notFound();
 
-  return <>{children}</>;
+  // Two cheap head-only counts, so the nav badges work without every section
+  // loading its full dataset.
+  const badges = await getAdminBadges();
+
+  return (
+    <div className="w-full min-h-screen flex flex-col lg:flex-row">
+      <AdminSidebar adminName={admin.username ?? "Operator"} badges={badges} />
+      <main className="flex-1 min-w-0 px-4 md:px-8 py-6 md:py-8 pb-28">{children}</main>
+    </div>
+  );
 }

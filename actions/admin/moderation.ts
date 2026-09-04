@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireAdmin, adminError, type AdminResult } from "@/utils/supabase/admin-auth";
+import { sendAdminGranted } from "@/lib/email/send";
 
 export type AdminVote = {
   id: string;
@@ -188,5 +189,79 @@ export async function setUserAdmin(profileId: string, makeAdmin: boolean): Promi
     return { ok: true };
   } catch (error) {
     return adminError(error, "Could not change admin rights.");
+  }
+}
+
+/**
+ * Grant admin by email address.
+ *
+ * Finding someone in a list of every profile does not scale, and you usually
+ * know the person by their email rather than their display name.
+ *
+ * This cannot create an account — Supabase auth users are made by signing up.
+ * If the address has never signed in we say so plainly rather than silently
+ * doing nothing.
+ */
+export async function inviteAdminByEmail(
+  email: string
+): Promise<AdminResult<{ username: string; emailed: boolean }>> {
+  try {
+    const granter = await requireAdmin();
+
+    const address = email?.trim().toLowerCase();
+    if (!address || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+      return { ok: false, error: "That doesn't look like an email address." };
+    }
+
+    const supabase = createAdminClient();
+
+    // listUsers is paginated; walk until we find the address or run out.
+    let target: { id: string; email?: string } | null = null;
+    for (let page = 1; page <= 10 && !target; page++) {
+      const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) throw error;
+      if (!data.users.length) break;
+
+      target =
+        data.users.find((u) => u.email?.toLowerCase() === address) ?? null;
+
+      if (data.users.length < 200) break;
+    }
+
+    if (!target) {
+      return {
+        ok: false,
+        error: `No account for ${address}. Ask them to sign up first, then grant access.`,
+      };
+    }
+
+    const { data: profile, error: updateError } = await supabase
+      .from("profiles")
+      .update({ is_admin: true })
+      .eq("id", target.id)
+      .select("username, is_banned")
+      .single();
+
+    if (updateError) throw updateError;
+
+    if (profile?.is_banned) {
+      // Undo — a suspended account must not hold admin rights.
+      await supabase.from("profiles").update({ is_admin: false }).eq("id", target.id);
+      return { ok: false, error: "That account is suspended. Release it first." };
+    }
+
+    // Best-effort notification; a mail failure must not undo the grant.
+    const mail = await sendAdminGranted(address, {
+      name: profile?.username ?? "there",
+      grantedBy: granter.username ?? "An administrator",
+    });
+
+    revalidatePath("/admin", "layout");
+    return {
+      ok: true,
+      data: { username: profile?.username ?? address, emailed: mail.ok },
+    };
+  } catch (error) {
+    return adminError(error, "Could not grant admin access.");
   }
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Pin, PinOff, Save, Gavel, Trash2, Search } from "lucide-react";
+import { Pin, PinOff, Save, Gavel, Trash2, Search, Info } from "lucide-react";
+import ContenderStack from "./ContenderStack";
 
 import type { AdminRoom } from "@/actions/admin/rooms";
 import { setRoomFeatured, updateRoom, forceSettleRoom, deleteRoom } from "@/actions/admin/rooms";
@@ -41,7 +42,7 @@ export default function ArenaPanel({
   return (
     <Panel
       title="Arena command"
-      subtitle={`${rooms.length} arenas. Pin to the homepage carousel, moderate titles, force-settle.`}
+      subtitle={`${rooms.length} arenas. Pin to the homepage carousel, fix titles, or close one early.`}
       action={
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -57,6 +58,18 @@ export default function ArenaPanel({
         </div>
       }
     >
+      <p className="flex items-start gap-2 text-[11px] leading-relaxed text-foreground/45 font-sans mb-4">
+        <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-foreground/30" />
+        <span>
+          <strong className="text-foreground/70">Force settle</strong> ends an arena immediately:
+          it stops accepting votes, unpins it from the homepage and stamps who closed it. It moves
+          no money — the creator&apos;s 10% was already paid per-vote as each vote landed, so
+          paying again here would double-pay them. Use it when a timer is wrong or an arena has to
+          stop now. <strong className="text-foreground/70">Delete</strong> only works on arenas
+          that never took a payment.
+        </span>
+      </p>
+
       <div className="flex flex-wrap gap-2 mb-4">
         {filters.map((f) => (
           <button
@@ -147,8 +160,13 @@ export default function ArenaPanel({
                       {money(room.total_pool)}
                     </td>
 
-                    <td className="py-3 pr-3 text-[11px] text-foreground/50 font-sans max-w-[180px] truncate">
-                      {names?.length ? names.join(" vs ") : "—"}
+                    <td className="py-3 pr-3">
+                      <div className="flex items-center gap-2">
+                        <ContenderStack contenders={room.room_contenders ?? []} />
+                        <span className="text-[11px] text-foreground/45 font-sans max-w-[130px] truncate">
+                          {names?.length ? names.join(" vs ") : "—"}
+                        </span>
+                      </div>
                     </td>
 
                     <td className="py-3">

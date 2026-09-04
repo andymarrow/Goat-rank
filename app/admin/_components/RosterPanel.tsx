@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Check, X, Save, Trash2, Plus, ImageOff } from "lucide-react";
+import { Check, X, Save, Trash2, Plus, ImageOff, Info } from "lucide-react";
 
 import type { AdminEntity } from "@/actions/admin/roster";
 import {
@@ -45,7 +45,7 @@ export default function RosterPanel({
       {/* ------------------------------------------------- MODERATION QUEUE */}
       <Panel
         title="The roster"
-        subtitle="Review paid contender injections; fix troll images, typos and colours."
+        subtitle="Every contender on the platform. Approve paid $5 injections, replace bad images, fix names and colours."
         action={
           <div className="flex gap-2">
             {(["pending", "all"] as const).map((t) => (
@@ -66,6 +66,17 @@ export default function RosterPanel({
           </div>
         }
       >
+        <p className="flex items-start gap-2 text-[11px] leading-relaxed text-foreground/45 font-sans mb-4">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-foreground/30" />
+          <span>
+            A <strong className="text-foreground/70">contender</strong> is a person, team, film or
+            product that arenas compete over — Ronaldo, Messi, a movie. They exist once and are
+            reused across every arena, which is why they have their own profile pages and lifetime
+            totals. Anything in the <strong className="text-foreground/70">Queue</strong> was paid
+            for by a user and is hidden from the public site until you approve it.
+          </span>
+        </p>
+
         {visible.length === 0 ? (
           <EmptyState
             message={tab === "pending" ? "Queue is clear — nothing awaiting review" : "No contenders yet"}

@@ -100,7 +100,7 @@ export default function GlobalLeaderboardsRow({ rooms }: { rooms: LandingRoom[] 
                 <div className="absolute inset-0 tex-dots opacity-100" />
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/65 to-transparent" />
               <div className="tex-scanlines absolute inset-0 pointer-events-none" />
 
               <div className="absolute top-3 right-3 flex flex-col gap-2">
@@ -111,16 +111,29 @@ export default function GlobalLeaderboardsRow({ rooms }: { rooms: LandingRoom[] 
 
               {/* Rank is positional within the current filter, so it always
                   reads 1..n rather than skipping numbers. */}
-              <div className="absolute bottom-0 left-0 p-4 flex items-end gap-3 w-full">
-                <span className="text-6xl md:text-7xl font-arcade font-black striped-text leading-none select-none">
+              <div className="absolute bottom-0 left-0 p-3 md:p-4 flex items-end gap-2.5 w-full">
+                {/* Rank badge. .striped-text is transparent fill with a thin
+                    stroke — legible on a flat panel, invisible over a photo,
+                    which is what the circled area on the cards was. */}
+                <span
+                  className="shrink-0 w-9 h-9 md:w-10 md:h-10 cut-corner bg-primary text-primary-foreground
+                             flex items-center justify-center font-arcade text-lg md:text-xl font-black
+                             leading-none select-none shadow-lg"
+                >
                   {index + 1}
                 </span>
 
                 <div className="flex flex-col pb-1 min-w-0">
-                  <h3 className="text-lg font-arcade font-bold text-white leading-tight mb-1 truncate">
+                  <h3
+                    className="text-base md:text-lg font-arcade font-bold text-white leading-tight mb-1 truncate"
+                    style={{ textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}
+                  >
                     {room.title}
                   </h3>
-                  <div className="flex items-center gap-3 text-[10px] font-arcade text-white/70">
+                  <div
+                    className="flex items-center gap-3 text-[10px] font-arcade text-white/85"
+                    style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}
+                  >
                     <span className="text-yellow-400">{money(room.total_pool)} Pool</span>
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" /> {compact(room.vote_count)}
