@@ -15,7 +15,7 @@ const UNIQUE_VIOLATION = "23505";
  * clearing cookies earns another vote — but it stops the actual problem,
  * which was that every click counted as a new person.
  */
-async function getFingerprint(): Promise<string> {
+async function getFingerprint(allowCreate: boolean): Promise<string | null> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -27,9 +27,13 @@ async function getFingerprint(): Promise<string> {
   const existing = jar.get(COOKIE)?.value;
   if (existing) return `a:${existing}`;
 
+  // Only a Server Action may write cookies. During render (getMyUpvotes) we
+  // must not mint one — an anonymous visitor with no cookie simply has no
+  // upvotes yet, which is the correct answer.
+  if (!allowCreate) return null;
+
   const id = crypto.randomUUID();
 
-  // Server Actions can write cookies (unlike Server Components).
   jar.set(COOKIE, id, {
     httpOnly: true,
     sameSite: "lax",
@@ -59,7 +63,9 @@ export async function toggleTestimonialUpvote(voteId: string): Promise<UpvoteRes
   if (!voteId) return { success: false, error: "Missing vote id." };
 
   try {
-    const fingerprint = await getFingerprint();
+    const fingerprint = await getFingerprint(true);
+    if (!fingerprint) return { success: false, error: "Could not identify you." };
+
     const supabase = createAdminClient();
 
     const { data: existing } = await supabase
@@ -104,7 +110,8 @@ export async function getMyUpvotes(voteIds: string[]): Promise<string[]> {
   if (voteIds.length === 0) return [];
 
   try {
-    const fingerprint = await getFingerprint();
+    const fingerprint = await getFingerprint(false);
+    if (!fingerprint) return [];
 
     const { data } = await createAdminClient()
       .from("testimonial_upvotes")
