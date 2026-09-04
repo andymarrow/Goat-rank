@@ -89,20 +89,51 @@ export default async function PublicUserPage({
               className="pressable hover-lift group flex items-center justify-between gap-3 bg-card
                          border border-border cut-corner p-4 hover:border-primary/50 transition-colors"
             >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Leading contender fronts the card. */}
+                <span className="relative w-12 h-12 shrink-0 cut-corner overflow-hidden bg-background border border-border">
+                  {arena.leader?.image_url ? (
+                    <Image
+                      src={arena.leader.image_url}
+                      alt={arena.leader.name}
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span
+                      className="w-full h-full flex items-center justify-center font-arcade text-base font-bold text-black"
+                      style={{ backgroundColor: arena.leader?.brand_color ?? "#FF7A00" }}
+                    >
+                      {(arena.leader?.name ?? arena.title).charAt(0).toUpperCase()}
+                    </span>
+                  )}
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      arena.status === "active" ? "bg-battle-green animate-pulse" : "bg-foreground/20"
-                    }`}
+                    className="absolute bottom-0 inset-x-0 h-1"
+                    style={{ backgroundColor: arena.leader?.brand_color ?? "#FF7A00" }}
                   />
-                  <span className="font-arcade text-[9px] uppercase tracking-widest text-foreground/40">
-                    {arena.status} · {arena.room_type}
-                  </span>
-                </div>
-                <span className="font-arcade text-sm font-bold text-foreground truncate block group-hover:text-primary transition-colors">
-                  {arena.title}
                 </span>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        arena.status === "active" ? "bg-battle-green animate-pulse" : "bg-foreground/20"
+                      }`}
+                    />
+                    <span className="font-arcade text-[9px] uppercase tracking-widest text-foreground/40">
+                      {arena.status} · {arena.room_type}
+                    </span>
+                  </div>
+                  <span className="font-arcade text-sm font-bold text-foreground truncate block group-hover:text-primary transition-colors">
+                    {arena.title}
+                  </span>
+                  {arena.leader && (
+                    <span className="text-[10px] text-foreground/35 font-sans truncate block">
+                      {arena.status === "settled" ? "Won by" : "Leading"} {arena.leader.name}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import DesktopNavbar from "./DesktopNavbar";
 import MobileTabBar from "./MobileTabBar";
+import SiteFooter from "./SiteFooter";
 
 /**
  * Global navigation chrome.
@@ -31,6 +32,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
         {children}
       </main>
 
+      <SiteFooter />
       <MobileTabBar />
     </div>
   );

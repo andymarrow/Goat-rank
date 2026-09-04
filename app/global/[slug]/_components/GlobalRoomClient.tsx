@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import AddContenderModal from "./AddContenderModal";
 import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
 import FeedList from "@/components/ui/FeedList";
+import CharityVote from "@/components/ui/CharityVote";
 import Countdown from "@/components/ui/Countdown";
 
 export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
@@ -323,12 +324,32 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
             Battle cries
           </h2>
         </div>
-        <FeedList
-          roomId={roomData.id}
-          initialItems={roomData.feed ?? []}
-          initialCursor={roomData.feedCursor ?? null}
-          initialHasMore={roomData.feedHasMore ?? false}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2">
+            <FeedList
+              roomId={roomData.id}
+              initialItems={roomData.feed ?? []}
+              initialCursor={roomData.feedCursor ?? null}
+              initialHasMore={roomData.feedHasMore ?? false}
+            />
+          </div>
+
+          <aside className="corner-ticks relative bg-card border border-border cut-corner p-4 overflow-hidden lg:sticky lg:top-24">
+            <div className="tex-dots absolute inset-0 pointer-events-none" />
+            <h3 className="relative font-arcade text-xs font-bold uppercase tracking-widest text-foreground mb-3">
+              Where the 30% goes
+            </h3>
+            <div className="relative">
+              <CharityVote
+                roomId={roomData.id}
+                charities={roomData.charities ?? []}
+                tally={roomData.charityTally ?? []}
+                myChoice={roomData.charityChoice ?? null}
+                total={roomData.charityTotal ?? 0}
+              />
+            </div>
+          </aside>
+        </div>
       </section>
 
       {/* --- MODALS --- */}

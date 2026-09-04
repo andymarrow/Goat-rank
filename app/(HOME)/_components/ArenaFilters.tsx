@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Flame, Clock, Sparkles, TrendingDown } from "lucide-react";
+import { FlameIcon } from "@/components/ui/flame";
 import { ROOM_SORTS, type RoomSort } from "@/lib/constants";
 
 const ICONS: Record<RoomSort, typeof Flame> = {
@@ -64,7 +65,11 @@ export default function ArenaFilters({
                     : "bg-card border-border text-foreground/55 hover:text-foreground hover:border-foreground/30"
                 }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              {key === "hot" ? (
+                <FlameIcon size={14} className="shrink-0" />
+              ) : (
+                <Icon className="w-3.5 h-3.5" />
+              )}
               {ROOM_SORTS[key].label}
             </Link>
           );

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Timer, Zap, Swords, ImageOff } from "lucide-react";
+import { Timer, Swords, ImageOff } from "lucide-react";
+import { ZapIcon } from "@/components/ui/zap";
 import type { LandingRoom } from "@/actions/getLanding";
 import { readableBrand } from "@/lib/color";
 
@@ -140,7 +141,7 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                   </span>
                   {isActive && (
                     <span className="flex items-center gap-2 text-white font-arcade text-xs bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 cut-corner">
-                      <Zap className="w-4 h-4 text-primary" fill="currentColor" /> LIVE
+                      <ZapIcon size={16} className="text-primary" /> LIVE
                     </span>
                   )}
                 </div>

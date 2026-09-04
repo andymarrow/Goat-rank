@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, Orbitron } from "next/font/google"; 
+import { Outfit, Orbitron, Geist } from "next/font/google"; 
 import NoiseOverlay from "@/components/ui/NoiseOverlay";
 import SiteBanner from "@/components/SiteBanner";
 import LayoutChrome from "@/components/LayoutChrome";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -39,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body className={`${outfit.variable} ${orbitron.variable} antialiased relative min-h-screen flex flex-col transition-colors duration-500`}>
         <ThemeProvider
           attribute="class"

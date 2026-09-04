@@ -4,13 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireAdmin, adminError, type AdminResult } from "@/utils/supabase/admin-auth";
 
-const HEX = /^#[0-9a-fA-F]{6}$/;
-
-// Palette used when the quick-add tool isn't given a colour.
-const SEED_COLORS = [
-  "#FF7A00", "#3B82F6", "#00E676", "#FF4444",
-  "#FFD600", "#FF6B6B", "#A855F7", "#22D3EE",
-];
+import { colorForIndex, HEX_RE as HEX } from "@/lib/palette";
 
 export type SeedContender = { name: string; color?: string; image?: string };
 
@@ -138,9 +132,7 @@ async function seedContenders(
       contenders.map((c, i) => ({
         name: c.name.trim().slice(0, 80),
         category: category.slice(0, 60),
-        brand_color: HEX.test(c.color ?? "")
-          ? c.color
-          : SEED_COLORS[(seedOffset + i) % SEED_COLORS.length],
+        brand_color: HEX.test(c.color ?? "") ? c.color : colorForIndex(seedOffset + i),
         image_url: c.image?.trim() || null,
         moderation_status: "approved" as const,
       }))

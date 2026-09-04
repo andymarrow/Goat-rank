@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { getRoomFeed } from "./getFeed";
+import { getCharityPreference } from "./charityVote";
 
 export async function getBattleData(roomId: string) {
   const supabase = await createClient();
@@ -57,7 +58,16 @@ export async function getBattleData(roomId: string) {
     console.error("Error fetching votes:", votesError);
   }
 
-  const feedPage = await getRoomFeed(roomId);
+  const [feedPage, charityPref] = await Promise.all([
+    getRoomFeed(roomId),
+    getCharityPreference(roomId),
+  ]);
+
+  const { data: charities } = await supabase
+    .from("charities")
+    .select("id, name, logo_url, website_url, payout_reference, description, is_active")
+    .eq("is_active", true)
+    .order("name");
 
   // 3. Format the data perfectly for our UI components
   // Sort contenders so index 0 is left, index 1 is right
@@ -84,5 +94,9 @@ export async function getBattleData(roomId: string) {
     feed: feedPage.items,
     feedCursor: feedPage.nextCursor,
     feedHasMore: feedPage.hasMore,
+    charities: charities ?? [],
+    charityTally: charityPref.tally,
+    charityChoice: charityPref.myChoice,
+    charityTotal: charityPref.total,
   };
 }

@@ -5,9 +5,13 @@ import { Upload, Swords, ArrowRight, ArrowLeft, Globe, Plus, Trash2, Loader2 } f
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client"; // <-- Supabase Client
 import Image from "next/image";
+import ColorPicker from "@/components/ui/ColorPicker";
 
 // Categories come from the DB (managed in /admin -> Config) via CreateClient.
-const COLORS = ["#FF5C5C", "#3B82F6", "#00E676", "#FACC15", "#FF8080", "#F9F8F3"];
+// Palette lives in lib/palette.ts so the create flow, the add-contender
+// modal and the admin seeder all offer the same colours.
+import { PALETTE_FLAT } from "@/lib/palette";
+const COLORS = PALETTE_FLAT;
 
 export default function ContenderStep({ 
   formData, 
@@ -153,7 +157,7 @@ export default function ContenderStep({
               <div className="mb-4">
                 <label className="text-foreground/40 font-arcade text-[10px] tracking-widest mb-2 block">BRAND COLOR</label>
                 <div className="flex gap-2">
-                  {COLORS.map(color => <button key={color} onClick={() => setC1({...c1, color})} className={`w-6 h-6 cut-corner transition-transform ${c1.color === color ? 'scale-125 border border-foreground' : 'opacity-50 hover:opacity-100'}`} style={{ backgroundColor: color }} />)}
+                  <ColorPicker value={c1.color} onChange={(color) => setC1({ ...c1, color })} compact />
                 </div>
               </div>
               
@@ -171,7 +175,7 @@ export default function ContenderStep({
               <div className="mb-4">
                 <label className="text-foreground/40 font-arcade text-[10px] tracking-widest mb-2 block">BRAND COLOR</label>
                 <div className="flex gap-2">
-                  {COLORS.map(color => <button key={color} onClick={() => setC2({...c2, color})} className={`w-6 h-6 cut-corner transition-transform ${c2.color === color ? 'scale-125 border border-foreground' : 'opacity-50 hover:opacity-100'}`} style={{ backgroundColor: color }} />)}
+                  <ColorPicker value={c2.color} onChange={(color) => setC2({ ...c2, color })} compact />
                 </div>
               </div>
 
@@ -187,7 +191,7 @@ export default function ContenderStep({
             {globalContenders.map((c: any, index: number) => (
               <div key={c.id} className="flex flex-col md:flex-row gap-4 bg-card border border-border p-4 cut-corner relative" style={{ borderLeftColor: c.color, borderLeftWidth: '4px' }}>
                 <div className="flex-1"><input type="text" placeholder={`Contender ${index + 1} Name`} value={c.name} onChange={(e) => updateGlobalContender(c.id, 'name', e.target.value)} className="w-full bg-background border border-border cut-corner p-3 text-foreground font-arcade uppercase outline-none focus:border-foreground/40" /></div>
-                <div className="flex items-center gap-2">{COLORS.map(color => <button key={color} onClick={() => updateGlobalContender(c.id, 'color', color)} className={`w-6 h-6 cut-corner transition-transform ${c.color === color ? 'scale-125 border border-foreground' : 'opacity-50 hover:opacity-100'}`} style={{ backgroundColor: color }} />)}</div>
+                <div className="flex items-center gap-2"><ColorPicker value={c.color} onChange={(color) => updateGlobalContender(c.id, 'color', color)} compact /></div>
                 
                 {/* UPLOAD UI for GLOBAL */}
                 <label className="w-12 h-12 bg-background border border-border cut-corner flex items-center justify-center text-foreground/50 hover:text-foreground transition-colors cursor-pointer relative overflow-hidden" title="Upload Image">

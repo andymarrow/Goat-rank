@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { X, Upload, ShieldAlert, Zap, UserPlus, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import ColorPicker from "@/components/ui/ColorPicker";
 import { createContenderCheckout } from "@/actions/checkout";
 
 interface AddContenderModalProps {
@@ -14,7 +15,8 @@ interface AddContenderModalProps {
   roomId: string;
 }
 
-const COLORS = ["#FF5C5C", "#3B82F6", "#00E676", "#FACC15", "#FF8080", "#F9F8F3"];
+import { PALETTE_FLAT } from "@/lib/palette";
+const COLORS = PALETTE_FLAT;
 
 export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }: AddContenderModalProps) {
   const [name, setName] = useState("");
@@ -154,14 +156,7 @@ export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }
             <div>
               <label className="text-foreground/60 font-arcade text-[10px] tracking-widest mb-2 block">BRAND COLOR</label>
               <div className="flex gap-3">
-                {COLORS.map(c => (
-                  <button 
-                    key={c}
-                    onClick={() => setColor(c)}
-                    className={`w-8 h-8 cut-corner transition-transform ${color === c ? 'scale-125 border-2 border-foreground shadow-lg' : 'opacity-50 hover:opacity-100'}`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
+                <ColorPicker value={color} onChange={setColor} compact />
               </div>
             </div>
 

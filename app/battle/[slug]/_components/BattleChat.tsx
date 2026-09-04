@@ -3,7 +3,9 @@
 import { motion } from "framer-motion";
 import { MessageSquare, Flame, Zap, ChevronRight } from "lucide-react";
 import { onBrand } from "@/lib/color";
+import { useState } from "react";
 import FeedList from "@/components/ui/FeedList";
+import CharityVote from "@/components/ui/CharityVote";
 import Image from "next/image";
 
 export default function BattleChat({ 
@@ -13,12 +15,8 @@ export default function BattleChat({
   battle: any;
   onVoteClick: (index: number) => void;
 }) {
+  const [tab, setTab] = useState<"feed" | "charity">("feed");
   
-  const getMessageStyle = (amount: number) => {
-    if (amount >= 50) return `border-l-4 border-yellow-400 bg-yellow-400/10 text-yellow-700 dark:text-yellow-100`; 
-    if (amount >= 15) return `border-l-4 bg-foreground/5`; 
-    return `border-l-2 bg-transparent opacity-80`; 
-  };
 
   return (
     <div className="w-full h-full flex flex-col bg-card border-l border-border relative">
@@ -35,16 +33,46 @@ export default function BattleChat({
         </div>
       </div>
 
-      {/* CHAT SCROLL AREA — paged rather than unbounded. */}
+      {/* Tabs: the sidebar is the only spare surface in a 1v1, so the charity
+          vote lives alongside the feed rather than competing with the arena. */}
+      <div className="flex border-b border-border shrink-0">
+        {(["feed", "charity"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            aria-current={tab === t ? "page" : undefined}
+            className={`flex-1 py-2.5 font-arcade text-[10px] font-bold uppercase tracking-widest
+              transition-colors ${
+                tab === t
+                  ? "text-primary border-b-2 border-primary -mb-px"
+                  : "text-foreground/40 hover:text-foreground/70"
+              }`}
+          >
+            {t === "feed" ? "Battle cries" : "Charity"}
+          </button>
+        ))}
+      </div>
+
       <div className="flex-1 overflow-y-auto p-3 md:p-4 scrollbar-hide bg-card">
-        <FeedList
-          roomId={battle.id}
-          initialItems={battle.feed ?? []}
-          initialCursor={battle.feedCursor ?? null}
-          initialHasMore={battle.feedHasMore ?? false}
-          compact
-          emptyMessage="Be the first to speak"
-        />
+        {tab === "feed" ? (
+          <FeedList
+            roomId={battle.id}
+            initialItems={battle.feed ?? []}
+            initialCursor={battle.feedCursor ?? null}
+            initialHasMore={battle.feedHasMore ?? false}
+            compact
+            emptyMessage="Be the first to speak"
+          />
+        ) : (
+          <CharityVote
+            roomId={battle.id}
+            charities={battle.charities ?? []}
+            tally={battle.charityTally ?? []}
+            myChoice={battle.charityChoice ?? null}
+            total={battle.charityTotal ?? 0}
+          />
+        )}
       </div>
 
       {/* STICKY VOTE ACTIONS */}
