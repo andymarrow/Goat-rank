@@ -15,7 +15,7 @@ export default function SiteFooter() {
       <div className="max-w-[1920px] mx-auto px-6 md:px-12 py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
         <div>
           <span className="flex items-center gap-2">
-            <Image src="/image/logo.png" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
+            <Image src="/image/logo.png" alt="" width={222} height={256} className="h-7 w-auto object-contain" />
             <span className="font-arcade text-sm font-bold tracking-wider text-foreground">
               GOAT<span className="text-primary">RANK</span>
             </span>

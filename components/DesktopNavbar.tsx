@@ -78,10 +78,10 @@ export default function DesktopNavbar() {
           <Image
             src="/image/logo.png"
             alt=""
-            width={36}
-            height={36}
+            width={222}
+            height={256}
             priority
-            className="w-9 h-9 object-contain transition-transform group-hover:rotate-6"
+            className="h-9 w-auto object-contain transition-transform group-hover:rotate-6"
           />
           <span className="font-arcade text-xl font-bold tracking-wider">GOATRANK</span>
         </Link>
