@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import AddContenderModal from "./AddContenderModal";
 import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
 import FeedList from "@/components/ui/FeedList";
+import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 import CharityVote from "@/components/ui/CharityVote";
 import Countdown from "@/components/ui/Countdown";
 
@@ -317,7 +318,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
 
       {/* Paid battle cries. Paged — an arena with thousands of messages must
           not ship all of them in the initial payload. */}
-      <section className="w-full max-w-5xl mx-auto px-4 md:px-0 py-8 md:py-10">
+      <section className="hidden lg:block w-full max-w-5xl mx-auto px-4 md:px-0 py-8 md:py-10">
         <div className="flex items-center gap-2 mb-4">
           <MessageSquare className="w-5 h-5 text-primary" />
           <h2 className="font-arcade text-base md:text-xl font-bold uppercase tracking-widest text-foreground">
@@ -351,6 +352,21 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
           </aside>
         </div>
       </section>
+
+      {/* Mobile: battle cries and the charity vote as a slide-over, the same
+          pattern as a 1v1 arena. No bottom vote bar here, so the trigger sits
+          just above the tab bar. */}
+      <MobileFeedDrawer
+        roomId={roomData.id}
+        feed={roomData.feed ?? []}
+        feedCursor={roomData.feedCursor ?? null}
+        feedHasMore={roomData.feedHasMore ?? false}
+        charities={roomData.charities ?? []}
+        charityTally={roomData.charityTally ?? []}
+        charityChoice={roomData.charityChoice ?? null}
+        charityTotal={roomData.charityTotal ?? 0}
+        bottomOffset="bottom-24"
+      />
 
       {/* --- MODALS --- */}
       <AddContenderModal 
