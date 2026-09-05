@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client"; // <-- Supabase Client
 import Image from "next/image";
 import ColorPicker from "@/components/ui/ColorPicker";
+import EntitySearch from "./EntitySearch";
+import type { EntityOption } from "@/actions/searchEntities";
 
 // Categories come from the DB (managed in /admin -> Config) via CreateClient.
 // Palette lives in lib/palette.ts so the create flow, the add-contender
@@ -42,6 +44,17 @@ export default function ContenderStep({
   );
 
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+
+  const applyExisting = (e: EntityOption, slot: "c1" | "c2") => {
+    const picked = {
+      entityId: e.id,
+      name: e.name,
+      color: e.brand_color ?? PALETTE_FLAT[0],
+      image: e.image_url,
+    };
+    if (slot === "c1") setC1({ ...c1, ...picked });
+    else setC2({ ...c2, ...picked });
+  };
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // --- SUPABASE STORAGE UPLOAD HANDLER ---
@@ -125,13 +138,13 @@ export default function ContenderStep({
     <div className="flex flex-col h-full animate-in fade-in duration-500">
       
       {/* ROOM TYPE TOGGLE */}
-      <div className="flex bg-background border border-border cut-corner p-1 mb-8">
-        <button onClick={() => setRoomType("1v1")} className={`flex-1 flex items-center justify-center gap-2 py-3 font-arcade text-xs font-bold transition-all cut-corner ${roomType === "1v1" ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground/50 hover:text-foreground"}`}><Swords className="w-4 h-4" /> 1V1 FACE-OFF</button>
-        <button onClick={() => setRoomType("global")} className={`flex-1 flex items-center justify-center gap-2 py-3 font-arcade text-xs font-bold transition-all cut-corner ${roomType === "global" ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground/50 hover:text-foreground"}`}><Globe className="w-4 h-4" /> GLOBAL ARENA (1 vs 100)</button>
+      <div className="flex flex-col xs:flex-row gap-1 bg-background border border-border cut-corner p-1 mb-6 md:mb-8">
+        <button onClick={() => setRoomType("1v1")} className={`flex-1 flex items-center justify-center gap-2 py-2.5 md:py-3 font-arcade text-[10px] md:text-xs font-bold transition-all cut-corner ${roomType === "1v1" ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground/50 hover:text-foreground"}`}><Swords className="w-4 h-4" /> 1V1 FACE-OFF</button>
+        <button onClick={() => setRoomType("global")} className={`flex-1 flex items-center justify-center gap-2 py-2.5 md:py-3 font-arcade text-[10px] md:text-xs font-bold transition-all cut-corner ${roomType === "global" ? "bg-primary text-primary-foreground shadow-lg" : "text-foreground/50 hover:text-foreground"}`}><Globe className="w-4 h-4" /> GLOBAL ARENA</button>
       </div>
 
       {/* BATTLE META */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-6 md:mb-8">
         <div className="flex-1">
           <label className="text-foreground/60 font-arcade text-[10px] tracking-widest mb-2 block">ARENA TITLE</label>
           <input type="text" placeholder={roomType === "1v1" ? "e.g. The Ultimate GOAT" : "e.g. Best Sci-Fi Movies"} value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-background border border-border cut-corner p-3 text-foreground font-arcade uppercase outline-none focus:border-primary transition-colors" />
@@ -147,13 +160,20 @@ export default function ContenderStep({
       {/* CHARACTER SELECT DYNAMIC UI */}
       <AnimatePresence mode="wait">
         {roomType === "1v1" ? (
-          <motion.div key="1v1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-8">
+          <motion.div key="1v1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-12 mb-6 md:mb-8">
             <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-card border border-border cut-corner items-center justify-center text-foreground/50 font-arcade font-bold italic">VS</div>
             
             {/* Contender 1 */}
-            <div className="bg-card border border-border p-5 cut-corner relative group transition-colors" style={{ borderBottomColor: c1.color, borderBottomWidth: '4px' }}>
-              <h4 className="font-arcade text-foreground text-sm mb-4">CONTENDER 01</h4>
-              <input type="text" placeholder="Name" value={c1.name} onChange={(e) => setC1({...c1, name: e.target.value})} className="w-full bg-background border border-border cut-corner p-3 text-foreground font-arcade uppercase outline-none focus:border-foreground/40 mb-4" />
+            <div className="bg-card border border-border p-4 md:p-5 cut-corner relative group transition-colors" style={{ borderBottomColor: c1.color, borderBottomWidth: '4px' }}>
+              <h4 className="font-arcade text-foreground text-sm mb-3">CONTENDER 01</h4>
+
+              {/* Reuse someone already on the platform instead of retyping the
+                  name, which is what created duplicate Ronaldos. */}
+              <div className="mb-3">
+                <EntitySearch category={category} onPick={(e) => applyExisting(e, "c1")} />
+              </div>
+
+              <input type="text" placeholder="…or type a new name" value={c1.name} onChange={(e) => setC1({...c1, name: e.target.value, entityId: undefined})} className="w-full bg-background border border-border cut-corner p-3 text-foreground font-arcade uppercase outline-none focus:border-foreground/40 mb-4" />
               <div className="mb-4">
                 <label className="text-foreground/40 font-arcade text-[10px] tracking-widest mb-2 block">BRAND COLOR</label>
                 <div className="flex gap-2">
@@ -169,9 +189,16 @@ export default function ContenderStep({
             </div>
 
             {/* Contender 2 */}
-            <div className="bg-card border border-border p-5 cut-corner relative group transition-colors" style={{ borderBottomColor: c2.color, borderBottomWidth: '4px' }}>
-              <h4 className="font-arcade text-foreground text-sm mb-4">CONTENDER 02</h4>
-              <input type="text" placeholder="Name" value={c2.name} onChange={(e) => setC2({...c2, name: e.target.value})} className="w-full bg-background border border-border cut-corner p-3 text-foreground font-arcade uppercase outline-none focus:border-foreground/40 mb-4" />
+            <div className="bg-card border border-border p-4 md:p-5 cut-corner relative group transition-colors" style={{ borderBottomColor: c2.color, borderBottomWidth: '4px' }}>
+              <h4 className="font-arcade text-foreground text-sm mb-3">CONTENDER 02</h4>
+
+              {/* Reuse someone already on the platform instead of retyping the
+                  name, which is what created duplicate Ronaldos. */}
+              <div className="mb-3">
+                <EntitySearch category={category} onPick={(e) => applyExisting(e, "c2")} />
+              </div>
+
+              <input type="text" placeholder="…or type a new name" value={c2.name} onChange={(e) => setC2({...c2, name: e.target.value, entityId: undefined})} className="w-full bg-background border border-border cut-corner p-3 text-foreground font-arcade uppercase outline-none focus:border-foreground/40 mb-4" />
               <div className="mb-4">
                 <label className="text-foreground/40 font-arcade text-[10px] tracking-widest mb-2 block">BRAND COLOR</label>
                 <div className="flex gap-2">
@@ -189,9 +216,39 @@ export default function ContenderStep({
         ) : (
           <motion.div key="global" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4 mb-8">
             {globalContenders.map((c: any, index: number) => (
-              <div key={c.id} className="flex flex-col md:flex-row gap-4 bg-card border border-border p-4 cut-corner relative" style={{ borderLeftColor: c.color, borderLeftWidth: '4px' }}>
-                <div className="flex-1"><input type="text" placeholder={`Contender ${index + 1} Name`} value={c.name} onChange={(e) => updateGlobalContender(c.id, 'name', e.target.value)} className="w-full bg-background border border-border cut-corner p-3 text-foreground font-arcade uppercase outline-none focus:border-foreground/40" /></div>
-                <div className="flex items-center gap-2"><ColorPicker value={c.color} onChange={(color) => updateGlobalContender(c.id, 'color', color)} compact /></div>
+              <div key={c.id} className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4 bg-card border border-border p-3 md:p-4 cut-corner relative" style={{ borderLeftColor: c.color, borderLeftWidth: '4px' }}>
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <EntitySearch
+                    category={category}
+                    placeholder={`Search contender ${index + 1}…`}
+                    onPick={(e) => {
+                      setGlobalContenders(
+                        globalContenders.map((g: any) =>
+                          g.id === c.id
+                            ? {
+                                ...g,
+                                entityId: e.id,
+                                name: e.name,
+                                color: e.brand_color ?? g.color,
+                                image: e.image_url,
+                              }
+                            : g
+                        )
+                      );
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="…or type a new name"
+                    value={c.name}
+                    onChange={(e) => {
+                      updateGlobalContender(c.id, "name", e.target.value);
+                      updateGlobalContender(c.id, "entityId", undefined);
+                    }}
+                    className="w-full bg-background border border-border cut-corner p-3 text-foreground font-arcade uppercase outline-none focus:border-foreground/40"
+                  />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap"><ColorPicker value={c.color} onChange={(color) => updateGlobalContender(c.id, 'color', color)} compact /></div>
                 
                 {/* UPLOAD UI for GLOBAL */}
                 <label className="w-12 h-12 bg-background border border-border cut-corner flex items-center justify-center text-foreground/50 hover:text-foreground transition-colors cursor-pointer relative overflow-hidden" title="Upload Image">

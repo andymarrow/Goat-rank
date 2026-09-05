@@ -222,11 +222,36 @@ export async function createRoomCheckout(data: {
       return { error: "Failed to initialize arena in database." };
     }
 
-    // 2. Insert the Contenders
+    // 2. Link the contenders.
     for (let i = 0; i < data.contenders.length; i++) {
       const c = data.contenders[i];
-      
-      // Insert Entity (or find existing)
+
+      // Reuse an existing contender wherever possible. This block used to
+      // insert unconditionally despite claiming otherwise, which is why
+      // picking "Ronaldo" again minted a second Ronaldo every time.
+      let entityId: string | null = c.entityId ?? null;
+
+      if (!entityId && c.name) {
+        const { data: existing } = await supabase
+          .from("entities")
+          .select("id")
+          .ilike("name", c.name.trim())
+          .eq("moderation_status", "approved")
+          .limit(1)
+          .maybeSingle();
+
+        entityId = existing?.id ?? null;
+      }
+
+      if (entityId) {
+        await supabase.from("room_contenders").insert({
+          room_id: room.id,
+          entity_id: entityId,
+          seed_index: i,
+        });
+        continue;
+      }
+
       const { data: entity } = await supabase
         .from("entities")
         .insert({

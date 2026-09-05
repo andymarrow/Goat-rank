@@ -16,6 +16,9 @@ import AccountMenu from "@/components/AccountMenu";
  */
 const LINKS = [
   { href: "/", label: "Arena" },
+  // The mobile tab bar had Ranks but desktop did not, so the contender
+  // directory was unreachable on a large screen.
+  { href: "/profile", label: "Ranks" },
   { href: "/create", label: "Host" },
   { href: "/dashboard", label: "Command" },
 ];

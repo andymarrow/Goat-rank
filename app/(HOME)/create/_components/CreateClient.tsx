@@ -44,7 +44,7 @@ export default function CreateClient({ categories }: { categories: string[] }) {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-card border border-border cut-corner-lg shadow-2xl relative overflow-hidden min-h-[600px] flex flex-col">
+    <div className="w-full max-w-4xl mx-auto bg-card border border-border cut-corner-lg shadow-2xl relative overflow-hidden min-h-0 md:min-h-[600px] flex flex-col">
       
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
 
@@ -60,7 +60,7 @@ export default function CreateClient({ categories }: { categories: string[] }) {
         <div className="md:hidden font-arcade text-xs text-primary">STEP 0{step}/03</div>
       </div>
 
-      <div className="flex-1 relative p-6 md:p-10 z-10">
+      <div className="flex-1 relative p-4 sm:p-6 md:p-10 z-10">
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
