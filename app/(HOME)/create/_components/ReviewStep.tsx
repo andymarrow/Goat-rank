@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 import { ArrowLeft, ShieldAlert, CheckCircle2, Zap, Users, ImageOff } from "lucide-react";
 import { readableBrand, onBrand } from "@/lib/color";
 import { useIsDark } from "@/lib/useIsDark";
@@ -18,6 +20,7 @@ export default function ReviewStep({
 }) {
   
   const isDark = useIsDark();
+  const [accepted, setAccepted] = useState(false);
   const is1v1 = formData.roomType === "1v1";
   const contenders = formData.contenders;
 
@@ -161,12 +164,51 @@ export default function ReviewStep({
 
       </div>
 
+      {/* Consent. Real links, and the button stays disabled until it is ticked —
+          people are about to pay, and votes in their arena are non-refundable. */}
+      <label className="mt-auto flex items-start gap-3 pt-4 cursor-pointer group/terms">
+        <input
+          type="checkbox"
+          checked={accepted}
+          onChange={(e) => setAccepted(e.target.checked)}
+          className="mt-0.5 w-4 h-4 shrink-0 accent-[var(--primary)] cursor-pointer"
+        />
+        <span className="text-xs text-foreground/60 font-sans leading-relaxed">
+          I have read and accept the{" "}
+          <Link
+            href="/legal/terms"
+            target="_blank"
+            className="text-primary underline underline-offset-2 hover:brightness-125"
+          >
+            Terms
+          </Link>
+          ,{" "}
+          <Link
+            href="/legal/privacy"
+            target="_blank"
+            className="text-primary underline underline-offset-2 hover:brightness-125"
+          >
+            Privacy policy
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/legal/money"
+            target="_blank"
+            className="text-primary underline underline-offset-2 hover:brightness-125"
+          >
+            where the money goes
+          </Link>
+          . I understand votes placed in my arena are non-refundable and that 30% of the pool goes
+          to charity.
+        </span>
+      </label>
+
       {/* --- NAVIGATION & CHECKOUT --- */}
-      <div className="mt-auto flex justify-between items-center pt-4 border-t border-border">
+      <div className="flex justify-between items-center pt-4 border-t border-border">
         <button onClick={onPrev} disabled={isSubmitting} className="text-foreground/50 hover:text-foreground font-arcade text-sm flex items-center gap-2 transition-colors disabled:opacity-50">
           <ArrowLeft className="w-4 h-4" /> BACK
         </button>
-        <button onClick={onCheckout} disabled={isSubmitting} className="cut-corner px-8 py-4 font-arcade font-bold flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 hover:translate-x-1 transition-all disabled:opacity-50 disabled:cursor-wait group relative overflow-hidden">
+        <button onClick={onCheckout} disabled={isSubmitting || !accepted} title={!accepted ? "Accept the terms to continue" : undefined} className="pressable cut-corner px-8 py-4 font-arcade font-bold flex items-center gap-3 bg-primary text-primary-foreground hover:bg-primary/90 hover:translate-x-1 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-x-0 group relative overflow-hidden">
           <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12" />
           <ShieldAlert className="w-5 h-5" />
           <span>{isSubmitting ? "INITIATING UPLINK..." : "PAY $10 TO DEPLOY"}</span>

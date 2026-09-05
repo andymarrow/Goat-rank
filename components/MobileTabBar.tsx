@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   Home, Swords, LayoutDashboard, Trophy, MoreHorizontal,
-  ShieldCheck, Sun, Moon, LogIn, LogOut, X,
+  ShieldCheck, Sun, Moon, LogIn, LogOut, X, HeartHandshake, Shield, FileText,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -71,7 +71,7 @@ export default function MobileTabBar() {
             role="dialog"
             aria-label="More options"
             className="md:hidden fixed bottom-16 inset-x-0 z-[56] bg-card border-t border-border
-                       p-4 pb-6 flex flex-col gap-2 shadow-2xl"
+                       p-4 pb-6 flex flex-col gap-2 shadow-2xl max-h-[70vh] overflow-y-auto scrollbar-hide"
           >
             <div className="flex items-center justify-between mb-1">
               <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50">
@@ -100,6 +100,17 @@ export default function MobileTabBar() {
             {mounted && isAdmin && (
               <SheetLink href="/admin" icon={<ShieldCheck className="w-4 h-4" />} label="Admin console" />
             )}
+
+            {/* The footer is desktop-only, so its links live here. */}
+            <div className="pt-2 mt-1 border-t border-border flex flex-col gap-2">
+              <SheetLink
+                href="/legal/money"
+                icon={<HeartHandshake className="w-4 h-4" />}
+                label="Where the money goes"
+              />
+              <SheetLink href="/legal/privacy" icon={<Shield className="w-4 h-4" />} label="Privacy" />
+              <SheetLink href="/legal/terms" icon={<FileText className="w-4 h-4" />} label="Terms" />
+            </div>
 
             {mounted &&
               (user ? (

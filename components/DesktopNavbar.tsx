@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Swords, Zap, Sun, Moon, LogIn } from "lucide-react";
+import { Swords, Sun, Moon, LogIn } from "lucide-react";
 import { useTheme } from "next-themes";
 import { createClient } from "@/utils/supabase/client";
 import AccountMenu from "@/components/AccountMenu";
@@ -73,10 +74,15 @@ export default function DesktopNavbar() {
                  border-b border-border items-center justify-between px-6 lg:px-12"
     >
       <div className="flex items-center gap-10">
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
-          <div className="w-8 h-8 cut-corner bg-primary flex items-center justify-center transition-transform group-hover:rotate-12">
-            <Zap className="text-primary-foreground w-5 h-5" />
-          </div>
+        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+          <Image
+            src="/image/logo.png"
+            alt=""
+            width={36}
+            height={36}
+            priority
+            className="w-9 h-9 object-contain transition-transform group-hover:rotate-6"
+          />
           <span className="font-arcade text-xl font-bold tracking-wider">GOATRANK</span>
         </Link>
 

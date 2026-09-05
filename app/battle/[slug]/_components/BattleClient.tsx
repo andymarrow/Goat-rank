@@ -6,10 +6,12 @@ import BattleChat from "./BattleChat";
 import VoteModal from "./VoteModal"; 
 import { createClient } from "@/utils/supabase/client"; // <-- Import the client!
 import { onBrand } from "@/lib/color";
+import { MessageSquare, X } from "lucide-react";
 
 export default function BattleClient({ initialBattleData }: { initialBattleData: any }) {
   const [battleData, setBattleData] = useState(initialBattleData);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [selectedContender, setSelectedContender] = useState(0);
 
   const supabase = createClient();
@@ -83,6 +85,65 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
       <div className="hidden lg:flex w-96 border-l border-border bg-card flex-col h-full overflow-hidden shrink-0">
         <BattleChat battle={battleData} onVoteClick={handleVoteClick} />
       </div>
+
+      {/* Mobile: the live feed has no room in the arena layout, so it opens as
+          a slide-over instead of being hidden entirely below lg. */}
+      <button
+        type="button"
+        onClick={() => setChatOpen(true)}
+        className="lg:hidden pressable fixed top-3 left-1/2 -translate-x-1/2 z-40 cut-corner
+                   bg-card/90 backdrop-blur-md border border-border px-3 py-1.5
+                   font-arcade text-[10px] font-bold uppercase tracking-widest
+                   text-foreground/80 inline-flex items-center gap-1.5 shadow-lg"
+      >
+        <MessageSquare className="w-3.5 h-3.5 text-primary" />
+        Live feed
+        {(battleData.feed?.length ?? 0) > 0 && (
+          <span className="cut-corner bg-primary text-primary-foreground px-1.5 text-[9px] tabular-nums">
+            {battleData.feed.length}
+          </span>
+        )}
+      </button>
+
+      {chatOpen && (
+        <div className="lg:hidden fixed inset-0 z-[60] flex">
+          <button
+            aria-label="Close live feed"
+            onClick={() => setChatOpen(false)}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          />
+
+          <aside
+            role="dialog"
+            aria-label="Live feed"
+            className="relative ml-auto w-[88%] max-w-sm h-full bg-card border-l border-border
+                       flex flex-col animate-in slide-in-from-right duration-200"
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <span className="font-arcade text-xs font-bold uppercase tracking-widest text-foreground">
+                Live feed
+              </span>
+              <button
+                onClick={() => setChatOpen(false)}
+                aria-label="Close"
+                className="pressable text-foreground/50 hover:text-foreground transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 min-h-0 flex flex-col">
+              <BattleChat
+                battle={battleData}
+                onVoteClick={(i: number) => {
+                  setChatOpen(false);
+                  handleVoteClick(i);
+                }}
+              />
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* Mobile vote bar. Sits directly above the 64px tab bar and respects the
           home-indicator inset; long contender names truncate instead of

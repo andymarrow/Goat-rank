@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { HeartHandshake } from "lucide-react";
 
 /**
@@ -13,8 +14,11 @@ export default function SiteFooter() {
     <footer className="w-full border-t border-border bg-card mt-auto">
       <div className="max-w-[1920px] mx-auto px-6 md:px-12 py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
         <div>
-          <span className="font-arcade text-sm font-bold tracking-wider text-foreground">
-            GOAT<span className="text-primary">RANK</span>
+          <span className="flex items-center gap-2">
+            <Image src="/image/logo.png" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
+            <span className="font-arcade text-sm font-bold tracking-wider text-foreground">
+              GOAT<span className="text-primary">RANK</span>
+            </span>
           </span>
           <p className="text-[11px] text-foreground/40 font-sans mt-1 max-w-xs leading-relaxed">
             Settle the debate. 30% of every arena goes to charity.

@@ -87,7 +87,7 @@ export default function GlobalLeaderboardsRow({ rooms }: { rooms: LandingRoom[] 
             key={room.id}
             className="pressable hover-lift snap-start shrink-0 group"
           >
-            <div className="corner-ticks relative w-[300px] md:w-[400px] aspect-[16/9] cut-corner overflow-hidden bg-black border border-border group-hover:border-primary/50 transition-colors">
+            <div className="corner-ticks relative w-[300px] md:w-[400px] aspect-[16/9] cut-corner overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-colors">
               {room.cover_image ? (
                 <Image
                   src={room.cover_image}
