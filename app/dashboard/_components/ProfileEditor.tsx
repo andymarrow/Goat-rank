@@ -88,11 +88,11 @@ export default function ProfileEditor({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="pressable cut-corner border border-border bg-background px-4 py-2
-                   font-arcade text-[10px] font-bold uppercase tracking-widest text-foreground/70
-                   hover:text-primary hover:border-primary transition-colors inline-flex items-center gap-2"
+        className="px-4 py-2.5 rounded-xl border border-border/80 bg-card text-foreground text-xs font-bold
+                   hover:bg-card/80 hover:border-primary/50 transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer"
       >
-        <Pencil className="w-3.5 h-3.5" /> Edit profile
+        <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+        <span>Edit profile</span>
       </button>
 
       <AnimatePresence>
@@ -110,24 +110,22 @@ export default function ProfileEditor({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="corner-ticks relative w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide
-                         bg-card border border-border cut-corner-lg p-6 shadow-2xl flex flex-col gap-5"
+              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide
+                         bg-card border border-border/80 rounded-3xl p-6 shadow-2xl flex flex-col gap-5 font-sans"
             >
-              <div className="tex-dots absolute inset-0 pointer-events-none" />
-
               <div className="relative flex items-start justify-between">
                 <div>
-                  <h2 className="font-arcade text-lg font-bold uppercase tracking-widest text-foreground">
+                  <h2 className="text-lg font-extrabold uppercase tracking-tight text-foreground">
                     Your identity
                   </h2>
-                  <p className="text-xs text-foreground/50 font-sans mt-1">
+                  <p className="text-xs text-muted-foreground font-sans mt-0.5">
                     This is what other players see next to your votes.
                   </p>
                 </div>
                 <button
                   onClick={() => !pending && setOpen(false)}
                   aria-label="Close"
-                  className="text-foreground/40 hover:text-foreground transition-colors"
+                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -137,15 +135,15 @@ export default function ProfileEditor({
               <div className="relative flex items-center gap-4">
                 <Avatar src={avatar} name={currentName} size={64} />
                 <div className="flex-1 min-w-0">
-                  <label className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
                     Display name
                   </label>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     maxLength={24}
-                    className="w-full bg-background border border-border cut-corner px-3 py-2 text-sm
-                               text-foreground font-sans outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background border border-border/80 rounded-xl px-3.5 py-2.5 text-sm
+                               text-foreground font-sans outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition-all shadow-xs"
                   />
                 </div>
               </div>
@@ -153,7 +151,7 @@ export default function ProfileEditor({
               {/* Library */}
               {avatars.length > 0 && (
                 <div className="relative">
-                  <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">
                     Pick an avatar
                   </span>
                   <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
@@ -166,12 +164,11 @@ export default function ProfileEditor({
                           onClick={() => setAvatar(a.image_url)}
                           title={a.name}
                           aria-pressed={active}
-                          className={`pressable relative aspect-square bg-background border cut-corner
-                            overflow-hidden transition-colors ${
-                              active
-                                ? "border-primary ring-1 ring-primary"
-                                : "border-border hover:border-foreground/40"
-                            }`}
+                          className={`relative aspect-square rounded-xl bg-zinc-900 border overflow-hidden transition-all cursor-pointer ${
+                            active
+                              ? "border-primary ring-2 ring-primary/40"
+                              : "border-border/80 hover:border-foreground/40"
+                          }`}
                         >
                           <Image
                             src={a.image_url}
@@ -181,7 +178,7 @@ export default function ProfileEditor({
                             className="object-cover"
                           />
                           {active && (
-                            <span className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-0.5">
+                            <span className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-0.5 rounded-tl-md">
                               <Check className="w-3 h-3" />
                             </span>
                           )}
@@ -194,13 +191,13 @@ export default function ProfileEditor({
 
               {/* Upload own */}
               <div className="relative">
-                <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">
                   Or upload your own
                 </span>
                 <label
-                  className="w-full h-20 bg-background border border-border border-dashed cut-corner
-                             flex flex-col items-center justify-center gap-1 text-foreground/30
-                             hover:text-foreground/60 hover:border-foreground/40 transition-all cursor-pointer"
+                  className="w-full h-20 bg-background border border-border/80 border-dashed rounded-xl
+                             flex flex-col items-center justify-center gap-1 text-muted-foreground
+                             hover:text-foreground hover:border-primary/60 transition-all cursor-pointer"
                 >
                   <input
                     type="file"
@@ -214,7 +211,7 @@ export default function ProfileEditor({
                   ) : (
                     <>
                       <Upload className="w-4 h-4" />
-                      <span className="font-arcade text-[10px] uppercase tracking-widest">
+                      <span className="text-[10px] font-bold uppercase tracking-wider">
                         Max 3MB
                       </span>
                     </>
@@ -225,8 +222,8 @@ export default function ProfileEditor({
               {error && (
                 <p
                   role="alert"
-                  className="relative cut-corner border border-battle-red/40 bg-battle-red/10
-                             px-3 py-2 text-xs font-sans text-battle-red"
+                  className="rounded-xl border border-destructive/30 bg-destructive/10
+                             px-3.5 py-2.5 text-xs font-sans font-semibold text-destructive"
                 >
                   {error}
                 </p>
@@ -235,14 +232,14 @@ export default function ProfileEditor({
               <button
                 onClick={save}
                 disabled={pending || uploading}
-                className="pressable relative w-full cut-corner bg-primary text-primary-foreground py-3
-                           font-arcade text-xs font-bold uppercase tracking-widest
-                           hover:brightness-110 transition-all disabled:opacity-50
-                           inline-flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-primary text-primary-foreground py-3
+                           font-bold text-xs uppercase tracking-wider
+                           hover:opacity-90 transition-all shadow-md active:scale-95 disabled:opacity-50
+                           inline-flex items-center justify-center gap-2 cursor-pointer"
               >
                 {pending && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saved && <Check className="w-4 h-4" />}
-                {saved ? "Saved" : "Save changes"}
+                <span>{saved ? "Saved" : "Save changes"}</span>
               </button>
             </motion.div>
           </div>
@@ -251,3 +248,4 @@ export default function ProfileEditor({
     </>
   );
 }
+

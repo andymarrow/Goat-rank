@@ -3,11 +3,11 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Users, Flame, Trophy } from "lucide-react";
+import { ChevronRight, Users, Trophy, ImageOff } from "lucide-react";
 import type { LandingRoom } from "@/actions/getLanding";
 
 const money = (n: number) =>
-  n >= 1000 ? `$${(n / 1000).toFixed(1)}K` : `$${n.toFixed(0)}`;
+  n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(Math.round(n));
 
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n);
@@ -15,8 +15,6 @@ const compact = (n: number) =>
 export default function GlobalLeaderboardsRow({ rooms }: { rooms: LandingRoom[] }) {
   const [activeFilter, setActiveFilter] = useState("All");
 
-  // Filters are built from the categories that actually have arenas, rather
-  // than a hardcoded list that could offer a category with nothing behind it.
   const filters = useMemo(
     () => ["All", ...[...new Set(rooms.map((r) => r.category).filter(Boolean))].sort()],
     [rooms]
@@ -30,120 +28,126 @@ export default function GlobalLeaderboardsRow({ rooms }: { rooms: LandingRoom[] 
   if (rooms.length === 0) {
     return (
       <section className="w-full max-w-[1920px] mx-auto px-6 md:px-12 py-8">
-        <h2 className="text-2xl md:text-3xl font-arcade font-bold text-foreground mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-6">
           Global Arenas
         </h2>
-        <div className="corner-ticks relative border border-dashed border-border cut-corner py-14 text-center overflow-hidden">
-          <div className="tex-hatch absolute inset-0 pointer-events-none" />
-          <Trophy className="relative w-6 h-6 mx-auto mb-3 text-foreground/25" />
-          <p className="relative font-arcade text-xs uppercase tracking-widest text-foreground/40">
+        <div className="rounded-2xl border border-dashed border-border py-12 text-center">
+          <Trophy className="w-6 h-6 mx-auto mb-2 text-muted-foreground/40" />
+          <p className="text-sm font-semibold text-muted-foreground">
             No global arenas live yet
           </p>
-          <Link
-            href="/create"
-            className="relative inline-block mt-4 cut-corner bg-primary text-primary-foreground
-                       px-5 py-2 font-arcade text-[10px] font-bold uppercase tracking-widest
-                       hover:brightness-110 transition-all pressable"
-          >
-            Deploy the first
-          </Link>
         </div>
       </section>
     );
   }
 
+  const half = Math.ceil(visible.length / 2);
+  const row1 = visible.slice(0, half);
+  const row2 = visible.slice(half);
+
+  const renderCard = (room: LandingRoom, isGrid = false) => {
+    return (
+      <Link
+        href={`/global/${room.id}`}
+        key={room.id}
+        className={`${isGrid ? "w-full" : "w-[280px] sm:w-[320px] shrink-0 snap-start"} group`}
+      >
+        <div className="relative w-full h-[270px] md:h-[285px] rounded-2xl bg-card border border-border/80 p-3.5 sm:p-4 flex flex-col justify-between hover:bg-white/[0.04] transition-all duration-200 ease-out group-hover:-translate-y-0.5 shadow-sm">
+          {/* Top Cover Image Box */}
+          <div className="relative w-full h-[150px] md:h-[165px] rounded-xl overflow-hidden bg-muted/60 border border-border/50 shrink-0">
+            {room.cover_image ? (
+              <Image
+                src={room.cover_image}
+                alt={room.title}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 450px"
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                <ImageOff className="w-8 h-8" />
+              </div>
+            )}
+            {/* Subtle Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80" />
+          </div>
+
+          {/* Bottom Content & Info */}
+          <div className="flex flex-col justify-between flex-1 min-w-0 pt-2.5">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground truncate max-w-[130px]">
+                  {room.category}
+                </span>
+              </div>
+              <h3 className="font-semibold text-foreground text-sm sm:text-base line-clamp-1 tracking-tight">
+                {room.title}
+              </h3>
+            </div>
+
+            <div className="flex items-center justify-between text-xs pt-2 border-t border-border/40 mt-2">
+              <span className="font-semibold text-yellow-500 font-sans">
+                {money(room.total_pool)}{" "}
+                <span className="font-normal text-muted-foreground text-[11px]">pool</span>
+              </span>
+              <span className="text-muted-foreground text-[11px] flex items-center gap-1">
+                <Users className="w-3.5 h-3.5" /> {compact(room.vote_count)} votes
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  };
+
   return (
-    <section className="w-full max-w-[1920px] mx-auto px-6 md:px-12 py-8">
-      <div className="flex flex-col md:flex-row md:items-center gap-6 mb-6">
-        <h2 className="text-2xl md:text-3xl font-arcade font-bold text-foreground flex items-center gap-2 group">
-          Global Arenas
-          <ChevronRight className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" />
-        </h2>
+    <section className="w-full py-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
+        <div>
+          <h2 className="text-base sm:text-lg font-semibold tracking-tight text-foreground flex items-center gap-1.5 group cursor-pointer">
+            Global Arenas
+            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+          </h2>
+        </div>
 
         {filters.length > 1 && (
-          <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
-            {filters.map((f) => (
-              <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
-                aria-pressed={activeFilter === f}
-                className={`pressable px-4 py-1.5 rounded-full text-xs font-arcade transition-colors whitespace-nowrap border ${
-                  activeFilter === f
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-transparent text-foreground/60 border-border hover:border-foreground/40 hover:text-foreground"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide p-1 rounded-full bg-card border border-border/80 shadow-xs">
+            {filters.map((f) => {
+              const active = activeFilter === f;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setActiveFilter(f)}
+                  aria-pressed={active}
+                  className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${active
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                >
+                  {f}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-8 snap-x snap-mandatory">
-        {visible.map((room, index) => (
-          <Link
-            href={`/global/${room.id}`}
-            key={room.id}
-            className="pressable hover-lift snap-start shrink-0 group"
-          >
-            <div className="corner-ticks relative w-[300px] md:w-[400px] aspect-[16/9] cut-corner overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-colors">
-              {room.cover_image ? (
-                <Image
-                  src={room.cover_image}
-                  alt={room.title}
-                  fill
-                  sizes="(max-width: 768px) 300px, 400px"
-                  className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700"
-                />
-              ) : (
-                <div className="absolute inset-0 tex-dots opacity-100" />
-              )}
+      {/* Desktop Grid Layout (lg and up) - 2 rows max (8 items) */}
+      <div className="hidden lg:grid grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-5 pt-2 pb-2">
+        {visible.slice(0, 8).map((room) => renderCard(room, true))}
+      </div>
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/65 to-transparent" />
-              <div className="tex-scanlines absolute inset-0 pointer-events-none" />
+      {/* Mobile/Tablet Horizontal Scroll Rows (only when overflowing / < lg) */}
+      <div className="flex lg:hidden flex-col gap-3.5 sm:gap-4 pt-2 pb-2">
+        <div className="flex gap-3.5 sm:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+          {row1.map((room) => renderCard(room, false))}
+        </div>
 
-              <div className="absolute top-3 right-3 flex flex-col gap-2">
-                <div className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-colors">
-                  <Flame className="w-4 h-4" />
-                </div>
-              </div>
-
-              {/* Rank is positional within the current filter, so it always
-                  reads 1..n rather than skipping numbers. */}
-              <div className="absolute bottom-0 left-0 p-3 md:p-4 flex items-end gap-2.5 w-full">
-                {/* Rank badge. .striped-text is transparent fill with a thin
-                    stroke — legible on a flat panel, invisible over a photo,
-                    which is what the circled area on the cards was. */}
-                <span
-                  className="shrink-0 w-9 h-9 md:w-10 md:h-10 cut-corner bg-primary text-primary-foreground
-                             flex items-center justify-center font-arcade text-lg md:text-xl font-black
-                             leading-none select-none shadow-lg"
-                >
-                  {index + 1}
-                </span>
-
-                <div className="flex flex-col pb-1 min-w-0">
-                  <h3
-                    className="text-base md:text-lg font-arcade font-bold text-white leading-tight mb-1 truncate"
-                    style={{ textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}
-                  >
-                    {room.title}
-                  </h3>
-                  <div
-                    className="flex items-center gap-3 text-[10px] font-arcade text-white/85"
-                    style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}
-                  >
-                    <span className="text-yellow-400">{money(room.total_pool)} Pool</span>
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" /> {compact(room.vote_count)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-        ))}
+        {row2.length > 0 && (
+          <div className="flex gap-3.5 sm:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+            {row2.map((room) => renderCard(room, false))}
+          </div>
+        )}
       </div>
     </section>
   );

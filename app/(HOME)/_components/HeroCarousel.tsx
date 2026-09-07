@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Timer, Swords, ImageOff } from "lucide-react";
-import { ZapIcon } from "@/components/ui/zap";
+import { Timer, ArrowUpRight, ImageOff, ChevronLeft, ChevronRight, Users, Trophy } from "lucide-react";
 import type { LandingRoom } from "@/actions/getLanding";
-import { readableBrand } from "@/lib/color";
 
 const money = (n: number) => `$${(Number(n) || 0).toLocaleString("en-US")}`;
 
@@ -16,229 +13,213 @@ function countdown(iso: string) {
   if (ms <= 0) return "ENDED";
 
   const h = Math.floor(ms / 3_600_000);
-  if (h >= 24) return `${Math.floor(h / 24)}D ${h % 24}H`;
+  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h left`;
 
   const m = Math.floor((ms % 3_600_000) / 60_000);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} left`;
 }
 
 export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  if (rooms.length === 0) {
-    return (
-      <section className="w-full max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <div className="corner-ticks relative cut-corner-lg border border-dashed border-border bg-card overflow-hidden py-20 text-center">
-          <div className="tex-grid absolute inset-0 pointer-events-none" />
-          <div className="tex-hatch absolute inset-0 pointer-events-none" />
+  useEffect(() => {
+    if (!rooms || rooms.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % rooms.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [rooms]);
 
-          <Swords className="relative w-8 h-8 mx-auto mb-4 text-foreground/25" />
-          <h2 className="relative font-arcade text-lg md:text-xl font-bold uppercase tracking-widest text-foreground/70">
-            No live arenas yet
-          </h2>
-          <p className="relative mt-2 text-sm text-foreground/45 font-sans max-w-sm mx-auto">
-            Nothing is running right now. Deploy the first contest and it lands here.
-          </p>
-          <Link
-            href="/create"
-            className="pressable sheen relative inline-flex items-center gap-2 mt-6 cut-corner
-                       bg-primary text-primary-foreground px-6 py-3 font-arcade text-xs font-bold
-                       uppercase tracking-widest overflow-hidden hover:brightness-110 transition-all"
-          >
-            <Swords className="w-4 h-4" /> Host a battle
-          </Link>
-        </div>
-      </section>
-    );
-  }
+  if (!rooms || rooms.length === 0) return null;
+
+  const current = rooms[activeIndex] || rooms[0];
+  const is1v1 = current.room_type === "1v1";
+  const [leftContender, rightContender] = current.contenders || [];
+  const href = `${is1v1 ? "/battle" : "/global"}/${current.id}`;
+
+  const pool = is1v1
+    ? (leftContender?.current_votes ?? 0) + (rightContender?.current_votes ?? 0)
+    : current.total_pool;
+
+  const leftVotes = leftContender?.current_votes ?? 0;
+  const rightVotes = rightContender?.current_votes ?? 0;
+  const totalVotes = leftVotes + rightVotes;
+  const leftPct = totalVotes > 0 ? Math.round((leftVotes / totalVotes) * 100) : 50;
+  const rightPct = 100 - leftPct;
+  const isLeftWinning = leftPct >= rightPct;
+
+  const nextSlide = () => setActiveIndex((prev) => (prev + 1) % rooms.length);
+  const prevSlide = () => setActiveIndex((prev) => (prev - 1 + rooms.length) % rooms.length);
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 md:px-6 py-8 h-[70vh] min-h-[500px] md:h-[600px]">
-      <div className="flex flex-col md:flex-row w-full h-full gap-2 md:gap-4">
-        {rooms.map((room, index) => {
-          const isActive = activeIndex === index;
-          const is1v1 = room.room_type === "1v1";
-          const [left, right] = room.contenders;
-          const href = `${is1v1 ? "/battle" : "/global"}/${room.id}`;
+    <div className="w-full flex flex-col gap-4">
+      {/* Top Header Controls */}
+      <div className="flex items-center justify-end gap-4 mb-1">
 
-          const pool = is1v1
-            ? (left?.current_votes ?? 0) + (right?.current_votes ?? 0)
-            : room.total_pool;
-          const leftPct = pool > 0 ? ((left?.current_votes ?? 0) / pool) * 100 : 50;
-
-          return (
-            <motion.div
-              key={room.id}
-              layout
-              onMouseEnter={() => setActiveIndex(index)}
-              onFocus={() => setActiveIndex(index)}
-              className="cut-corner-lg relative overflow-hidden group bg-black border border-border"
-              initial={false}
-              animate={{ flex: isActive ? 3 : 1 }}
-              transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+        {/* Progress Indicator Dots & Chevrons */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            {rooms.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveIndex(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === activeIndex
+                    ? "w-6 bg-primary"
+                    : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-1 ml-1">
+            <button
+              onClick={prevSlide}
+              aria-label="Previous featured arena"
+              className="p-1.5 rounded-full border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
             >
-              {/* Artwork */}
-              {is1v1 && left && right ? (
-                <div className="absolute inset-0 w-full h-full bg-[#121417] flex items-end justify-between">
-                  {[left, right].map((c, i) => (
-                    <div
-                      key={i}
-                      className={`relative h-[90%] w-[45%] transition-all duration-300 ${
-                        !isActive ? "opacity-30 grayscale" : ""
-                      }`}
-                    >
-                      {c.image_url ? (
-                        <Image
-                          src={c.image_url}
-                          alt={c.name}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 25vw"
-                          className={`object-contain ${i === 0 ? "object-bottom-left" : "object-bottom-right"}`}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-end justify-center pb-8">
-                          <span
-                            className="font-arcade text-2xl sm:text-3xl md:text-4xl font-black opacity-40"
-                            style={{ color: c.brand_color ?? "#FFFFFF" }}
-                          >
-                            {c.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="absolute inset-0 w-full h-full">
-                  {room.cover_image ? (
-                    <Image
-                      src={room.cover_image}
-                      alt={room.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 66vw"
-                      className="object-cover"
-                    />
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={nextSlide}
+              aria-label="Next featured arena"
+              className="p-1.5 rounded-full border border-border bg-card hover:bg-muted text-foreground transition-colors cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Spotlight Stage Card */}
+      <div key={current.id} className="relative w-full rounded-3xl border border-border/80 bg-card p-6 sm:p-8 shadow-sm flex flex-col lg:flex-row gap-8 items-stretch justify-between overflow-hidden hover:bg-white/[0.03] transition-colors duration-300">
+        {/* Left Info Column - Streamlined & Minimal */}
+        <div className="flex-1 flex flex-col justify-between py-2 gap-6 z-10">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                {current.category}
+              </span>
+              <span className="text-muted-foreground/30">•</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[10px] font-mono font-bold text-primary shadow-xs">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span>LIVE</span>
+              </div>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-snug">
+              {current.title}
+            </h1>
+          </div>
+
+          <div className="flex flex-col gap-5">
+            {/* Inline Meta Strip */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <span className="text-yellow-500 font-bold text-base font-sans">{money(pool)}</span>
+                <span className="text-[11px] text-muted-foreground">pool</span>
+              </div>
+              <span className="text-muted-foreground/30">•</span>
+              <div className="flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-muted-foreground/70" />
+                <span className="font-semibold text-foreground">{current.vote_count || totalVotes}</span> votes
+              </div>
+              <span className="text-muted-foreground/30">•</span>
+              <div className="flex items-center gap-1">
+                <Timer className="w-3.5 h-3.5 text-muted-foreground/70" />
+                <span>{countdown(current.expires_at)}</span>
+              </div>
+            </div>
+
+            {/* Clean Action Button */}
+            <Link
+              href={href}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-xs uppercase tracking-wider hover:brightness-110 transition-all shadow-sm group self-start"
+            >
+              <span>Enter Arena</span>
+              <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Right Visual Showcase Box */}
+        <div className="lg:w-[480px] xl:w-[540px] shrink-0 flex flex-col justify-between gap-4 z-10">
+          {is1v1 && leftContender && rightContender ? (
+            /* 1v1 Contender Showcase Box */
+            <div className="flex flex-col gap-4 h-full justify-between">
+              <div className="relative w-full h-[200px] sm:h-[220px] rounded-2xl overflow-hidden bg-muted/60 border border-border/60 p-2 flex items-center gap-2">
+                {/* Left Contender Image */}
+                <div className="relative w-1/2 h-full rounded-xl overflow-hidden bg-black/40">
+                  {leftContender.image_url ? (
+                    <Image src={leftContender.image_url} alt={leftContender.name} fill className="object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-[#121417] flex items-center justify-center">
-                      <ImageOff className="w-8 h-8 text-white/15" />
+                    <div className="w-full h-full flex items-center justify-center font-bold text-lg text-primary">
+                      {leftContender.name.charAt(0)}
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/50" />
+                </div>
+
+                {/* VS Badge */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 rounded-md bg-black/90 border border-white/20 text-xs font-extrabold text-white z-10 shadow-lg tracking-widest">
+                  VS
+                </div>
+
+                {/* Right Contender Image */}
+                <div className="relative w-1/2 h-full rounded-xl overflow-hidden bg-black/40">
+                  {rightContender.image_url ? (
+                    <Image src={rightContender.image_url} alt={rightContender.name} fill className="object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-bold text-lg text-primary">
+                      {rightContender.name.charAt(0)}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 1v1 Progress Split */}
+              <div className="w-full p-3.5 rounded-2xl bg-muted/40 border border-border/50 flex flex-col gap-2">
+                <div className="flex justify-between text-xs font-medium">
+                  <span className={isLeftWinning ? "text-foreground font-semibold" : "text-muted-foreground"}>
+                    {leftContender.name} <span className={isLeftWinning ? "text-primary font-bold" : ""}>({leftPct}%)</span>
+                  </span>
+                  <span className={!isLeftWinning ? "text-foreground font-semibold" : "text-muted-foreground"}>
+                    <span className={!isLeftWinning ? "text-primary font-bold" : ""}>({rightPct}%)</span> {rightContender.name}
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-zinc-800/90 overflow-hidden flex">
+                  <div
+                    className={`h-full transition-all duration-500 ${isLeftWinning ? "bg-primary" : "bg-zinc-700/80"}`}
+                    style={{ width: `${leftPct}%` }}
+                  />
+                  <div
+                    className={`h-full flex-1 transition-all duration-500 ${!isLeftWinning ? "bg-primary" : "bg-zinc-700/80"}`}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Global Leaderboard Cover Showcase Box */
+            <div className="relative w-full h-[260px] sm:h-[280px] rounded-2xl overflow-hidden bg-muted/60 border border-border/60">
+              {current.cover_image ? (
+                <Image
+                  src={current.cover_image}
+                  alt={current.title}
+                  fill
+                  sizes="540px"
+                  className="object-cover opacity-90"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                  <ImageOff className="w-12 h-12" />
                 </div>
               )}
-
-              <div className="tex-dots absolute inset-0 z-0 pointer-events-none" />
-              {isActive && <div className="tex-scanlines absolute inset-0 z-0 pointer-events-none" />}
-
-              {/* Legibility scrim. Titles previously sat straight on the
-                  artwork and were unreadable over a bright photo. */}
-              <div className="absolute inset-x-0 bottom-0 h-2/3 z-[1] pointer-events-none
-                              bg-gradient-to-t from-black via-black/70 to-transparent" />
-
-              {/* Overlay */}
-              <motion.div
-                className="absolute inset-0 p-4 md:p-8 flex flex-col justify-between z-10 pointer-events-none"
-                animate={{ opacity: 1 }}
-              >
-                <div className="flex justify-between items-start">
-                  <span className="cut-corner px-4 py-1.5 text-xs font-arcade font-bold uppercase text-white bg-white/15 backdrop-blur-md border border-white/10">
-                    {room.category}
-                  </span>
-                  {isActive && (
-                    <span className="flex items-center gap-2 text-white font-arcade text-xs bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 cut-corner">
-                      <ZapIcon size={16} className="text-primary" /> LIVE
-                    </span>
-                  )}
-                </div>
-
-                <div className="w-full max-w-2xl mx-auto flex flex-col gap-3">
-                  {/* Always visible — a card you cannot read is a dead card. */}
-                  <div className="flex justify-between items-end gap-3">
-                    <h2
-                      className="text-white text-lg sm:text-2xl md:text-3xl font-arcade uppercase font-bold
-                                 tracking-wider min-w-0 truncate group-hover:text-primary transition-colors"
-                      style={{ textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}
-                    >
-                      {room.title}
-                    </h2>
-                    <div
-                      className="flex items-center gap-1.5 text-white font-arcade text-[11px] md:text-sm shrink-0"
-                      style={{ textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}
-                    >
-                      <Timer className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                      <span>{countdown(room.expires_at)}</span>
-                    </div>
-                  </div>
-
-                  {!isActive && (
-                    <span
-                      className="font-arcade text-sm font-bold text-battle-yellow"
-                      style={{ textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}
-                    >
-                      {money(room.total_pool)} pool
-                    </span>
-                  )}
-
-                {isActive && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="corner-ticks w-full bg-black/60 backdrop-blur-xl border border-white/10 p-4 md:p-6 cut-corner flex flex-col gap-4"
-                  >
-                    {is1v1 && left && right ? (
-                      <div className="w-full">
-                        <div className="flex justify-between text-xs md:text-sm font-arcade mb-2 gap-3">
-                          <span
-                            className="truncate"
-                            style={{ color: readableBrand(left.brand_color, true) }}
-                          >
-                            {left.name} — {money(left.current_votes)}
-                          </span>
-                          <span
-                            className="truncate text-right"
-                            style={{ color: readableBrand(right.brand_color, true) }}
-                          >
-                            {right.name} — {money(right.current_votes)}
-                          </span>
-                        </div>
-
-                        <div className="w-full h-4 bg-black/50 cut-corner flex overflow-hidden border border-white/10 relative">
-                          <motion.div
-                            className="h-full"
-                            style={{ backgroundColor: left.brand_color ?? "#FF7A00" }}
-                            initial={{ width: "50%" }}
-                            animate={{ width: `${leftPct}%` }}
-                            transition={{ duration: 1, ease: "easeOut" }}
-                          />
-                          <div
-                            className="h-full flex-1"
-                            style={{ backgroundColor: right.brand_color ?? "#3B82F6" }}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between font-arcade">
-                        <span className="text-white/60 text-xs uppercase tracking-widest">
-                          Total pool
-                        </span>
-                        <span className="text-yellow-400 text-xl font-bold">
-                          {money(room.total_pool)}
-                        </span>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-                </div>
-              </motion.div>
-
-              {/* Whole-panel link. Sits above the overlay (which is made
-                  pointer-events-none) so a click anywhere on the card opens
-                  the arena, not just the title. */}
-              <Link href={href} aria-label={room.title} className="absolute inset-0 z-20" />
-            </motion.div>
-          );
-        })}
+              <div className="absolute bottom-3 left-3 px-3 py-1 rounded-lg bg-black/80 backdrop-blur-md text-primary font-bold text-xs border border-white/10 flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5" /> Leaderboard Arena
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

@@ -22,8 +22,9 @@ const T = {
   yellow: "#FFD600",
 } as const;
 
-const ARCADE = `'Orbitron', 'Impact', 'Arial Black', sans-serif`;
-const SANS = `'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+const INTER = `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+const ARCADE = INTER;
+const SANS = INTER;
 
 export type EmailButton = { label: string; url: string };
 
@@ -50,7 +51,7 @@ function shell({
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
 <title>${escapeHtml(heading)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background:${T.bg};color:${T.text};font-family:${SANS};">
   <!-- Preheader: shown in the inbox list, hidden in the body. -->

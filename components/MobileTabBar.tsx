@@ -74,13 +74,13 @@ export default function MobileTabBar() {
                        p-4 pb-6 flex flex-col gap-2 shadow-2xl max-h-[70vh] overflow-y-auto scrollbar-hide"
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50">
-                More
+              <span className="font-sans text-xs font-semibold text-muted-foreground">
+                More Options
               </span>
               <button
                 onClick={() => setSheetOpen(false)}
                 aria-label="Close"
-                className="text-foreground/40 hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -89,8 +89,8 @@ export default function MobileTabBar() {
             {mounted && (
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="pressable w-full flex items-center gap-3 px-3 py-3 bg-background border border-border
-                           cut-corner font-arcade text-xs uppercase tracking-widest text-foreground/80"
+                className="pressable w-full flex items-center gap-3 px-3 py-2.5 bg-muted/40 border border-border/50
+                           rounded-xl font-sans text-xs font-medium text-foreground hover:bg-muted transition-colors"
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 {theme === "dark" ? "Light mode" : "Dark mode"}
@@ -119,8 +119,8 @@ export default function MobileTabBar() {
                     await createClient().auth.signOut();
                     window.location.href = "/";
                   }}
-                  className="pressable w-full flex items-center gap-3 px-3 py-3 bg-background border border-border
-                             cut-corner font-arcade text-xs uppercase tracking-widest text-battle-red"
+                  className="pressable w-full flex items-center gap-3 px-3 py-2.5 bg-rose-500/10 border border-rose-500/20
+                             rounded-xl font-sans text-xs font-medium text-rose-500 hover:bg-rose-500/20 transition-colors"
                 >
                   <LogOut className="w-4 h-4" /> Sign out
                 </button>
@@ -133,8 +133,8 @@ export default function MobileTabBar() {
 
       <nav
         aria-label="Primary"
-        className="md:hidden fixed bottom-0 inset-x-0 h-16 z-[57] bg-background/95 backdrop-blur-lg
-                   border-t border-border grid grid-cols-5 items-center
+        className="md:hidden fixed bottom-0 inset-x-0 h-16 z-[57] bg-background
+                   grid grid-cols-5 items-center
                    pb-[env(safe-area-inset-bottom)]"
       >
         <Tab href="/" label="Arena" icon={<Home className="w-5 h-5" />} active={isActive("/")} />
@@ -173,16 +173,18 @@ export default function MobileTabBar() {
           aria-expanded={sheetOpen}
           aria-label="More options"
           className={`pressable flex flex-col items-center gap-1 py-2 transition-colors ${
-            sheetOpen ? "text-primary" : "text-foreground/60"
+            sheetOpen ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <MoreHorizontal className="w-5 h-5" />
-          <span className="text-[9px] font-arcade font-bold uppercase tracking-wider">More</span>
+          <span className="text-[10px] font-sans font-medium">{MoreText}</span>
         </button>
       </nav>
     </>
   );
 }
+
+const MoreText = "More";
 
 function Tab({
   href,
@@ -200,11 +202,11 @@ function Tab({
       href={href}
       aria-current={active ? "page" : undefined}
       className={`pressable flex flex-col items-center gap-1 py-2 transition-colors ${
-        active ? "text-primary" : "text-foreground/60"
+        active ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
       }`}
     >
       {icon}
-      <span className="text-[9px] font-arcade font-bold uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] font-sans font-medium">{label}</span>
     </Link>
   );
 }
@@ -221,8 +223,8 @@ function SheetLink({
   return (
     <Link
       href={href}
-      className="pressable w-full flex items-center gap-3 px-3 py-3 bg-background border border-border
-                 cut-corner font-arcade text-xs uppercase tracking-widest text-foreground/80"
+      className="pressable w-full flex items-center gap-3 px-3 py-2.5 bg-muted/40 border border-border/50
+                 rounded-xl font-sans text-xs font-medium text-foreground hover:bg-muted transition-colors"
     >
       {icon}
       {label}

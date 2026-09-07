@@ -51,9 +51,9 @@ export default function EntitySearch({
   }, []);
 
   return (
-    <div ref={boxRef} className="relative">
+    <div ref={boxRef} className="relative font-sans">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30 pointer-events-none" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         <input
           value={query}
           onFocus={() => setOpen(true)}
@@ -63,12 +63,12 @@ export default function EntitySearch({
           }}
           placeholder={placeholder}
           aria-label="Search existing contenders"
-          className="w-full bg-background border border-border cut-corner pl-9 pr-9 py-3 text-sm
-                     text-foreground font-sans outline-none focus:border-primary transition-colors
-                     placeholder:text-foreground/30"
+          className="w-full bg-background border border-border/80 rounded-xl pl-10 pr-9 py-2.5 text-sm
+                     text-foreground font-sans outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition-all shadow-xs
+                     placeholder:text-muted-foreground"
         />
         {loading && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-primary" />
+          <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-primary" />
         )}
         {!loading && query && (
           <button
@@ -78,7 +78,7 @@ export default function EntitySearch({
               setOpen(false);
             }}
             aria-label="Clear"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -88,10 +88,10 @@ export default function EntitySearch({
       {open && (
         <div
           className="absolute z-30 mt-1 w-full max-h-72 overflow-y-auto scrollbar-hide
-                     bg-card border border-border cut-corner shadow-2xl"
+                     bg-card border border-border/80 rounded-2xl shadow-2xl"
         >
           {results.length === 0 ? (
-            <p className="px-3 py-4 text-xs text-foreground/40 font-sans text-center">
+            <p className="px-3 py-4 text-xs text-muted-foreground font-sans text-center">
               {loading
                 ? "Searching…"
                 : query
@@ -109,14 +109,14 @@ export default function EntitySearch({
                       setQuery("");
                       setOpen(false);
                     }}
-                    className="pressable w-full flex items-center gap-3 p-2 cut-corner
-                               hover:bg-foreground/5 transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-2 rounded-xl
+                               hover:bg-muted/40 transition-colors text-left cursor-pointer"
                   >
-                    <span className="relative w-10 h-10 shrink-0 bg-background border border-border cut-corner overflow-hidden">
+                    <span className="relative w-10 h-10 shrink-0 bg-zinc-900 border border-border/80 rounded-xl overflow-hidden">
                       {e.image_url ? (
                         <Image src={e.image_url} alt={e.name} fill sizes="40px" className="object-cover" />
                       ) : (
-                        <span className="w-full h-full flex items-center justify-center text-foreground/20">
+                        <span className="w-full h-full flex items-center justify-center text-muted-foreground">
                           <ImageOff className="w-4 h-4" />
                         </span>
                       )}
@@ -127,10 +127,10 @@ export default function EntitySearch({
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block font-arcade text-xs font-bold text-foreground truncate">
+                      <span className="block text-xs font-bold text-foreground truncate">
                         {e.name}
                       </span>
-                      <span className="block text-[10px] text-foreground/40 font-sans">
+                      <span className="block text-[11px] text-muted-foreground font-semibold">
                         {e.category}
                         {Number(e.lifetime_raised) > 0 &&
                           ` · $${Number(e.lifetime_raised).toLocaleString()} raised`}
@@ -148,3 +148,4 @@ export default function EntitySearch({
     </div>
   );
 }
+

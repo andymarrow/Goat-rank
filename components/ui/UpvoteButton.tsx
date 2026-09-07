@@ -67,7 +67,7 @@ export default function UpvoteButton({
               animate={{ opacity: 0, y: -40, scale: 1.2 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 font-arcade font-bold text-primary text-lg drop-shadow-md"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 font-sans font-extrabold text-primary text-base drop-shadow-md"
             >
               +1
             </motion.div>
@@ -76,25 +76,25 @@ export default function UpvoteButton({
       </div>
 
       <motion.button
-        whileTap={{ scale: 0.9, y: 2 }}
+        whileTap={{ scale: 0.94 }}
         onClick={handleUpvote}
         disabled={isUpdating}
         aria-pressed={upvoted}
         aria-label={upvoted ? "Remove your upvote" : "Upvote this battle cry"}
         title={upvoted ? "You upvoted this — click to undo" : "Upvote"}
-        className={`flex items-center gap-2 px-3 py-1.5 cut-corner border transition-colors group
-          select-none disabled:opacity-60 ${
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all group
+          select-none cursor-pointer disabled:opacity-60 ${
             upvoted
-              ? "bg-primary/10 border-primary/50 text-primary"
-              : "bg-background border-border text-foreground/60 hover:border-primary hover:text-primary"
+              ? "bg-primary text-primary-foreground border-transparent font-bold shadow-xs"
+              : "bg-muted/40 border-border/50 text-muted-foreground hover:bg-muted hover:text-foreground hover:border-border"
           }`}
       >
         <ArrowBigUp
-          className={`w-4 h-4 transition-transform ${
-            upvoted ? "fill-current -translate-y-px" : "group-hover:-translate-y-0.5"
+          className={`w-3.5 h-3.5 transition-transform ${
+            upvoted ? "fill-current -translate-y-px text-primary-foreground" : "group-hover:-translate-y-0.5"
           }`}
         />
-        <span className="font-arcade text-sm font-bold tabular-nums">{count}</span>
+        <span className="text-xs font-bold font-sans tabular-nums">{count}</span>
       </motion.button>
     </div>
   );

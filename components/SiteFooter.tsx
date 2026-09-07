@@ -11,8 +11,8 @@ import { HeartHandshake } from "lucide-react";
  */
 export default function SiteFooter() {
   return (
-    <footer className="w-full border-t border-border bg-card mt-auto">
-      <div className="max-w-[1920px] mx-auto px-6 md:px-12 py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+    <footer className="w-full bg-background mt-auto">
+      <div className="w-[80%] max-w-[1920px] mx-auto py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
         <div>
           <span className="flex items-center gap-2">
             <Image src="/image/logo.png" alt="" width={222} height={256} className="h-7 w-auto object-contain" />

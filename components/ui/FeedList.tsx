@@ -56,10 +56,9 @@ export default function FeedList({
 
   if (items.length === 0) {
     return (
-      <div className="corner-ticks relative border border-dashed border-border cut-corner py-10 text-center overflow-hidden">
-        <div className="tex-hatch absolute inset-0 pointer-events-none" />
-        <MessageSquare className="relative w-5 h-5 mx-auto mb-2 text-foreground/25" />
-        <p className="relative font-arcade text-[11px] uppercase tracking-widest text-foreground/40">
+      <div className="w-full py-6 px-4 text-center rounded-xl border border-dashed border-border bg-card/40 flex flex-col items-center justify-center gap-1.5">
+        <MessageSquare className="w-4 h-4 text-muted-foreground/30" />
+        <p className="text-xs font-medium text-muted-foreground">
           {emptyMessage}
         </p>
       </div>
@@ -68,96 +67,92 @@ export default function FeedList({
 
   return (
     <div className="flex flex-col gap-2">
-      <ul className="flex flex-col gap-2">
+      <div className="rounded-2xl border border-border/60 bg-card/40 p-2 sm:p-3 divide-y divide-border/30">
         {items.map((entry) => (
-          <li
+          <div
             key={entry.id}
-            className={`relative flex gap-2.5 border border-border bg-card cut-corner ${
-              compact ? "p-2.5" : "p-3 md:p-4"
-            }`}
+            className="relative flex items-start gap-2.5 py-2.5 px-1 sm:px-1.5 transition-colors hover:bg-white/[0.02] first:pt-1 last:pb-1"
           >
             <Avatar
               src={entry.voter_avatar}
               name={entry.voter_name}
-              size={compact ? 28 : 38}
+              size={24}
             />
 
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-                {/* Votes now carry voter_id, so the name links to a real person. */}
-                {entry.voter_id ? (
-                  <Link
-                    href={`/u/${entry.voter_id}`}
-                    className="font-arcade text-[11px] font-bold text-foreground hover:text-primary transition-colors truncate"
-                  >
-                    {entry.voter_name}
-                  </Link>
-                ) : (
-                  <span className="font-arcade text-[11px] font-bold text-foreground truncate">
-                    {entry.voter_name}
+            <div className="min-w-0 flex-1 flex flex-col gap-1">
+              {/* Header: Author, Badge, Backed entity & Time */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                  {entry.voter_id ? (
+                    <Link
+                      href={`/u/${entry.voter_id}`}
+                      className="font-semibold text-xs text-foreground hover:text-primary transition-colors truncate"
+                    >
+                      {entry.voter_name}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-xs text-foreground truncate">
+                      {entry.voter_name}
+                    </span>
+                  )}
+
+                  <span className="px-1.5 py-0.2 rounded-full bg-zinc-800 border border-zinc-700/80 text-zinc-200 text-[9px] font-bold inline-flex items-center gap-0.5 shrink-0">
+                    <Zap className="w-2.5 h-2.5 fill-current text-zinc-400" />
+                    {money(entry.amount)}
                   </span>
-                )}
 
-                <span className="cut-corner border border-primary/40 bg-primary/10 text-primary px-1.5 py-0.5 font-arcade text-[9px] font-bold uppercase tracking-widest inline-flex items-center gap-1 shrink-0">
-                  <Zap className="w-2.5 h-2.5" fill="currentColor" />
-                  {money(entry.amount)}
-                </span>
+                  {entry.backing && !compact && (
+                    <span className="text-[10px] text-muted-foreground truncate">
+                      backed <span className="text-foreground/80 font-medium">{entry.backing}</span>
+                    </span>
+                  )}
+                </div>
 
-                {entry.backing && !compact && (
-                  <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/45 truncate">
-                    backed {entry.backing}
-                  </span>
-                )}
-
-                <span className="text-[10px] text-foreground/30 font-sans ml-auto shrink-0">
+                <span className="text-[10px] text-muted-foreground shrink-0 font-sans">
                   {formatSince(entry.created_at)}
                 </span>
               </div>
 
-              <p
-                className={`font-sans leading-relaxed break-words text-foreground/80 ${
-                  compact ? "text-[11px]" : "text-xs md:text-sm"
-                }`}
-              >
-                {entry.message}
-              </p>
+              {/* Message Content & Inline Upvote */}
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-sans leading-relaxed text-foreground/85 text-xs break-words min-w-0 flex-1">
+                  {entry.message || <span className="text-muted-foreground/60">No battle cry message</span>}
+                </p>
 
-              <div className="mt-1.5">
-                <UpvoteButton
-                  initialCount={entry.upvote_count}
-                  voteId={entry.id}
-                  initialUpvoted={entry.upvoted}
-                />
+                <div className="shrink-0 ml-2">
+                  <UpvoteButton
+                    initialCount={entry.upvote_count}
+                    voteId={entry.id}
+                    initialUpvoted={entry.upvoted}
+                  />
+                </div>
               </div>
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
       {hasMore && (
         <button
           type="button"
           onClick={loadMore}
           disabled={pending}
-          className="pressable w-full cut-corner border border-border bg-background py-2.5
-                     font-arcade text-[10px] font-bold uppercase tracking-widest text-foreground/60
-                     hover:text-foreground hover:border-foreground/40 transition-colors
-                     inline-flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full py-2 rounded-xl border border-border/60 bg-muted/30 hover:bg-muted font-medium text-[11px] text-muted-foreground hover:text-foreground transition-all inline-flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer active:scale-[0.99] shadow-xs mt-1"
         >
           {pending ? (
             <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading
+              <Loader2 className="w-3 h-3 animate-spin text-primary" /> Loading...
             </>
           ) : (
             <>
-              <ChevronDown className="w-3.5 h-3.5" /> Load older cries
+              <ChevronDown className="w-3 h-3" /> Load older cries
             </>
           )}
         </button>
       )}
 
       {!hasMore && items.length > 10 && (
-        <p className="text-center font-arcade text-[9px] uppercase tracking-widest text-foreground/25 py-2">
+        <p className="text-center text-[10px] text-muted-foreground py-1 font-medium">
           That&apos;s the whole feed
         </p>
       )}

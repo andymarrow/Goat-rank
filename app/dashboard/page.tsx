@@ -12,8 +12,9 @@ export default async function DashboardPage() {
   if (!data) redirect("/login");
 
   return (
-    <div className="w-full min-h-[calc(100vh-64px)] pb-24">
+    <div className="w-full min-h-[calc(100vh-64px)] pb-24 font-sans">
       <DashboardClient data={data} avatars={avatars} />
     </div>
   );
 }
+

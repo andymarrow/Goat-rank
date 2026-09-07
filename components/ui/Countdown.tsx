@@ -23,11 +23,10 @@ function split(target: string | Date | null | undefined): Parts {
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
- * Segmented countdown.
+ * Segmented Countdown Timer
  *
- * "6d 23h" reads like a shipping estimate. Splitting the units and always
- * showing live seconds makes a closing arena feel like it is closing, and the
- * final hour turns red so urgency is visible rather than implied.
+ * Displays days, hours, minutes, and seconds in modern, sleek glass containers
+ * with tabular monospace typography and color-coded urgency states.
  */
 export default function Countdown({
   target,
@@ -53,21 +52,35 @@ export default function Countdown({
   }, [target]);
 
   const scale = {
-    sm: { box: "px-1.5 py-1 min-w-[30px]", num: "text-sm", lab: "text-[7px]" },
-    md: { box: "px-2 py-1.5 min-w-[40px]", num: "text-lg", lab: "text-[8px]" },
-    lg: { box: "px-3 py-2 min-w-[54px]", num: "text-2xl md:text-3xl", lab: "text-[9px]" },
-    // Narrow phones cannot fit four md cells plus separators without
-    // overflowing the viewport, so start small and grow.
+    sm: {
+      box: "px-1.5 py-0.5 min-w-[28px] rounded-md",
+      num: "text-xs font-bold tracking-tight",
+      lab: "text-[7px] font-semibold tracking-wider",
+      colon: "text-xs -mt-2",
+    },
+    md: {
+      box: "px-2 py-1 min-w-[36px] rounded-lg",
+      num: "text-sm font-bold tracking-tight",
+      lab: "text-[8px] font-semibold tracking-wider",
+      colon: "text-sm -mt-2.5",
+    },
+    lg: {
+      box: "px-3 py-1.5 min-w-[48px] rounded-xl",
+      num: "text-lg md:text-xl font-bold tracking-tight",
+      lab: "text-[9px] font-semibold tracking-wider",
+      colon: "text-base md:text-lg -mt-3",
+    },
     auto: {
-      box: "px-1 py-0.5 min-w-[26px] sm:px-1.5 sm:py-1 sm:min-w-[32px] md:px-2 md:py-1.5 md:min-w-[40px]",
-      num: "text-xs sm:text-sm md:text-lg",
-      lab: "text-[6px] sm:text-[7px] md:text-[8px]",
+      box: "px-1.5 py-0.5 min-w-[28px] sm:px-2 sm:py-1 sm:min-w-[34px] md:px-2.5 md:py-1 md:min-w-[38px] rounded-lg md:rounded-xl",
+      num: "text-xs sm:text-sm md:text-base font-bold tracking-tight",
+      lab: "text-[7px] sm:text-[8px] font-semibold tracking-wider",
+      colon: "text-xs sm:text-sm md:text-base -mt-2.5",
     },
   }[size];
 
   if (parts.done) {
     return (
-      <span className="font-arcade text-xs uppercase tracking-widest text-foreground/40">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 border border-border/60 text-muted-foreground text-xs font-semibold uppercase tracking-widest">
         Closed
       </span>
     );
@@ -78,39 +91,46 @@ export default function Countdown({
   const soon = parts.days === 0 && !urgent;
 
   const tone = urgent
-    ? "border-battle-red/50 bg-battle-red/10 text-battle-red"
+    ? "border-red-500/40 bg-red-500/10 text-red-400 shadow-xs shadow-red-500/10"
     : soon
-    ? "border-battle-yellow/50 bg-battle-yellow/10 text-battle-yellow"
-    : "border-border bg-background text-foreground";
+    ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+    : "border-border/70 bg-card/60 text-foreground";
+
+  const labelTone = urgent
+    ? "text-red-400/80"
+    : soon
+    ? "text-amber-400/80"
+    : "text-muted-foreground/70";
 
   const cells: [number, string][] = [
-    ...(parts.days > 0 ? ([[parts.days, "days"]] as [number, string][]) : []),
-    [parts.hours, "hrs"],
-    [parts.minutes, "min"],
-    [parts.seconds, "sec"],
+    ...(parts.days > 0 ? ([[parts.days, "DAYS"]] as [number, string][]) : []),
+    [parts.hours, "HRS"],
+    [parts.minutes, "MIN"],
+    [parts.seconds, "SEC"],
   ];
 
   return (
     <span
-      className={`inline-flex items-center gap-1 ${urgent ? "animate-pulse" : ""}`}
+      className={`inline-flex items-center gap-1 sm:gap-1.5 ${urgent ? "animate-pulse" : ""}`}
       title={`Closes ${formatAbsolute(target)}`}
       aria-label={`Closes in ${parts.days}d ${parts.hours}h ${parts.minutes}m`}
     >
       {cells.map(([value, label], i) => (
-        <span key={label} className="inline-flex items-center gap-1">
+        <span key={label} className="inline-flex items-center gap-1 sm:gap-1.5">
           <span
-            className={`cut-corner border flex flex-col items-center leading-none ${scale.box} ${tone}`}
+            className={`border flex flex-col items-center justify-center leading-none transition-colors ${scale.box} ${tone}`}
           >
-            <span className={`font-arcade font-black tabular-nums ${scale.num}`}>{pad(value)}</span>
-            <span className={`font-arcade uppercase tracking-widest opacity-50 ${scale.lab}`}>
+            <span className={`tabular-nums ${scale.num}`}>{pad(value)}</span>
+            <span className={`uppercase opacity-75 ${scale.lab} ${labelTone}`}>
               {label}
             </span>
           </span>
           {i < cells.length - 1 && (
-            <span className="font-arcade opacity-25 -mt-2">:</span>
+            <span className={`text-muted-foreground/40 select-none font-bold ${scale.colon}`}>:</span>
           )}
         </span>
       ))}
     </span>
   );
 }
+

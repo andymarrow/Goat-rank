@@ -1,96 +1,74 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MessageSquare, Flame, Zap, ChevronRight } from "lucide-react";
-import { onBrand } from "@/lib/color";
-import { useState } from "react";
+import { MessageSquare, Heart, Crown } from "lucide-react";
 import FeedList from "@/components/ui/FeedList";
 import CharityVote from "@/components/ui/CharityVote";
-import Image from "next/image";
 
-export default function BattleChat({ 
-  battle, 
-  onVoteClick 
-}: { 
+export default function BattleChat({
+  battle,
+  onVoteClick
+}: {
   battle: any;
-  onVoteClick: (index: number) => void;
+  onVoteClick?: (index: number) => void;
 }) {
-  const [tab, setTab] = useState<"feed" | "charity">("feed");
-  
+  const leftAmount = Number(battle.contenders?.[0]?.amount) || 0;
+  const rightAmount = Number(battle.contenders?.[1]?.amount) || 0;
+  const totalPool = battle.totalPool ?? (leftAmount + rightAmount);
 
   return (
-    <div className="w-full h-full flex flex-col bg-card border-l border-border relative">
-      
-      {/* HEADER */}
-      <div className="p-4 border-b border-border bg-background flex items-center justify-between z-10 shadow-sm">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-primary" />
-          <h3 className="font-arcade text-sm text-foreground font-bold tracking-wider">LIVE FEED</h3>
-        </div>
-        <div className="flex items-center gap-1 text-xs font-arcade text-green-500">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          LIVE
-        </div>
-      </div>
+    <div className="w-full h-full flex flex-col gap-4 overflow-hidden font-sans">
 
-      {/* Tabs: the sidebar is the only spare surface in a 1v1, so the charity
-          vote lives alongside the feed rather than competing with the arena. */}
-      <div className="flex border-b border-border shrink-0">
-        {(["feed", "charity"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            aria-current={tab === t ? "page" : undefined}
-            className={`flex-1 py-2.5 font-arcade text-[10px] font-bold uppercase tracking-widest
-              transition-colors ${
-                tab === t
-                  ? "text-primary border-b-2 border-primary -mb-px"
-                  : "text-foreground/40 hover:text-foreground/70"
-              }`}
-          >
-            {t === "feed" ? "Battle cries" : "Charity"}
-          </button>
-        ))}
-      </div>
+      {/* 1. LIVE ARENA FEED CARD (Expands to take available height) */}
+      <div className="w-full flex-1 min-h-[220px] rounded-2xl bg-card border border-border/80 p-4 shadow-xl flex flex-col gap-3 overflow-hidden">
+        {/* Card Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-border/60 shrink-0">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-primary" />
+            <h3 className="text-xs md:text-sm text-foreground font-bold tracking-wider uppercase">
+              LIVE ARENA FEED
+            </h3>
+          </div>
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[10px] font-bold text-primary shadow-xs">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <span>LIVE</span>
+          </div>
+        </div>
 
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 scrollbar-hide bg-card">
-        {tab === "feed" ? (
+        {/* Live Feed List - Fills all available vertical height */}
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
           <FeedList
             roomId={battle.id}
             initialItems={battle.feed ?? []}
             initialCursor={battle.feedCursor ?? null}
             initialHasMore={battle.feedHasMore ?? false}
             compact
-            emptyMessage="Be the first to speak"
+            emptyMessage="Be the first to speak in this battle"
           />
-        ) : (
-          <CharityVote
-            roomId={battle.id}
-            charities={battle.charities ?? []}
-            tally={battle.charityTally ?? []}
-            myChoice={battle.charityChoice ?? null}
-            total={battle.charityTotal ?? 0}
-          />
-        )}
+        </div>
       </div>
 
-      {/* STICKY VOTE ACTIONS */}
-      <div className="shrink-0 border-t border-border bg-background p-3 md:p-4">
-        <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/40 block mb-2 text-center">
-          Back your contender
-        </span>
-        <div className="flex flex-col gap-2">
-          <button onClick={() => onVoteClick(0)} className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md" style={{ backgroundColor: battle.contenders[0].color, color: onBrand(battle.contenders[0].color) }}>
-            <span>VOTE {battle.contenders[0].name.toUpperCase()}</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-          
-          <button onClick={() => onVoteClick(1)} className="w-full cut-corner py-3 font-arcade font-bold text-sm flex items-center justify-between px-4 transition-all hover:brightness-110 shadow-md" style={{ backgroundColor: battle.contenders[1].color, color: onBrand(battle.contenders[1].color) }}>
-            <span>VOTE {battle.contenders[1].name.toUpperCase()}</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+      {/* 2 & 3. STICKY BOTTOM CONTAINER FOR CHARITY & POOL SUMMARY */}
+      <div className="shrink-0 flex flex-col gap-4">
+        {/* CHARITY ALLOCATION CARD */}
+        {battle.charities && battle.charities.length > 0 && (
+          <div className="w-full rounded-2xl bg-card border border-border/80 p-4 shadow-xl flex flex-col gap-3">
+            <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+              <Heart className="w-4 h-4 text-primary fill-primary/20" />
+              <h4 className="text-xs md:text-sm font-bold text-foreground uppercase tracking-wider">
+                CHARITY ALLOCATION
+              </h4>
+            </div>
+
+            <CharityVote
+              roomId={battle.id}
+              charities={battle.charities ?? []}
+              tally={battle.charityTally ?? []}
+              myChoice={battle.charityChoice ?? null}
+              total={battle.charityTotal ?? 0}
+            />
+          </div>
+        )}
       </div>
 
     </div>

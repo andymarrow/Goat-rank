@@ -35,7 +35,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
 
       {/* pt-16 clears the fixed desktop navbar; pb-20 clears the mobile tab
           bar so the last row of content is never trapped underneath it. */}
-      <main className="flex-1 w-full max-w-[1920px] mx-auto pt-0 md:pt-16 pb-20 md:pb-0">
+      <main className="flex-1 w-[80%] max-w-[1920px] mx-auto pt-0 md:pt-16 pb-20 md:pb-0">
         {children}
       </main>
 
