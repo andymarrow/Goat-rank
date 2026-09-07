@@ -22,12 +22,10 @@ export default function ArenaFilters({
   sort,
   category,
   categories,
-  includeMock = false,
 }: {
   sort: RoomSort;
   category: string;
   categories: string[];
-  includeMock?: boolean;
 }) {
   const pathname = usePathname();
   const params = useSearchParams();
@@ -57,7 +55,7 @@ export default function ArenaFilters({
     return qs ? `${pathname}?${qs}` : pathname;
   };
 
-  const toggleMockHref = hrefWith({ mock: includeMock ? "false" : "true" });
+  const toggleMockHref = hrefWith({ mock: "true" });
   const activeCategoryLabel = category.toLowerCase() === "all" ? "All Categories" : category;
 
   return (
@@ -156,17 +154,17 @@ export default function ArenaFilters({
           <Link
             href={toggleMockHref}
             scroll={false}
-            title={includeMock ? "Showing Mock Data (click to switch to Actual Data)" : "Showing Actual Data (click to enable Mock Data)"}
+            title={"Showing Actual Data (click to enable Mock Data)"}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-all shrink-0 cursor-pointer shadow-sm"
           >
             <span
-              className={`w-2 h-2 rounded-full transition-colors ${includeMock
+              className={`w-2 h-2 rounded-full transition-colors ${false
                 ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse"
                 : "bg-emerald-500"
                 }`}
             />
             <span className="text-[11px] font-medium hidden sm:inline">
-              {includeMock ? "Mock Data" : "Live DB"}
+              {"Live DB"}
             </span>
           </Link>
         </div>

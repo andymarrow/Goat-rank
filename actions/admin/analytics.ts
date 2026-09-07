@@ -49,6 +49,10 @@ function startOfUtcDay(offsetDays = 0) {
 /**
  * One overview payload for the God-Eye panel.
  *
+ * Every query here excludes demo content. Seeded pledges fill a demo arena's
+ * pool so the page looks alive, but counting them as revenue, charity
+ * liability or user numbers would mean reporting money that does not exist.
+ *
  * Supabase's PostgREST has no SUM aggregate over a filtered set without an RPC,
  * so amounts are summed in JS. That is fine at this scale and keeps the whole
  * console working off the base tables — revisit with an RPC if `votes` grows
@@ -63,10 +67,14 @@ export async function getAdminOverview(): Promise<AdminOverview> {
 
   const [voteRows, recentVotes, rooms, profiles, entitiesPending, payoutsPending] =
     await Promise.all([
-      supabase.from("votes").select("amount"),
-      supabase.from("votes").select("amount, created_at").gte("created_at", since),
-      supabase.from("rooms").select("status"),
-      supabase.from("profiles").select("wallet_balance, total_earned"),
+      supabase.from("votes").select("amount").eq("is_demo", false),
+      supabase
+        .from("votes")
+        .select("amount, created_at")
+        .eq("is_demo", false)
+        .gte("created_at", since),
+      supabase.from("rooms").select("status").eq("is_demo", false),
+      supabase.from("profiles").select("wallet_balance, total_earned").eq("is_bot", false),
       supabase
         .from("entities")
         .select("id", { count: "exact", head: true })

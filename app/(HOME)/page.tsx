@@ -19,13 +19,12 @@ export default async function HomePage({
 
   const sort = isRoomSort(params.sort) ? params.sort : "hot";
   const category = params.category ?? "all";
-  const includeMock = params.mock === "true" || params.mock === "1";
 
   const [live1v1Battles, categories, featured, globalRooms] = await Promise.all([
-    getActive1v1Rooms(sort, category, includeMock),
-    getLiveCategories(includeMock),
-    getFeaturedRooms(4, includeMock),
-    getGlobalRooms(12, includeMock),
+    getActive1v1Rooms(sort, category),
+    getLiveCategories(),
+    getFeaturedRooms(4),
+    getGlobalRooms(12),
   ]);
 
   return (
@@ -42,7 +41,7 @@ export default async function HomePage({
       <section className="w-full pt-2">
         {/* useSearchParams needs a Suspense boundary during streaming. */}
         <Suspense fallback={<div className="h-9" />}>
-          <ArenaFilters sort={sort} category={category} categories={categories} includeMock={includeMock} />
+          <ArenaFilters sort={sort} category={category} categories={categories} />
         </Suspense>
       </section>
 

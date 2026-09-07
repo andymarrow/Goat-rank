@@ -1,5 +1,4 @@
 import { createClient } from "@/utils/supabase/server";
-import { MOCK_GLOBAL_ROOMS, MOCK_1V1_ROOMS } from "@/lib/mockData";
 
 export type LandingContender = {
   name: string;
@@ -111,35 +110,10 @@ async function getVoteCounts(
 }
 
 /** Convert raw 1v1 mock object to LandingRoom format */
-function mock1v1ToLandingRoom(m: any): LandingRoom {
-  const contenders = (m.room_contenders || [])
-    .map((rc: any) => ({
-      name: rc.entities.name,
-      image_url: rc.entities.image_url,
-      brand_color: rc.entities.brand_color,
-      current_votes: rc.current_votes,
-      seed_index: rc.seed_index,
-    }))
-    .sort((a: any, b: any) => a.seed_index - b.seed_index);
-
-  return {
-    id: m.id,
-    title: m.title,
-    category: m.category,
-    room_type: "1v1",
-    total_pool: m.total_pool,
-    expires_at: m.expires_at,
-    is_featured: true,
-    contenders,
-    cover_image: contenders[0]?.image_url || null,
-    vote_count: Math.floor(m.total_pool / 25),
-  };
-}
-
 /**
  * Rooms for the hero carousel.
  */
-export async function getFeaturedRooms(limit = 4, includeMock = false): Promise<LandingRoom[]> {
+export async function getFeaturedRooms(limit = 4): Promise<LandingRoom[]> {
   let dbRooms: LandingRoom[] = [];
   try {
     const supabase = await createClient();
@@ -178,28 +152,13 @@ export async function getFeaturedRooms(limit = 4, includeMock = false): Promise<
     console.error("Error fetching featured rooms from Supabase:", error);
   }
 
-  let combined = [...dbRooms];
+  const combined = [...dbRooms];
 
-  if (includeMock) {
-    const mockFeatured = [
-      ...MOCK_GLOBAL_ROOMS.filter((r) => r.is_featured),
-      ...MOCK_1V1_ROOMS.map(mock1v1ToLandingRoom),
-    ];
-
-    const seenIds = new Set(dbRooms.map((r) => r.id));
-    for (const m of mockFeatured) {
-      if (!seenIds.has(m.id)) {
-        combined.push(m);
-        seenIds.add(m.id);
-      }
-    }
-  }
-
-  return combined.slice(0, limit);
+    return combined.slice(0, limit);
 }
 
 /** Active global (1-vs-many) arenas, biggest pool first. */
-export async function getGlobalRooms(limit = 12, includeMock = false): Promise<LandingRoom[]> {
+export async function getGlobalRooms(limit = 12): Promise<LandingRoom[]> {
   let dbRooms: LandingRoom[] = [];
   try {
     const supabase = await createClient();
@@ -220,13 +179,7 @@ export async function getGlobalRooms(limit = 12, includeMock = false): Promise<L
     console.error("Error fetching global rooms from Supabase:", error);
   }
 
-  let combined = [...dbRooms];
+  const combined = [...dbRooms];
 
-  if (includeMock) {
-    const dbIds = new Set(dbRooms.map((r) => r.id));
-    const filteredMocks = MOCK_GLOBAL_ROOMS.filter((m) => !dbIds.has(m.id));
-    combined = [...dbRooms, ...filteredMocks];
-  }
-
-  return combined.slice(0, limit);
+    return combined.slice(0, limit);
 }

@@ -9,6 +9,7 @@ import UpvoteButton from "@/components/ui/UpvoteButton";
 import { getRoomFeed } from "@/actions/getFeed";
 import type { FeedItem } from "@/lib/feed";
 import { formatSince } from "@/lib/time";
+import { DemoDot } from "@/components/ui/DemoBadge";
 
 const money = (n: number) => `$${(Number(n) || 0).toFixed(2)}`;
 
@@ -83,7 +84,11 @@ export default function FeedList({
               {/* Header: Author, Badge, Backed entity & Time */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                  {entry.voter_id ? (
+                  {/* Disclosure: seeded bot content is marked, never passed
+                      off as a real supporter. */}
+                  {entry.is_demo && <DemoDot />}
+
+                  {entry.voter_id && !entry.is_demo ? (
                     <Link
                       href={`/u/${entry.voter_id}`}
                       className="font-semibold text-xs text-foreground hover:text-primary transition-colors truncate"

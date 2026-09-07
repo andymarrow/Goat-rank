@@ -1,6 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { ROOM_SORTS, type RoomSort } from "@/lib/constants";
-import { MOCK_1V1_ROOMS, MOCK_GLOBAL_ROOMS } from "@/lib/mockData";
 
 const SELECT = `
   id,
@@ -25,8 +24,7 @@ const SELECT = `
  */
 export async function getActive1v1Rooms(
   sort: RoomSort = "hot",
-  category?: string,
-  includeMock = false
+  category?: string
 ) {
   let dbData: any[] = [];
   try {
@@ -55,21 +53,9 @@ export async function getActive1v1Rooms(
     console.error("Error fetching rooms from Supabase:", error);
   }
 
-  let combined = [...dbData];
+  const combined = [...dbData];
 
-  if (includeMock) {
-    const dbIds = new Set(dbData.map((r) => r.id));
-    let filteredMocks = MOCK_1V1_ROOMS.filter((m) => !dbIds.has(m.id));
-
-    if (category && category !== "all") {
-      filteredMocks = filteredMocks.filter(
-        (m) => m.category.toLowerCase() === category.toLowerCase()
-      );
-    }
-    combined = [...dbData, ...filteredMocks];
-  }
-
-  // Apply sorting
+    // Apply sorting
   if (sort === "hot") {
     combined.sort((a, b) => (b.total_pool || 0) - (a.total_pool || 0));
   } else if (sort === "new") {
@@ -89,7 +75,7 @@ export async function getActive1v1Rooms(
 }
 
 /** Distinct categories that actually have a live arena behind them. */
-export async function getLiveCategories(includeMock = false): Promise<string[]> {
+export async function getLiveCategories(): Promise<string[]> {
   let dbCategories: string[] = [];
 
   try {
@@ -106,12 +92,7 @@ export async function getLiveCategories(includeMock = false): Promise<string[]> 
     console.error("Error fetching categories:", error);
   }
 
-  const mockCategories = includeMock
-    ? [
-        ...MOCK_1V1_ROOMS.map((r) => r.category),
-        ...MOCK_GLOBAL_ROOMS.map((r) => r.category),
-      ]
-    : [];
-
-  return [...new Set([...dbCategories, ...mockCategories])].sort();
+  // Demo arenas are real rows, so their categories arrive with everything
+  // else — no separate fixture list to merge in.
+  return [...new Set(dbCategories)].sort();
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity, Swords, Hammer, Users, MessageSquare, Wallet, Settings,
-  ArrowLeft, ShieldCheck, Smile,
+  ArrowLeft, ShieldCheck, Smile, Bot,
 } from "lucide-react";
 
 const SECTIONS = [
@@ -14,6 +14,7 @@ const SECTIONS = [
   { href: "/admin/roster", label: "Roster", icon: Users, badge: "roster" },
   { href: "/admin/feed", label: "Feed", icon: MessageSquare },
   { href: "/admin/ledger", label: "Ledger", icon: Wallet, badge: "ledger" },
+  { href: "/admin/demo", label: "Demo", icon: Bot },
   { href: "/admin/avatars", label: "Avatars", icon: Smile },
   { href: "/admin/config", label: "Config", icon: Settings },
 ] as const;
