@@ -196,11 +196,17 @@ export async function forceSettleRoom(roomId: string): Promise<AdminResult> {
 /**
  * Delete a room that violates terms.
  *
- * Refuses once money is in the pool: the votes rows are the only record of
- * what people paid, and the aggregates they fed are irreversible. Settle a
- * funded room instead.
+ * A funded room needs `force`, because deleting it destroys the votes rows —
+ * the only record of what each backer paid — while the money those rows moved
+ * stays moved: the creator's 10% was credited per vote as it landed and the
+ * contender's lifetime total already counts it. Nothing here reverses that, so
+ * the caller confirms in a dialog that spells it out. Settling is still the
+ * right answer for an arena that merely ended badly.
  */
-export async function deleteRoom(roomId: string): Promise<AdminResult> {
+export async function deleteRoom(
+  roomId: string,
+  opts: { force?: boolean } = {}
+): Promise<AdminResult<{ votes: number }>> {
   try {
     await requireAdmin();
     const supabase = createAdminClient();
@@ -214,20 +220,43 @@ export async function deleteRoom(roomId: string): Promise<AdminResult> {
     if (readError) throw readError;
     if (!room) return { ok: false, error: "Arena not found." };
 
-    if (Number(room.total_pool) > 0) {
+    const funded = Number(room.total_pool) > 0;
+
+    if (funded && !opts.force) {
       return {
         ok: false,
-        error: "This arena has taken money. Force-settle it instead of deleting.",
+        error: "This arena has taken money. Confirm the deletion to remove it anyway.",
       };
     }
 
+    const { data: voteRows } = await supabase.from("votes").select("id").eq("room_id", roomId);
+    const voteIds = (voteRows ?? []).map((v) => v.id);
+
+    // Children first: the base schema's cascade rules are not guaranteed, and
+    // a half-deleted room is worse than one that refused to go.
+    for (let i = 0; i < voteIds.length; i += 200) {
+      const { error } = await supabase
+        .from("testimonial_upvotes")
+        .delete()
+        .in("vote_id", voteIds.slice(i, i + 200));
+      if (error) throw error;
+    }
+
+    await supabase.from("room_charity_votes").delete().eq("room_id", roomId);
+
+    if (voteIds.length > 0) {
+      const { error } = await supabase.from("votes").delete().eq("room_id", roomId);
+      if (error) throw error;
+    }
+
     await supabase.from("room_contenders").delete().eq("room_id", roomId);
+
     const { error } = await supabase.from("rooms").delete().eq("id", roomId);
     if (error) throw error;
 
-    revalidatePath("/admin");
+    revalidatePath("/admin", "layout");
     revalidatePath("/");
-    return { ok: true };
+    return { ok: true, data: { votes: voteIds.length } };
   } catch (error) {
     return adminError(error, "Could not delete the arena.");
   }

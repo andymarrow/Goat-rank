@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type ReactNode } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Check, TriangleAlert } from "lucide-react";
 
@@ -223,4 +223,118 @@ export function EmptyState({ message }: { message: string }) {
 /** Horizontal scroll container — tables must never widen the page. */
 export function Scroller({ children }: { children: ReactNode }) {
   return <div className="-mx-4 sm:-mx-5 px-4 sm:px-5 overflow-x-auto scrollbar-hide">{children}</div>;
+}
+
+/**
+ * Confirmation dialog for an action that cannot be undone.
+ *
+ * ActionButton's two-click arming is enough for a reversible toggle, but a
+ * destructive action needs the consequences spelled out and a deliberate
+ * second click — not a second click on the same button, which is easy to make
+ * by accident.
+ */
+export function ConfirmDialog({
+  open,
+  title,
+  children,
+  confirmLabel = "Confirm",
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  children: ReactNode;
+  confirmLabel?: string;
+  onConfirm: () => Promise<{ ok: boolean; error?: string }>;
+  onClose: () => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !pending) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, pending, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => !pending && onClose()}
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            initial={{ scale: 0.96, opacity: 0, y: 8 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.96, opacity: 0, y: 8 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl bg-card border border-border/60 p-5 shadow-2xl flex flex-col gap-3"
+          >
+            <div className="flex items-start gap-3">
+              <span className="shrink-0 rounded-xl bg-red-500/10 border border-red-500/30 p-2 text-red-500">
+                <TriangleAlert className="w-4 h-4" />
+              </span>
+              <h2 className="text-base font-extrabold text-foreground pt-1.5">{title}</h2>
+            </div>
+
+            <div className="text-[12px] leading-relaxed text-muted-foreground font-sans flex flex-col gap-2">
+              {children}
+            </div>
+
+            {error && (
+              <p role="alert" className="text-[11px] text-red-500 font-sans">
+                {error}
+              </p>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={pending}
+                className="rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 font-mono
+                           text-[10px] font-bold uppercase tracking-wider text-muted-foreground
+                           hover:text-foreground transition-colors cursor-pointer disabled:opacity-40"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                autoFocus
+                onClick={() =>
+                  startTransition(async () => {
+                    setError(undefined);
+                    const res = await onConfirm();
+                    if (res.ok) onClose();
+                    else setError(res.error ?? "That didn't work.");
+                  })
+                }
+                disabled={pending}
+                className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 font-mono
+                           text-[10px] font-bold uppercase tracking-wider text-red-500
+                           hover:bg-red-500/20 transition-colors cursor-pointer inline-flex
+                           items-center gap-1.5 disabled:opacity-40"
+              >
+                {pending && <Loader2 className="w-3 h-3 animate-spin" />}
+                {confirmLabel}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 }

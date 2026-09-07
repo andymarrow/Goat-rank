@@ -9,7 +9,7 @@ import ContenderEditor from "./ContenderEditor";
 import type { AdminRoom } from "@/actions/admin/rooms";
 import { setRoomFeatured, forceSettleRoom, deleteRoom } from "@/actions/admin/rooms";
 import {
-  Panel, ActionButton, Badge, EmptyState, Scroller, inputClass, money,
+  Panel, ActionButton, Badge, ConfirmDialog, EmptyState, Scroller, inputClass, money,
 } from "./AdminPrimitives";
 
 const statusTone = (s: string) =>
@@ -19,6 +19,7 @@ export default function ArenaPanel({ rooms }: { rooms: AdminRoom[] }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [openContenders, setOpenContenders] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminRoom | null>(null);
 
   const visible = rooms.filter((r) => {
     const matchesFilter =
@@ -188,13 +189,17 @@ export default function ArenaPanel({ rooms }: { rooms: AdminRoom[] }) {
                               </ActionButton>
                             )}
 
-                            <ActionButton
-                              variant="danger"
-                              confirm="Delete?"
-                              onRun={() => deleteRoom(room.id)}
+                            <button
+                              type="button"
+                              onClick={() => setPendingDelete(room)}
+                              aria-label={`Delete ${room.title}`}
+                              className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5
+                                         font-mono text-[10px] font-bold uppercase tracking-wider
+                                         text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer
+                                         inline-flex items-center gap-1.5"
                             >
                               <Trash2 className="w-3 h-3" />
-                            </ActionButton>
+                            </button>
                       </div>
                     </td>
                   </tr>
@@ -214,6 +219,31 @@ export default function ArenaPanel({ rooms }: { rooms: AdminRoom[] }) {
         </Scroller>
       )}
 
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title={pendingDelete ? `Delete "${pendingDelete.title}"?` : "Delete arena?"}
+        confirmLabel="Delete arena"
+        onClose={() => setPendingDelete(null)}
+        onConfirm={() => deleteRoom(pendingDelete!.id, { force: true })}
+      >
+        <p>
+          The arena, its contender line-up and its page all disappear. Anyone holding a link to it
+          gets a 404.
+        </p>
+
+        {Number(pendingDelete?.total_pool) > 0 && (
+          <p>
+            It holds{" "}
+            <strong className="text-foreground">{money(pendingDelete?.total_pool ?? 0)}</strong>.
+            Deleting destroys the pledge records — the only account of who paid what — while the
+            money they moved stays moved: the creator&apos;s 10% was credited per pledge as it
+            landed, and each contender&apos;s lifetime total still counts it. Nothing here reverses
+            that.
+          </p>
+        )}
+
+        <p>This cannot be undone.</p>
+      </ConfirmDialog>
     </Panel>
   );
 }

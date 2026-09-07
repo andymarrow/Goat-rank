@@ -15,6 +15,7 @@ export async function getBattleData(roomId: string) {
       title,
       category,
       charity_name,
+      charity_id,
       total_pool,
       expires_at,
       room_contenders (
@@ -78,6 +79,19 @@ export async function getBattleData(roomId: string) {
     title: room.title,
     category: room.category,
     charity: room.charity_name,
+    // The cause, with its logo and link, for the arena's charity card. Falls
+    // back to a bare name for rooms that predate the charity registry.
+    beneficiary:
+      (charities ?? []).find((c) => c.id === room.charity_id) ??
+      (room.charity_name && room.charity_name !== "Pending Charity"
+        ? {
+            id: null,
+            name: room.charity_name,
+            logo_url: null,
+            website_url: null,
+            description: null,
+          }
+        : null),
     totalPool: room.total_pool,
     // Raw timestamp; the client formats and ticks it via useCountdown.
     expiresAt: room.expires_at,

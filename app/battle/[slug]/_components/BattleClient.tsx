@@ -6,6 +6,7 @@ import BattleChat from "./BattleChat";
 import VoteModal from "./VoteModal";
 import { createClient } from "@/utils/supabase/client"; // <-- Import the client!
 import { onBrand } from "@/lib/color";
+import CharityCard from "@/components/ui/CharityCard";
 import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 
 export default function BattleClient({ initialBattleData }: { initialBattleData: any }) {
@@ -81,6 +82,10 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
         {/* Center Main Arena Column */}
         <div className="flex-1 w-full min-w-0 flex flex-col gap-6">
           <BattleArena battle={battleData} onVoteClick={handleVoteClick} />
+
+          {/* Who the 30% actually reaches. A name on its own asked people to
+              pledge to something they may not recognise. */}
+          {battleData.beneficiary && <CharityCard charity={battleData.beneficiary} />}
         </div>
 
         {/* Right Sidebar Column */}

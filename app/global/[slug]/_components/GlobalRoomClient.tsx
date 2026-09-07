@@ -27,6 +27,7 @@ import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
 import FeedList from "@/components/ui/FeedList";
 import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 import CharityVote from "@/components/ui/CharityVote";
+import CharityCard from "@/components/ui/CharityCard";
 import Countdown from "@/components/ui/Countdown";
 
 export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
@@ -191,7 +192,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                 </span>
               </div>
 
-              {roomData.charity && (
+              {roomData.charity && !roomData.beneficiary && (
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground font-medium flex items-center gap-2">
                     <Heart className="w-3.5 h-3.5 text-muted-foreground" />
@@ -213,6 +214,9 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
               <span>Add Contender</span>
             </button>
           </div>
+
+          {/* Who the 30% reaches, with their logo and a link out. */}
+          {roomData.beneficiary && <CharityCard charity={roomData.beneficiary} />}
 
           {/* CHARITY ALLOCATION CARD WRAPPER */}
           <div className="relative w-full rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-sm flex flex-col gap-3">

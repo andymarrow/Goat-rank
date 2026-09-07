@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Megaphone, XCircle, Save } from "lucide-react";
+import { Plus, Trash2, Megaphone, XCircle, Save, ExternalLink, Pencil, HeartHandshake } from "lucide-react";
+import Image from "next/image";
+import ImageUpload from "./ImageUpload";
 
 import type { Category, Charity, SiteBanner } from "@/actions/admin/config";
 import {
@@ -27,7 +29,30 @@ export default function ConfigPanel({
     payoutReference: "",
     websiteUrl: "",
     logoUrl: "",
+    description: "",
   });
+
+  // Editing was missing entirely: a charity could be registered, disabled or
+  // deleted, but never corrected — and its logo could not be set at all.
+  const [editing, setEditing] = useState<string | null>(null);
+  const [charityDraft, setCharityDraft] = useState({
+    name: "",
+    payoutReference: "",
+    websiteUrl: "",
+    logoUrl: "",
+    description: "",
+  });
+
+  const startEditing = (c: Charity) => {
+    setEditing(c.id);
+    setCharityDraft({
+      name: c.name,
+      payoutReference: c.payout_reference ?? "",
+      websiteUrl: c.website_url ?? "",
+      logoUrl: c.logo_url ?? "",
+      description: c.description ?? "",
+    });
+  };
   const [banner, setBanner] = useState({
     message: "",
     href: "",
@@ -225,6 +250,25 @@ export default function ConfigPanel({
                 />
               </Field>
             </div>
+
+            <Field label="What they do">
+              <input
+                value={newCharity.description}
+                onChange={(e) => setNewCharity({ ...newCharity, description: e.target.value })}
+                placeholder="Emergency food and medical care for children in conflict zones"
+                className={inputClass}
+              />
+            </Field>
+
+            {/* Backers see this logo and link on the arena page, so a charity
+                registered without them shows as a bare name. */}
+            <Field label="Logo">
+              <ImageUpload
+                value={newCharity.logoUrl || null}
+                onChange={(url) => setNewCharity({ ...newCharity, logoUrl: url ?? "" })}
+                size={56}
+              />
+            </Field>
             <div className="flex justify-end">
               <ActionButton
                 variant="primary"
@@ -232,7 +276,13 @@ export default function ConfigPanel({
                 onRun={async () => {
                   const res = await upsertCharity(newCharity);
                   if (res.ok) {
-                    setNewCharity({ name: "", payoutReference: "", websiteUrl: "", logoUrl: "" });
+                    setNewCharity({
+                      name: "",
+                      payoutReference: "",
+                      websiteUrl: "",
+                      logoUrl: "",
+                      description: "",
+                    });
                   }
                   return res;
                 }}
@@ -249,29 +299,153 @@ export default function ConfigPanel({
               {charities.map((c) => (
                 <li
                   key={c.id}
-                  className="flex items-center gap-3 p-2.5 border border-border/60 bg-background rounded-xl"
+                  className="flex flex-col gap-3 p-2.5 border border-border/60 bg-background rounded-xl"
                 >
-                  <div className="min-w-0 flex-1">
-                    <span className="font-mono text-[11px] font-bold text-foreground truncate block">
-                      {c.name}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground font-sans">
-                      {c.payout_reference ?? (
-                        <span className="text-amber-500">no payout reference</span>
+                  <div className="flex items-center gap-3">
+                    <span className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden bg-muted/50 border border-border/60 flex items-center justify-center">
+                      {c.logo_url ? (
+                        <Image src={c.logo_url} alt={c.name} fill sizes="36px" className="object-cover" />
+                      ) : (
+                        <HeartHandshake className="w-4 h-4 text-muted-foreground" />
                       )}
                     </span>
+
+                    <div className="min-w-0 flex-1">
+                      <span className="font-mono text-[11px] font-bold text-foreground truncate block">
+                        {c.name}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-sans block truncate">
+                        {c.payout_reference ?? (
+                          <span className="text-amber-500">no payout reference</span>
+                        )}
+                        {!c.logo_url && <span className="text-amber-500"> · no logo</span>}
+                        {!c.website_url && <span className="text-amber-500"> · no link</span>}
+                      </span>
+                    </div>
+
+                    {!c.is_active && <Badge tone="bad">Inactive</Badge>}
+
+                    {c.website_url && (
+                      <a
+                        href={c.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Open ${c.name}`}
+                        className="rounded-lg border border-border/60 bg-muted/40 p-1.5 text-muted-foreground
+                                   hover:text-primary transition-colors cursor-pointer"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+
+                    <ActionButton
+                      onRun={async () => {
+                        if (editing === c.id) setEditing(null);
+                        else startEditing(c);
+                        return { ok: true };
+                      }}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </ActionButton>
+
+                    <ActionButton
+                      onRun={() =>
+                        upsertCharity({
+                          id: c.id,
+                          name: c.name,
+                          // Every field is rewritten on update, so the rest of
+                          // the row has to come along or a toggle would wipe it.
+                          logoUrl: c.logo_url ?? undefined,
+                          websiteUrl: c.website_url ?? undefined,
+                          payoutReference: c.payout_reference ?? undefined,
+                          description: c.description ?? undefined,
+                          isActive: !c.is_active,
+                        })
+                      }
+                    >
+                      {c.is_active ? "Disable" : "Enable"}
+                    </ActionButton>
+
+                    <ActionButton variant="danger" confirm="Delete?" onRun={() => deleteCharity(c.id)}>
+                      <Trash2 className="w-3 h-3" />
+                    </ActionButton>
                   </div>
-                  {!c.is_active && <Badge tone="bad">Inactive</Badge>}
-                  <ActionButton
-                    onRun={() =>
-                      upsertCharity({ id: c.id, name: c.name, isActive: !c.is_active })
-                    }
-                  >
-                    {c.is_active ? "Disable" : "Enable"}
-                  </ActionButton>
-                  <ActionButton variant="danger" confirm="Delete?" onRun={() => deleteCharity(c.id)}>
-                    <Trash2 className="w-3 h-3" />
-                  </ActionButton>
+
+                  {editing === c.id && (
+                    <div className="flex flex-col gap-2.5 pt-2.5 border-t border-border/60">
+                      <Field label="Charity name">
+                        <input
+                          value={charityDraft.name}
+                          onChange={(e) =>
+                            setCharityDraft({ ...charityDraft, name: e.target.value })
+                          }
+                          className={inputClass}
+                        />
+                      </Field>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Field label="Payout reference">
+                          <input
+                            value={charityDraft.payoutReference}
+                            onChange={(e) =>
+                              setCharityDraft({ ...charityDraft, payoutReference: e.target.value })
+                            }
+                            className={inputClass}
+                          />
+                        </Field>
+                        <Field label="Website">
+                          <input
+                            value={charityDraft.websiteUrl}
+                            onChange={(e) =>
+                              setCharityDraft({ ...charityDraft, websiteUrl: e.target.value })
+                            }
+                            placeholder="https://…"
+                            className={inputClass}
+                          />
+                        </Field>
+                      </div>
+
+                      <Field label="What they do">
+                        <input
+                          value={charityDraft.description}
+                          onChange={(e) =>
+                            setCharityDraft({ ...charityDraft, description: e.target.value })
+                          }
+                          className={inputClass}
+                        />
+                      </Field>
+
+                      <Field label="Logo">
+                        <ImageUpload
+                          value={charityDraft.logoUrl || null}
+                          onChange={(url) => setCharityDraft({ ...charityDraft, logoUrl: url ?? "" })}
+                          size={56}
+                        />
+                      </Field>
+
+                      <div className="flex justify-end">
+                        <ActionButton
+                          variant="primary"
+                          disabled={!charityDraft.name.trim()}
+                          onRun={async () => {
+                            const res = await upsertCharity({
+                              id: c.id,
+                              name: charityDraft.name,
+                              payoutReference: charityDraft.payoutReference,
+                              websiteUrl: charityDraft.websiteUrl,
+                              logoUrl: charityDraft.logoUrl,
+                              description: charityDraft.description,
+                              isActive: c.is_active,
+                            });
+                            if (res.ok) setEditing(null);
+                            return res;
+                          }}
+                        >
+                          <Save className="w-3 h-3" /> Save charity
+                        </ActionButton>
+                      </div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

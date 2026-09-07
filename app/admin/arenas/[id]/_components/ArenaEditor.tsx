@@ -15,7 +15,9 @@ import EntitySearch from "@/app/(HOME)/create/_components/EntitySearch";
 import ImageUpload from "../../../_components/ImageUpload";
 import type { Category, Charity } from "@/actions/admin/config";
 import ContenderEditor from "../../../_components/ContenderEditor";
-import { Panel, ActionButton, Badge, Field, inputClass, money } from "../../../_components/AdminPrimitives";
+import {
+  Panel, ActionButton, Badge, ConfirmDialog, Field, inputClass, money,
+} from "../../../_components/AdminPrimitives";
 import { formatAbsolute, formatCountdown } from "@/lib/time";
 
 /** Datetime-local wants `YYYY-MM-DDTHH:mm` in local time, not an ISO string. */
@@ -59,6 +61,9 @@ export default function ArenaEditor({
   const [newEntityId, setNewEntityId] = useState<string | null>(null);
 
   const atCapacity = room.room_type === "1v1" && (room.room_contenders?.length ?? 0) >= 2;
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const funded = Number(room.total_pool) > 0;
 
   const publicHref = `/${room.room_type === "global" ? "global" : "battle"}/${room.id}`;
   const isSettled = room.status === "settled";
@@ -308,17 +313,16 @@ export default function ArenaEditor({
               </ActionButton>
             )}
 
-            <ActionButton
-              variant="danger"
-              confirm="Delete arena?"
-              onRun={async () => {
-                const res = await deleteRoom(room.id);
-                if (res.ok) router.push("/admin/arenas");
-                return res;
-              }}
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 font-mono
+                         text-[10px] font-bold uppercase tracking-wider text-red-500
+                         hover:bg-red-500/20 transition-colors cursor-pointer inline-flex
+                         items-center gap-1.5"
             >
               <Trash2 className="w-3 h-3" /> Delete
-            </ActionButton>
+            </button>
           </div>
 
           <p className="flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground font-sans">
@@ -333,6 +337,34 @@ export default function ArenaEditor({
         </div>
       </Panel>
 
+      <ConfirmDialog
+        open={confirmDelete}
+        title={`Delete "${room.title}"?`}
+        confirmLabel="Delete arena"
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          const res = await deleteRoom(room.id, { force: true });
+          if (res.ok) router.push("/admin/arenas");
+          return res;
+        }}
+      >
+        <p>
+          The arena, its contender line-up and its page all disappear. Anyone holding a link to
+          it gets a 404.
+        </p>
+
+        {funded && (
+          <p>
+            It holds <strong className="text-foreground">{money(room.total_pool)}</strong> across{" "}
+            {room.room_contenders?.length ?? 0} contenders. Deleting destroys the pledge records —
+            the only account of who paid what — while the money they moved stays moved: the
+            creator&apos;s 10% was credited per pledge as it landed, and each contender&apos;s
+            lifetime total still counts it. Nothing here reverses that.
+          </p>
+        )}
+
+        <p>This cannot be undone.</p>
+      </ConfirmDialog>
     </div>
   );
 }
