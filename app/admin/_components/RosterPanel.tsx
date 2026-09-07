@@ -53,11 +53,11 @@ export default function RosterPanel({
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`pressable cut-corner border px-3 py-1 font-arcade text-[10px] font-bold
+                className={`pressable rounded-xl border px-3 py-1 font-mono text-[10px] font-bold
                   uppercase tracking-widest transition-colors ${
                     tab === t
                       ? "bg-primary border-primary text-primary-foreground"
-                      : "bg-background border-border text-foreground/50 hover:text-foreground"
+                      : "bg-background border-border/60 text-muted-foreground hover:text-foreground"
                   }`}
               >
                 {t === "pending" ? `Queue (${pending.length})` : `All (${entities.length})`}
@@ -66,8 +66,8 @@ export default function RosterPanel({
           </div>
         }
       >
-        <p className="flex items-start gap-2 text-[11px] leading-relaxed text-foreground/45 font-sans mb-4">
-          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-foreground/30" />
+        <p className="flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground font-sans mb-4">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-muted-foreground" />
           <span>
             A <strong className="text-foreground/70">contender</strong> is a person, team, film or
             product that arenas compete over — Ronaldo, Messi, a movie. They exist once and are
@@ -90,18 +90,17 @@ export default function RosterPanel({
               return (
                 <article
                   key={entity.id}
-                  className="corner-ticks relative bg-background border border-border cut-corner overflow-hidden"
+                  className=" relative bg-muted/30 border border-border/60 rounded-xl overflow-hidden"
                   style={
                     entity.moderation_status === "pending"
-                      ? { borderColor: "var(--battle-yellow)" }
+                      ? { borderColor: "rgb(245 158 11 / 0.6)" }
                       : undefined
                   }
                 >
-                  <div className="tex-dots absolute inset-0 pointer-events-none" />
 
                   <div className="relative flex gap-3 p-3">
                     {/* Image preview — the whole point of the review queue */}
-                    <div className="relative w-20 h-20 shrink-0 bg-black cut-corner border border-border overflow-hidden">
+                    <div className="relative w-20 h-20 shrink-0 bg-black rounded-xl border border-border/60 overflow-hidden">
                       {renderable ? (
                         <Image
                           src={entity.image_url as string}
@@ -113,7 +112,7 @@ export default function RosterPanel({
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-foreground/25">
                           <ImageOff className="w-4 h-4" />
-                          <span className="font-arcade text-[8px] uppercase">
+                          <span className="font-mono text-[8px] uppercase">
                             {entity.image_url ? "Bad host" : "None"}
                           </span>
                         </div>
@@ -126,7 +125,7 @@ export default function RosterPanel({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-arcade text-xs font-bold text-foreground truncate">
+                        <h3 className="font-mono text-xs font-bold text-foreground truncate">
                           {entity.name}
                         </h3>
                         <Badge
@@ -141,7 +140,7 @@ export default function RosterPanel({
                           {entity.moderation_status}
                         </Badge>
                       </div>
-                      <p className="text-[11px] text-foreground/40 font-sans mt-0.5">
+                      <p className="text-[11px] text-muted-foreground font-sans mt-0.5">
                         {entity.category} · {money(entity.lifetime_raised)} raised
                       </p>
 
@@ -175,8 +174,8 @@ export default function RosterPanel({
                                 image_url: entity.image_url ?? "",
                               });
                             }}
-                            className="pressable cut-corner border border-border px-3 py-1.5 font-arcade
-                                       text-[10px] font-bold uppercase tracking-widest text-foreground/60
+                            className="pressable rounded-xl border border-border/60 px-3 py-1.5 font-mono
+                                       text-[10px] font-bold uppercase tracking-widest text-muted-foreground
                                        hover:text-foreground transition-colors"
                           >
                             Fix
@@ -195,7 +194,7 @@ export default function RosterPanel({
                   </div>
 
                   {isEditing && (
-                    <div className="relative border-t border-border p-3 flex flex-col gap-2.5">
+                    <div className="relative border-t border-border/60 p-3 flex flex-col gap-2.5">
                       <Field label="Name">
                         <input
                           value={draft.name}
@@ -220,7 +219,7 @@ export default function RosterPanel({
                               value={draft.brand_color}
                               onChange={(e) => setDraft({ ...draft, brand_color: e.target.value })}
                               aria-label="Brand colour picker"
-                              className="w-9 h-9 shrink-0 bg-background border border-border cut-corner cursor-pointer"
+                              className="w-9 h-9 shrink-0 bg-muted/30 border border-border/60 rounded-xl cursor-pointer"
                             />
                             <input
                               value={draft.brand_color}
@@ -239,7 +238,7 @@ export default function RosterPanel({
                           className={inputClass}
                         />
                       </Field>
-                      <p className="text-[10px] text-foreground/35 font-sans -mt-1">
+                      <p className="text-[10px] text-muted-foreground font-sans -mt-1">
                         Allowed hosts: {ALLOWED_HOSTS.join(", ")}
                       </p>
 
@@ -254,8 +253,8 @@ export default function RosterPanel({
                         <button
                           type="button"
                           onClick={() => setEditing(null)}
-                          className="pressable cut-corner border border-border px-3 py-1.5 font-arcade
-                                     text-[10px] uppercase tracking-widest text-foreground/50"
+                          className="pressable rounded-xl border border-border/60 px-3 py-1.5 font-mono
+                                     text-[10px] uppercase tracking-widest text-muted-foreground"
                         >
                           Cancel
                         </button>

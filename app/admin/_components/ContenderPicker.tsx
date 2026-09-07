@@ -110,16 +110,16 @@ export default function ContenderPicker({
       {/* ------------------------------------------------ SELECTED LINE-UP */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             Line-up
           </span>
-          <span className="font-arcade text-[10px] text-foreground/35">
+          <span className="font-mono text-[10px] text-muted-foreground">
             {picked.length} / {max}
           </span>
         </div>
 
         {picked.length === 0 ? (
-          <p className="text-[11px] text-foreground/35 font-sans border border-dashed border-border cut-corner p-4 text-center">
+          <p className="text-[11px] text-muted-foreground font-sans border border-dashed border-border/60 rounded-xl p-4 text-center">
             Search below to add existing contenders, or create a new one.
           </p>
         ) : (
@@ -127,14 +127,14 @@ export default function ContenderPicker({
             {picked.map((c, i) => (
               <li
                 key={`${c.name}-${i}`}
-                className="flex items-center gap-2 bg-background border border-border cut-corner pl-1 pr-2 py-1"
+                className="flex items-center gap-2 bg-muted/30 border border-border/60 rounded-xl pl-1 pr-2 py-1"
               >
-                <span className="relative w-7 h-7 shrink-0 cut-corner overflow-hidden bg-card">
+                <span className="relative w-7 h-7 shrink-0 rounded-xl overflow-hidden bg-card">
                   {c.image ? (
                     <Image src={c.image} alt={c.name} fill sizes="28px" className="object-cover" />
                   ) : (
                     <span
-                      className="w-full h-full flex items-center justify-center font-arcade text-[10px] font-bold text-black"
+                      className="w-full h-full flex items-center justify-center font-mono text-[10px] font-bold text-black"
                       style={{ backgroundColor: c.color ?? "#FF7A00" }}
                     >
                       {c.name.charAt(0).toUpperCase()}
@@ -142,7 +142,7 @@ export default function ContenderPicker({
                   )}
                 </span>
 
-                <span className="font-arcade text-[11px] text-foreground truncate max-w-[120px]">
+                <span className="font-mono text-[11px] text-foreground truncate max-w-[120px]">
                   {c.name}
                 </span>
 
@@ -150,7 +150,7 @@ export default function ContenderPicker({
                   type="button"
                   onClick={() => remove(i)}
                   aria-label={`Remove ${c.name}`}
-                  className="text-foreground/30 hover:text-battle-red transition-colors"
+                  className="text-muted-foreground hover:text-red-500 transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -163,7 +163,7 @@ export default function ContenderPicker({
       {/* ------------------------------------------------- SEARCH EXISTING */}
       <div>
         <div className="relative mb-2">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -174,7 +174,7 @@ export default function ContenderPicker({
         </div>
 
         {results.length === 0 ? (
-          <p className="text-[11px] text-foreground/35 font-sans py-3 text-center">
+          <p className="text-[11px] text-muted-foreground font-sans py-3 text-center">
             {query ? `Nothing matches "${query}" — create it below.` : "No contenders in the roster yet."}
           </p>
         ) : (
@@ -193,7 +193,7 @@ export default function ContenderPicker({
                 }
                 disabled={picked.length >= max}
                 title={`${e.name} · ${e.category}`}
-                className="pressable group relative bg-background border border-border cut-corner
+                className="pressable group relative bg-muted/30 border border-border/60 rounded-xl
                            overflow-hidden hover:border-primary transition-colors disabled:opacity-40"
               >
                 <span className="relative block aspect-square bg-card">
@@ -213,7 +213,7 @@ export default function ContenderPicker({
                   </span>
                 </span>
 
-                <span className="block px-1.5 py-1 font-arcade text-[9px] text-foreground truncate">
+                <span className="block px-1.5 py-1 font-mono text-[9px] text-foreground truncate">
                   {e.name}
                 </span>
               </button>
@@ -223,16 +223,16 @@ export default function ContenderPicker({
       </div>
 
       {/* ---------------------------------------------------- CREATE NEW */}
-      <div className="border-t border-border pt-4">
-        <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-2">
+      <div className="border-t border-border/60 pt-4">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">
           Not in the roster? Create one
         </span>
 
         <div className="flex items-end gap-3">
           <label
-            className="relative w-16 h-16 shrink-0 bg-background border border-border border-dashed
-                       cut-corner flex flex-col items-center justify-center gap-1 text-foreground/30
-                       hover:text-foreground/60 hover:border-foreground/40 transition-all
+            className="relative w-16 h-16 shrink-0 bg-muted/30 border border-border/60 border-dashed
+                       rounded-xl flex flex-col items-center justify-center gap-1 text-muted-foreground
+                       hover:text-muted-foreground hover:border-foreground/40 transition-all
                        cursor-pointer overflow-hidden"
           >
             <input
@@ -249,7 +249,7 @@ export default function ContenderPicker({
             ) : (
               <>
                 <Upload className="w-4 h-4" />
-                <span className="font-arcade text-[8px] uppercase">Image</span>
+                <span className="font-mono text-[8px] uppercase">Image</span>
               </>
             )}
           </label>
@@ -271,8 +271,8 @@ export default function ContenderPicker({
               setNewName("");
               setNewImage(null);
             }}
-            className="pressable cut-corner bg-primary text-primary-foreground px-3 py-2.5
-                       font-arcade text-[10px] font-bold uppercase tracking-widest
+            className="pressable rounded-xl bg-primary text-primary-foreground px-3 py-2.5
+                       font-mono text-[10px] font-bold uppercase tracking-widest
                        hover:brightness-110 transition-all disabled:opacity-40 inline-flex items-center gap-1.5"
           >
             <Check className="w-3 h-3" /> Add
@@ -280,7 +280,7 @@ export default function ContenderPicker({
         </div>
 
         {error && (
-          <p role="alert" className="mt-2 text-[11px] text-battle-red font-sans">
+          <p role="alert" className="mt-2 text-[11px] text-red-500 font-sans">
             {error}
           </p>
         )}

@@ -40,14 +40,14 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
           <StatTile
             label="Charity · 30%"
             value={money(treasury.charityLocked)}
-            accent="text-battle-pink"
+            accent="text-pink-500"
             hint="Liability, not yet remitted"
             icon={<HeartHandshake className="w-4 h-4" />}
           />
           <StatTile
             label="Creators · 10%"
             value={money(treasury.creatorLocked)}
-            accent="text-battle-green"
+            accent="text-emerald-500"
             hint="Credited per-vote by trigger"
             icon={<Users className="w-4 h-4" />}
           />
@@ -66,8 +66,8 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
           />
         </div>
 
-        <p className="mt-4 flex items-start gap-2 text-[11px] leading-relaxed text-foreground/45 font-sans">
-          <TriangleAlert className="w-3.5 h-3.5 shrink-0 mt-0.5 text-battle-yellow" />
+        <p className="mt-4 flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground font-sans">
+          <TriangleAlert className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500" />
           <span>
             These are <strong className="text-foreground/70">derived</strong> from vote volume, not a
             reconciled bank ledger. Only the creator 10% actually moves in the database. Lemon
@@ -83,7 +83,7 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
             label="Live arenas"
             value={String(pulse.activeArenas)}
             hint={`${pulse.pendingArenas} awaiting payment`}
-            accent="text-battle-green"
+            accent="text-emerald-500"
             icon={<Swords className="w-4 h-4" />}
           />
           <StatTile
@@ -127,17 +127,17 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
           {volumeSeries.map((point) => (
             <div key={point.day} className="group relative flex-1 flex flex-col justify-end h-full">
               <div
-                className="w-full bg-primary/70 group-hover:bg-primary transition-colors cut-corner min-h-[2px]"
+                className="w-full bg-primary/70 group-hover:bg-primary transition-colors rounded-xl min-h-[2px]"
                 style={{ height: `${Math.max((point.amount / peak) * 100, 1)}%` }}
               />
               <span className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100
-                               transition-opacity font-arcade text-[9px] text-foreground whitespace-nowrap">
+                               transition-opacity font-mono text-[9px] text-foreground whitespace-nowrap">
                 {money(point.amount)}
               </span>
             </div>
           ))}
         </div>
-        <div className="mt-2 flex justify-between font-arcade text-[9px] uppercase tracking-widest text-foreground/35">
+        <div className="mt-2 flex justify-between font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
           <span>{volumeSeries[0]?.day}</span>
           <span>Today</span>
         </div>
@@ -161,7 +161,7 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
         }
       >
         {!report ? (
-          <p className="text-xs text-foreground/45 font-sans leading-relaxed">
+          <p className="text-xs text-muted-foreground font-sans leading-relaxed">
             Scans the most recent 100 orders. A refunded order flips its vote to{" "}
             <code className="text-foreground/70">refunded</code>, which fires the reversal trigger
             and backs the money out of the pool, the entity total and the creator&apos;s wallet.
@@ -176,18 +176,18 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
               <StatTile
                 label="Reversals applied"
                 value={String(report.refundsApplied)}
-                accent={report.refundsApplied > 0 ? "text-battle-yellow" : "text-foreground"}
+                accent={report.refundsApplied > 0 ? "text-amber-500" : "text-foreground"}
               />
               <StatTile
                 label="Value reversed"
                 value={money(report.reversedTotal)}
-                accent={report.reversedTotal > 0 ? "text-battle-red" : "text-foreground"}
+                accent={report.reversedTotal > 0 ? "text-red-500" : "text-foreground"}
               />
             </div>
 
             {report.missingInDb.length > 0 && (
-              <div className="border border-battle-red/40 bg-battle-red/10 cut-corner p-3">
-                <p className="font-arcade text-[10px] uppercase tracking-widest text-battle-red mb-2">
+              <div className="border border-red-500/40 bg-red-500/10 rounded-xl p-3">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-red-500 mb-2">
                   {report.missingInDb.length} paid order(s) with no vote row
                 </p>
                 <ul className="flex flex-col gap-1 font-sans text-[11px] text-foreground/70">

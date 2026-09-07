@@ -445,8 +445,10 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
             </div>
           )}
 
-          {/* BOTTOM BATTLE CRIES FEED SECTION */}
-          <div className="flex flex-col gap-3 pt-3 border-t border-border/40">
+          {/* BOTTOM BATTLE CRIES FEED SECTION
+              Desktop only: on mobile the same feed is already in the drawer,
+              so rendering it here too showed every battle cry twice. */}
+          <div className="hidden lg:flex flex-col gap-3 pt-3 border-t border-border/40">
             <div className="flex items-center gap-1.5">
               <MessageSquare className="w-3.5 h-3.5 text-primary" />
               <h2 className="text-xs font-semibold text-foreground uppercase tracking-wider">

@@ -53,8 +53,8 @@ export default function ConfigPanel({
         }
       >
         {live && (
-          <div className="mb-4 border border-primary/40 bg-primary/10 cut-corner p-3">
-            <span className="font-arcade text-[9px] uppercase tracking-widest text-primary">
+          <div className="mb-4 border border-primary/40 bg-primary/10 rounded-xl p-3">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-primary">
               Currently live
             </span>
             <p className="mt-1 text-sm font-sans text-foreground">{live.message}</p>
@@ -120,7 +120,7 @@ export default function ConfigPanel({
           title="Category manager"
           subtitle="Drives the create flow and the homepage filters."
         >
-          <div className="flex flex-wrap items-end gap-2 mb-4 pb-4 border-b border-border">
+          <div className="flex flex-wrap items-end gap-2 mb-4 pb-4 border-b border-border/60">
             <div className="flex-1 min-w-[140px]">
               <Field label="New category">
                 <input
@@ -136,7 +136,7 @@ export default function ConfigPanel({
               value={newCategory.accent}
               onChange={(e) => setNewCategory({ ...newCategory, accent: e.target.value })}
               aria-label="Category accent colour"
-              className="w-9 h-9 bg-background border border-border cut-corner cursor-pointer"
+              className="w-9 h-9 bg-muted/30 border border-border/60 rounded-xl cursor-pointer"
             />
             <ActionButton
               variant="primary"
@@ -162,17 +162,17 @@ export default function ConfigPanel({
               {categories.map((c) => (
                 <li
                   key={c.id}
-                  className="flex items-center gap-3 p-2.5 border border-border bg-background cut-corner"
+                  className="flex items-center gap-3 p-2.5 border border-border/60 bg-background rounded-xl"
                 >
                   <span
                     className="w-2.5 h-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: c.accent ?? "#FF7A00" }}
                   />
                   <div className="min-w-0 flex-1">
-                    <span className="font-arcade text-[11px] font-bold text-foreground">
+                    <span className="font-mono text-[11px] font-bold text-foreground">
                       {c.label}
                     </span>
-                    <span className="ml-2 text-[10px] text-foreground/35 font-mono">{c.slug}</span>
+                    <span className="ml-2 text-[10px] text-muted-foreground font-mono">{c.slug}</span>
                   </div>
                   {!c.is_active && <Badge tone="bad">Hidden</Badge>}
                   <ActionButton
@@ -196,7 +196,7 @@ export default function ConfigPanel({
           title="Charity registry"
           subtitle="Creators pick from this list. Payout reference is where you send the money."
         >
-          <div className="flex flex-col gap-2.5 mb-4 pb-4 border-b border-border">
+          <div className="flex flex-col gap-2.5 mb-4 pb-4 border-b border-border/60">
             <Field label="Charity name">
               <input
                 value={newCharity.name}
@@ -249,15 +249,15 @@ export default function ConfigPanel({
               {charities.map((c) => (
                 <li
                   key={c.id}
-                  className="flex items-center gap-3 p-2.5 border border-border bg-background cut-corner"
+                  className="flex items-center gap-3 p-2.5 border border-border/60 bg-background rounded-xl"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-arcade text-[11px] font-bold text-foreground truncate block">
+                    <span className="font-mono text-[11px] font-bold text-foreground truncate block">
                       {c.name}
                     </span>
-                    <span className="text-[10px] text-foreground/35 font-sans">
+                    <span className="text-[10px] text-muted-foreground font-sans">
                       {c.payout_reference ?? (
-                        <span className="text-battle-yellow">no payout reference</span>
+                        <span className="text-amber-500">no payout reference</span>
                       )}
                     </span>
                   </div>

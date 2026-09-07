@@ -39,7 +39,7 @@ export default function ContenderStack({
   if (visible.length === 0) {
     return (
       <span
-        className="inline-flex items-center justify-center bg-background border border-border cut-corner text-foreground/20"
+        className="inline-flex items-center justify-center bg-muted/30 border border-border/60 rounded-xl text-foreground/20"
         style={{ width: size, height: size }}
       >
         <ImageOff className="w-3.5 h-3.5" />
@@ -53,7 +53,7 @@ export default function ContenderStack({
         <span
           key={i}
           title={c.entities!.name}
-          className="relative bg-background border border-border cut-corner overflow-hidden"
+          className="relative bg-muted/30 border border-border/60 rounded-xl overflow-hidden"
           style={{
             width: size,
             height: size,
@@ -71,7 +71,7 @@ export default function ContenderStack({
             />
           ) : (
             <span
-              className="w-full h-full flex items-center justify-center font-arcade font-bold text-black"
+              className="w-full h-full flex items-center justify-center font-mono font-bold text-black"
               style={{
                 backgroundColor: c.entities!.brand_color ?? "#FF7A00",
                 fontSize: Math.round(size * 0.4),
@@ -85,8 +85,8 @@ export default function ContenderStack({
 
       {overflow > 0 && (
         <span
-          className="relative flex items-center justify-center bg-background border border-border
-                     cut-corner font-arcade text-foreground/50"
+          className="relative flex items-center justify-center bg-muted/30 border border-border/60
+                     rounded-xl font-mono text-muted-foreground"
           style={{
             width: size,
             height: size,

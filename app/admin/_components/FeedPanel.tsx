@@ -89,11 +89,11 @@ export default function FeedPanel({
               setView(v);
               setOpenRoom(null);
             }}
-            className={`pressable cut-corner border px-4 py-2 font-arcade text-[10px] font-bold
+            className={`pressable rounded-xl border px-4 py-2 font-mono text-[10px] font-bold
               uppercase tracking-widest transition-colors ${
                 view === v
                   ? "bg-primary border-primary text-primary-foreground"
-                  : "bg-card border-border text-foreground/55 hover:text-foreground"
+                  : "bg-card border-border/60 text-muted-foreground hover:text-foreground"
               }`}
           >
             {v === "rooms" ? "By arena" : "User jail"}
@@ -108,7 +108,7 @@ export default function FeedPanel({
           subtitle="Pick an arena to review and moderate its battle cries."
           action={
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input
                 value={roomQuery}
                 onChange={(e) => setRoomQuery(e.target.value)}
@@ -132,7 +132,7 @@ export default function FeedPanel({
                       type="button"
                       onClick={() => setOpenRoom(room.id)}
                       className="pressable w-full flex items-center justify-between gap-3 p-3
-                                 bg-background border border-border cut-corner text-left
+                                 bg-muted/30 border border-border/60 rounded-xl text-left
                                  hover:border-primary/50 transition-colors group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -140,14 +140,14 @@ export default function FeedPanel({
 
                         <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-arcade text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                          <span className="font-mono text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
                             {room.title}
                           </span>
                           <Badge tone={room.status === "active" ? "good" : "neutral"}>
                             {room.status.replace("_", " ")}
                           </Badge>
                         </div>
-                        <span className="text-[11px] text-foreground/40 font-sans">
+                        <span className="text-[11px] text-muted-foreground font-sans">
                           {messages.length} message{messages.length === 1 ? "" : "s"}
                           {nuked > 0 && ` · ${nuked} nuked`} · {money(room.total_pool)} pool
                         </span>
@@ -178,7 +178,7 @@ export default function FeedPanel({
                   onChange={(e) => setHideNuked(e.target.checked)}
                   className="accent-[var(--primary)] w-4 h-4"
                 />
-                <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                   Hide nuked
                 </span>
               </label>
@@ -186,9 +186,9 @@ export default function FeedPanel({
               <Link
                 href={`/${activeRoom.room_type === "global" ? "global" : "battle"}/${activeRoom.id}`}
                 target="_blank"
-                className="pressable cut-corner border border-border bg-background px-3 py-1.5
-                           font-arcade text-[10px] font-bold uppercase tracking-widest
-                           text-foreground/60 hover:text-primary inline-flex items-center gap-1.5"
+                className="pressable rounded-xl border border-border/60 bg-background px-3 py-1.5
+                           font-mono text-[10px] font-bold uppercase tracking-widest
+                           text-muted-foreground hover:text-primary inline-flex items-center gap-1.5"
               >
                 <ExternalLink className="w-3 h-3" /> Open
               </Link>
@@ -196,9 +196,9 @@ export default function FeedPanel({
               <button
                 type="button"
                 onClick={() => setOpenRoom(null)}
-                className="pressable cut-corner border border-border bg-background px-3 py-1.5
-                           font-arcade text-[10px] font-bold uppercase tracking-widest
-                           text-foreground/60 hover:text-foreground inline-flex items-center gap-1.5"
+                className="pressable rounded-xl border border-border/60 bg-background px-3 py-1.5
+                           font-mono text-[10px] font-bold uppercase tracking-widest
+                           text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
               >
                 <ArrowLeft className="w-3 h-3" /> Back
               </button>
@@ -212,13 +212,13 @@ export default function FeedPanel({
               {activeMessages.map((vote) => (
                 <li
                   key={vote.id}
-                  className={`flex gap-3 p-3 border cut-corner transition-colors ${
+                  className={`flex gap-3 p-3 border rounded-xl transition-colors ${
                     vote.message_hidden
-                      ? "border-battle-red/30 bg-battle-red/5"
-                      : "border-border bg-background"
+                      ? "border-red-500/30 bg-red-500/5"
+                      : "border-border/60 bg-background"
                   }`}
                 >
-                  <div className="relative w-9 h-9 shrink-0 bg-card border border-border cut-corner overflow-hidden">
+                  <div className="relative w-9 h-9 shrink-0 bg-card border border-border/60 rounded-xl overflow-hidden">
                     {vote.voter_avatar && (
                       <Image
                         src={vote.voter_avatar}
@@ -232,20 +232,20 @@ export default function FeedPanel({
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-arcade text-[11px] font-bold text-foreground">
+                      <span className="font-mono text-[11px] font-bold text-foreground">
                         {vote.voter_name}
                       </span>
                       <Badge tone="hot">{money(vote.amount)}</Badge>
                       {vote.refunded && <Badge tone="bad">Refunded</Badge>}
                       {vote.message_hidden && <Badge tone="bad">Nuked</Badge>}
-                      <span className="text-[10px] text-foreground/35 font-sans ml-auto">
+                      <span className="text-[10px] text-muted-foreground font-sans ml-auto">
                         {formatSince(vote.created_at)}
                       </span>
                     </div>
 
                     <p
                       className={`mt-1 text-xs font-sans leading-relaxed break-words ${
-                        vote.message_hidden ? "text-foreground/30 line-through" : "text-foreground/75"
+                        vote.message_hidden ? "text-muted-foreground line-through" : "text-foreground/75"
                       }`}
                     >
                       {vote.message}
@@ -282,11 +282,11 @@ export default function FeedPanel({
         >
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[220px]">
-              <label className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-1.5">
+              <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-1.5">
                 Email address
               </label>
               <div className="relative">
-                <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+                <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <input
                   type="email"
                   value={inviteEmail}
@@ -321,14 +321,14 @@ export default function FeedPanel({
             </ActionButton>
           </div>
 
-          <p className="mt-3 text-[11px] leading-relaxed text-foreground/40 font-sans">
+          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground font-sans">
             The person must already have a GOAT Rank account — this grants access to an existing
             user, it cannot create one. Admins can settle arenas, release payouts and moderate
             messages, so grant it sparingly.
           </p>
 
           {inviteNote && (
-            <p role="status" className="mt-2 text-[11px] text-battle-green font-sans">
+            <p role="status" className="mt-2 text-[11px] text-emerald-500 font-sans">
               {inviteNote}
             </p>
           )}
@@ -342,7 +342,7 @@ export default function FeedPanel({
           subtitle="Suspended accounts cannot deploy arenas or withdraw creator funds."
           action={
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input
                 value={userQuery}
                 onChange={(e) => setUserQuery(e.target.value)}
@@ -360,21 +360,21 @@ export default function FeedPanel({
               {users.map((user) => (
                 <li
                   key={user.id}
-                  className="flex flex-wrap items-center gap-3 p-3 border border-border bg-background cut-corner"
+                  className="flex flex-wrap items-center gap-3 p-3 border border-border/60 bg-background rounded-xl"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={`/u/${user.id}`}
                         target="_blank"
-                        className="font-arcade text-[11px] font-bold text-foreground hover:text-primary transition-colors truncate"
+                        className="font-mono text-[11px] font-bold text-foreground hover:text-primary transition-colors truncate"
                       >
                         {user.username ?? "unnamed"}
                       </Link>
                       {user.is_admin && <Badge tone="hot">Admin</Badge>}
                       {user.is_banned && <Badge tone="bad">Jailed</Badge>}
                     </div>
-                    <p className="text-[10px] text-foreground/40 font-sans mt-0.5">
+                    <p className="text-[10px] text-muted-foreground font-sans mt-0.5">
                       Wallet {money(user.wallet_balance)} · earned {money(user.total_earned)}
                       {user.banned_reason && ` · ${user.banned_reason}`}
                     </p>

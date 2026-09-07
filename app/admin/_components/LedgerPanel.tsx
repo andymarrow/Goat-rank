@@ -59,11 +59,11 @@ export default function LedgerPanel({
           <Scroller>
             <table className="w-full min-w-[820px] border-collapse">
               <thead>
-                <tr className="border-b border-border text-left">
+                <tr className="border-b border-border/60 text-left">
                   {["Creator", "Requested", "Amount", "Wallet", "Status", "Actions"].map((h) => (
                     <th
                       key={h}
-                      className="py-2 pr-3 font-arcade text-[9px] uppercase tracking-widest text-foreground/40"
+                      className="py-2 pr-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground"
                     >
                       {h}
                     </th>
@@ -73,16 +73,16 @@ export default function LedgerPanel({
               <tbody>
                 {payouts.map((p) => (
                   <tr key={p.id} className="border-b border-border/50">
-                    <td className="py-3 pr-3 font-arcade text-xs text-foreground">
+                    <td className="py-3 pr-3 font-mono text-xs text-foreground">
                       {p.profiles?.username ?? "unnamed"}
                     </td>
-                    <td className="py-3 pr-3 text-[11px] text-foreground/45 font-sans whitespace-nowrap">
+                    <td className="py-3 pr-3 text-[11px] text-muted-foreground font-sans whitespace-nowrap">
                       {new Date(p.requested_at).toLocaleDateString()}
                     </td>
-                    <td className="py-3 pr-3 font-arcade text-xs tabular-nums text-battle-green">
+                    <td className="py-3 pr-3 font-mono text-xs tabular-nums text-emerald-500">
                       {money(p.amount)}
                     </td>
-                    <td className="py-3 pr-3 font-arcade text-xs tabular-nums text-foreground/50">
+                    <td className="py-3 pr-3 font-mono text-xs tabular-nums text-muted-foreground">
                       {money(p.profiles?.wallet_balance ?? 0)}
                     </td>
                     <td className="py-3 pr-3">
@@ -90,7 +90,7 @@ export default function LedgerPanel({
                     </td>
                     <td className="py-3">
                       {p.status === "paid" || p.status === "rejected" ? (
-                        <span className="text-[10px] text-foreground/30 font-sans">
+                        <span className="text-[10px] text-muted-foreground font-sans">
                           {p.payout_reference || "—"}
                         </span>
                       ) : (
@@ -149,11 +149,11 @@ export default function LedgerPanel({
             <Scroller>
               <table className="w-full min-w-[720px] border-collapse">
                 <thead>
-                  <tr className="border-b border-border text-left">
+                  <tr className="border-b border-border/60 text-left">
                     {["Charity", "Payout reference", "Rooms", "Gross pool", "Owed"].map((h) => (
                       <th
                         key={h}
-                        className="py-2 pr-3 font-arcade text-[9px] uppercase tracking-widest text-foreground/40"
+                        className="py-2 pr-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground"
                       >
                         {h}
                       </th>
@@ -163,21 +163,21 @@ export default function LedgerPanel({
                 <tbody>
                   {charityLedger.map((row) => (
                     <tr key={row.charity_name ?? "unassigned"} className="border-b border-border/50">
-                      <td className="py-3 pr-3 font-arcade text-xs text-foreground">
+                      <td className="py-3 pr-3 font-mono text-xs text-foreground">
                         {row.charity_name ?? "Unassigned"}
                       </td>
-                      <td className="py-3 pr-3 text-[11px] font-sans text-foreground/45">
+                      <td className="py-3 pr-3 text-[11px] font-sans text-muted-foreground">
                         {row.payout_reference ?? (
-                          <span className="text-battle-yellow">not set</span>
+                          <span className="text-amber-500">not set</span>
                         )}
                       </td>
-                      <td className="py-3 pr-3 font-arcade text-xs tabular-nums text-foreground/60">
+                      <td className="py-3 pr-3 font-mono text-xs tabular-nums text-muted-foreground">
                         {row.room_count}
                       </td>
-                      <td className="py-3 pr-3 font-arcade text-xs tabular-nums text-foreground/60">
+                      <td className="py-3 pr-3 font-mono text-xs tabular-nums text-muted-foreground">
                         {money(row.gross_pool)}
                       </td>
-                      <td className="py-3 pr-3 font-arcade text-xs tabular-nums text-battle-pink">
+                      <td className="py-3 pr-3 font-mono text-xs tabular-nums text-pink-500">
                         {money(row.charity_owed)}
                       </td>
                     </tr>
@@ -186,11 +186,11 @@ export default function LedgerPanel({
               </table>
             </Scroller>
 
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-              <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/40">
+            <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 Total owed to charities
               </span>
-              <span className="font-arcade text-xl font-black tabular-nums text-battle-pink">
+              <span className="font-mono text-xl font-black tabular-nums text-pink-500">
                 {money(charityTotal)}
               </span>
             </div>

@@ -46,7 +46,7 @@ export default function ArenaPanel({
       action={
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -58,8 +58,8 @@ export default function ArenaPanel({
         </div>
       }
     >
-      <p className="flex items-start gap-2 text-[11px] leading-relaxed text-foreground/45 font-sans mb-4">
-        <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-foreground/30" />
+      <p className="flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground font-sans mb-4">
+        <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-muted-foreground" />
         <span>
           <strong className="text-foreground/70">Force settle</strong> ends an arena immediately:
           it stops accepting votes, unpins it from the homepage and stamps who closed it. It moves
@@ -76,11 +76,11 @@ export default function ArenaPanel({
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`pressable cut-corner border px-3 py-1 font-arcade text-[10px] font-bold uppercase
+            className={`pressable rounded-xl border px-3 py-1 font-mono text-[10px] font-bold uppercase
               tracking-widest transition-colors ${
                 filter === f
                   ? "bg-primary border-primary text-primary-foreground"
-                  : "bg-background border-border text-foreground/50 hover:text-foreground"
+                  : "bg-background border-border/60 text-muted-foreground hover:text-foreground"
               }`}
           >
             {f.replace("_", " ")}
@@ -94,11 +94,11 @@ export default function ArenaPanel({
         <Scroller>
           <table className="w-full min-w-[900px] border-collapse">
             <thead>
-              <tr className="border-b border-border text-left">
+              <tr className="border-b border-border/60 text-left">
                 {["Arena", "Type", "Status", "Pool", "Contenders", "Actions"].map((h) => (
                   <th
                     key={h}
-                    className="py-2 pr-3 font-arcade text-[9px] uppercase tracking-widest text-foreground/40"
+                    className="py-2 pr-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground"
                   >
                     {h}
                   </th>
@@ -136,12 +136,12 @@ export default function ArenaPanel({
                       ) : (
                         <>
                           <div className="flex items-center gap-2">
-                            <span className="font-arcade text-xs font-bold text-foreground truncate">
+                            <span className="font-mono text-xs font-bold text-foreground truncate">
                               {room.title}
                             </span>
                             {room.is_featured && <Badge tone="hot">Pinned</Badge>}
                           </div>
-                          <span className="text-[11px] text-foreground/40 font-sans">
+                          <span className="text-[11px] text-muted-foreground font-sans">
                             {room.category}
                           </span>
                         </>
@@ -156,14 +156,14 @@ export default function ArenaPanel({
                       <Badge tone={statusTone(room.status)}>{room.status.replace("_", " ")}</Badge>
                     </td>
 
-                    <td className="py-3 pr-3 font-arcade text-xs tabular-nums text-battle-yellow">
+                    <td className="py-3 pr-3 font-mono text-xs tabular-nums text-amber-500">
                       {money(room.total_pool)}
                     </td>
 
                     <td className="py-3 pr-3">
                       <div className="flex items-center gap-2">
                         <ContenderStack contenders={room.room_contenders ?? []} />
-                        <span className="text-[11px] text-foreground/45 font-sans max-w-[130px] truncate">
+                        <span className="text-[11px] text-muted-foreground font-sans max-w-[130px] truncate">
                           {names?.length ? names.join(" vs ") : "—"}
                         </span>
                       </div>
@@ -183,8 +183,8 @@ export default function ArenaPanel({
                             <button
                               type="button"
                               onClick={() => setEditing(null)}
-                              className="pressable cut-corner border border-border px-3 py-1.5 font-arcade
-                                         text-[10px] uppercase tracking-widest text-foreground/50"
+                              className="pressable rounded-xl border border-border/60 px-3 py-1.5 font-mono
+                                         text-[10px] uppercase tracking-widest text-muted-foreground"
                             >
                               Cancel
                             </button>
@@ -208,8 +208,8 @@ export default function ArenaPanel({
                                 setEditing(room.id);
                                 setDraft({ title: room.title, category: room.category });
                               }}
-                              className="pressable cut-corner border border-border bg-background px-3 py-1.5
-                                         font-arcade text-[10px] font-bold uppercase tracking-widest
+                              className="pressable rounded-xl border border-border/60 bg-background px-3 py-1.5
+                                         font-mono text-[10px] font-bold uppercase tracking-widest
                                          text-foreground/70 hover:text-foreground transition-colors"
                             >
                               Edit

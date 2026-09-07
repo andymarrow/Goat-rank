@@ -79,11 +79,11 @@ export default function AvatarPanel({ avatars }: { avatars: AdminAvatar[] }) {
         }
       >
         {/* Uploader */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 mb-5 pb-5 border-b border-border">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 mb-5 pb-5 border-b border-border/60">
           <label
-            className="relative w-24 h-24 shrink-0 bg-background border border-border border-dashed
-                       cut-corner flex flex-col items-center justify-center gap-1 text-foreground/30
-                       hover:text-foreground/60 hover:border-foreground/40 transition-all
+            className="relative w-24 h-24 shrink-0 bg-muted/30 border border-border/60 border-dashed
+                       rounded-xl flex flex-col items-center justify-center gap-1 text-muted-foreground
+                       hover:text-muted-foreground hover:border-foreground/40 transition-all
                        cursor-pointer overflow-hidden"
           >
             <input
@@ -100,7 +100,7 @@ export default function AvatarPanel({ avatars }: { avatars: AdminAvatar[] }) {
             ) : (
               <>
                 <Upload className="w-4 h-4" />
-                <span className="font-arcade text-[9px] uppercase tracking-widest">Upload</span>
+                <span className="font-mono text-[9px] uppercase tracking-widest">Upload</span>
               </>
             )}
           </label>
@@ -135,8 +135,8 @@ export default function AvatarPanel({ avatars }: { avatars: AdminAvatar[] }) {
         {error && (
           <p
             role="alert"
-            className="mb-4 cut-corner border border-battle-red/40 bg-battle-red/10 px-3 py-2
-                       text-xs font-sans text-battle-red"
+            className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2
+                       text-xs font-sans text-red-500"
           >
             {error}
           </p>
@@ -149,8 +149,8 @@ export default function AvatarPanel({ avatars }: { avatars: AdminAvatar[] }) {
             {avatars.map((a) => (
               <div
                 key={a.id}
-                className={`relative bg-background border cut-corner overflow-hidden ${
-                  a.is_active ? "border-border" : "border-border opacity-40"
+                className={`relative bg-background border rounded-xl overflow-hidden ${
+                  a.is_active ? "border-border/60" : "border-border/60 opacity-40"
                 }`}
               >
                 <div className="relative aspect-square">
@@ -158,7 +158,7 @@ export default function AvatarPanel({ avatars }: { avatars: AdminAvatar[] }) {
                 </div>
 
                 <div className="p-1.5">
-                  <p className="font-arcade text-[9px] uppercase tracking-wider text-foreground/70 truncate">
+                  <p className="font-mono text-[9px] uppercase tracking-wider text-foreground/70 truncate">
                     {a.name}
                   </p>
                   <div className="flex items-center gap-1 mt-1">

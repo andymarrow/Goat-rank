@@ -103,7 +103,7 @@ export default function StudioPanel({
           </Field>
 
           <div>
-            <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Format
             </span>
             <div className="mt-1.5 flex gap-2">
@@ -112,11 +112,11 @@ export default function StudioPanel({
                   key={t}
                   type="button"
                   onClick={() => setRoomType(t)}
-                  className={`pressable flex-1 cut-corner border py-2 font-arcade text-[10px] font-bold
+                  className={`pressable flex-1 rounded-xl border py-2 font-mono text-[10px] font-bold
                     uppercase tracking-widest transition-colors ${
                       roomType === t
                         ? "bg-primary border-primary text-primary-foreground"
-                        : "bg-background border-border text-foreground/50 hover:text-foreground"
+                        : "bg-background border-border/60 text-muted-foreground hover:text-foreground"
                     }`}
                 >
                   {t === "1v1" ? "1 v 1" : "Global list"}
@@ -126,7 +126,7 @@ export default function StudioPanel({
           </div>
 
           <div>
-            <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-2">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">
               {roomType === "1v1" ? "Contenders — exactly 2" : "Contenders — 2 to 100"}
             </span>
             <ContenderPicker
@@ -145,16 +145,16 @@ export default function StudioPanel({
               onChange={(e) => setFeatured(e.target.checked)}
               className="accent-[var(--primary)] w-4 h-4"
             />
-            <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/70 inline-flex items-center gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/70 inline-flex items-center gap-1.5">
               <Pin className="w-3 h-3" /> Pin to homepage carousel
             </span>
           </label>
 
-          <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-            <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/40">
+          <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               {parsed.length} contender{parsed.length === 1 ? "" : "s"} parsed
               {!countOk && parsed.length > 0 && (
-                <span className="text-battle-red">
+                <span className="text-red-500">
                   {" "}
                   · {roomType === "1v1" ? "need exactly 2" : "need 2–100"}
                 </span>
@@ -220,13 +220,13 @@ export default function StudioPanel({
               category={rooms.find((r) => r.id === seedTarget)?.category}
             />
 
-            <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+            <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-4">
               <div className="flex items-center gap-2">
                 <Badge tone={parsedSeed.length > 100 ? "bad" : "neutral"}>
                   {parsedSeed.length} parsed
                 </Badge>
                 {parsedSeed.length > 100 && (
-                  <span className="text-[10px] text-battle-red font-sans">max 100 per batch</span>
+                  <span className="text-[10px] text-red-500 font-sans">max 100 per batch</span>
                 )}
               </div>
 
@@ -248,7 +248,7 @@ export default function StudioPanel({
                 {parsedSeed.slice(0, 60).map((c, i) => (
                   <span
                     key={`${c.name}-${i}`}
-                    className="cut-corner border border-border px-2 py-0.5 text-[10px] font-sans text-foreground/60"
+                    className="rounded-xl border border-border/60 px-2 py-0.5 text-[10px] font-sans text-muted-foreground"
                     style={c.color ? { borderColor: `${c.color}66`, color: c.color } : undefined}
                   >
                     {c.name}

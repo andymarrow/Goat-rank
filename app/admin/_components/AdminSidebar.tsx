@@ -39,20 +39,19 @@ export default function AdminSidebar({
   return (
     <aside
       className="lg:w-60 lg:shrink-0 lg:h-screen lg:sticky lg:top-0 border-b lg:border-b-0
-                 lg:border-r border-border bg-card flex flex-col"
+                 lg:border-r border-border/60 bg-card flex flex-col"
     >
-      <div className="corner-ticks relative px-4 py-4 lg:py-6 border-b border-border overflow-hidden">
-        <div className="tex-grid absolute inset-0 pointer-events-none" />
+      <div className=" relative px-4 py-4 lg:py-6 border-b border-border/60 overflow-hidden">
         <div className="relative flex items-center gap-2 mb-1">
           <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span className="font-arcade text-[9px] uppercase tracking-[0.2em] text-foreground/50">
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
             Restricted
           </span>
         </div>
-        <p className="relative font-arcade font-black uppercase tracking-wider text-xl lg:text-2xl text-foreground">
+        <p className="relative font-mono font-black uppercase tracking-wider text-xl lg:text-2xl text-foreground">
           GOD<span className="text-primary italic"> MODE</span>
         </p>
-        <p className="relative mt-0.5 text-[11px] text-foreground/45 font-sans truncate">
+        <p className="relative mt-0.5 text-[11px] text-muted-foreground font-sans truncate">
           {adminName}
         </p>
       </div>
@@ -73,11 +72,11 @@ export default function AdminSidebar({
               href={s.href}
               aria-current={active ? "page" : undefined}
               className={`pressable relative shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5
-                cut-corner font-arcade text-[10px] font-bold uppercase tracking-widest
+                rounded-xl font-mono text-[10px] font-bold uppercase tracking-widest
                 transition-colors ${
                   active
                     ? "bg-primary text-primary-foreground"
-                    : "text-foreground/55 hover:text-foreground hover:bg-foreground/5"
+                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
                 }`}
             >
               <Icon className="w-4 h-4 shrink-0" />
@@ -85,7 +84,7 @@ export default function AdminSidebar({
 
               {count > 0 && (
                 <span
-                  className={`ml-auto cut-corner px-1.5 py-0.5 text-[9px] tabular-nums ${
+                  className={`ml-auto rounded-xl px-1.5 py-0.5 text-[9px] tabular-nums ${
                     active ? "bg-black/25" : "bg-primary text-primary-foreground"
                   }`}
                 >
@@ -97,12 +96,12 @@ export default function AdminSidebar({
         })}
       </nav>
 
-      <div className="hidden lg:block p-2 border-t border-border">
+      <div className="hidden lg:block p-2 border-t border-border/60">
         <Link
           href="/"
-          className="pressable w-full flex items-center gap-2.5 px-3 py-2.5 cut-corner
-                     font-arcade text-[10px] font-bold uppercase tracking-widest
-                     text-foreground/55 hover:text-foreground hover:bg-foreground/5 transition-colors"
+          className="pressable w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl
+                     font-mono text-[10px] font-bold uppercase tracking-widest
+                     text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Live site
         </Link>
