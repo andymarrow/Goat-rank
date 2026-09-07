@@ -104,7 +104,7 @@ export default function MobileFeedDrawer({
                   LIVE FEED
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[10px] font-mono font-bold text-primary shadow-xs">
+              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted border border-border/60 text-[10px] font-mono font-bold text-primary shadow-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span>LIVE</span>
               </div>

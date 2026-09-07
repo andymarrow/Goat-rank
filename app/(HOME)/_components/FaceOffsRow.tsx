@@ -86,13 +86,13 @@ export default function FaceOffsRow({ liveBattles }: { liveBattles: any[] }) {
             </div>
 
             {/* Minimal Progress Bar */}
-            <div className="w-full h-1.5 rounded-full bg-zinc-800/90 overflow-hidden flex">
+            <div className="w-full h-1.5 rounded-full bg-muted/60 overflow-hidden flex">
               <div
-                className={`h-full transition-all duration-500 ${isC1Winning ? "bg-primary" : "bg-zinc-700/80"}`}
+                className={`h-full transition-all duration-500 ${isC1Winning ? "bg-primary" : "bg-muted/80"}`}
                 style={{ width: `${pct1}%` }}
               />
               <div
-                className={`h-full flex-1 transition-all duration-500 ${!isC1Winning ? "bg-primary" : "bg-zinc-700/80"}`}
+                className={`h-full flex-1 transition-all duration-500 ${!isC1Winning ? "bg-primary" : "bg-muted/80"}`}
               />
             </div>
           </div>

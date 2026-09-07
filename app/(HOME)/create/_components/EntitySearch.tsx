@@ -112,7 +112,7 @@ export default function EntitySearch({
                     className="w-full flex items-center gap-3 p-2 rounded-xl
                                hover:bg-muted/40 transition-colors text-left cursor-pointer"
                   >
-                    <span className="relative w-10 h-10 shrink-0 bg-zinc-900 border border-border/80 rounded-xl overflow-hidden">
+                    <span className="relative w-10 h-10 shrink-0 bg-muted border border-border/80 rounded-xl overflow-hidden">
                       {e.image_url ? (
                         <Image src={e.image_url} alt={e.name} fill sizes="40px" className="object-cover" />
                       ) : (

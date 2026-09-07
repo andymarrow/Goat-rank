@@ -54,8 +54,6 @@ export default function ArenaFilters({
     const qs = next.toString();
     return qs ? `${pathname}?${qs}` : pathname;
   };
-
-  const toggleMockHref = hrefWith({ mock: "true" });
   const activeCategoryLabel = category.toLowerCase() === "all" ? "All Categories" : category;
 
   return (
@@ -122,7 +120,7 @@ export default function ArenaFilters({
 
               {/* Floating Glassmorphic Dropdown Panel */}
               {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-zinc-900 border border-zinc-800 p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 text-xs">
+                <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-card border border-border/60 p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 text-xs">
                   <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Categories
                   </div>
@@ -137,7 +135,7 @@ export default function ArenaFilters({
                         className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl transition-colors ${
                           active
                             ? "bg-primary text-primary-foreground font-semibold"
-                            : "text-foreground hover:bg-zinc-800/80"
+                            : "text-foreground hover:bg-muted/60"
                         }`}
                       >
                         <span className="capitalize">{cat === "all" ? "All Categories" : cat}</span>
@@ -150,23 +148,6 @@ export default function ArenaFilters({
             </div>
           )}
 
-          {/* Small Dot Button to Toggle Between Actual Data & Mock Data */}
-          <Link
-            href={toggleMockHref}
-            scroll={false}
-            title={"Showing Actual Data (click to enable Mock Data)"}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-all shrink-0 cursor-pointer shadow-sm"
-          >
-            <span
-              className={`w-2 h-2 rounded-full transition-colors ${false
-                ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse"
-                : "bg-emerald-500"
-                }`}
-            />
-            <span className="text-[11px] font-medium hidden sm:inline">
-              {"Live DB"}
-            </span>
-          </Link>
         </div>
       </div>
     </div>

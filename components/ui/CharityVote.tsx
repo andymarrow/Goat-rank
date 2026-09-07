@@ -115,14 +115,14 @@ export default function CharityVote({
                 aria-pressed={mine}
                 className={`relative w-full overflow-hidden flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all ${
                   mine
-                    ? "bg-zinc-800 border-zinc-700 text-zinc-100 font-semibold cursor-default shadow-xs"
+                    ? "bg-muted border-border/60 text-foreground font-semibold cursor-default shadow-xs"
                     : "border-border/60 bg-muted/30 text-foreground hover:border-border hover:bg-muted/60 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]"
                 }`}
               >
                 {/* Share bar, behind content */}
                 <span
                   className={`absolute inset-y-0 left-0 transition-all duration-500 pointer-events-none ${
-                    mine ? "bg-zinc-700/60" : "bg-zinc-800/30"
+                    mine ? "bg-primary/20" : "bg-muted/30"
                   }`}
                   style={{ width: `${pct}%` }}
                   aria-hidden="true"
@@ -150,11 +150,11 @@ export default function CharityVote({
                 </span>
 
                 <span className="relative flex items-center gap-1.5 shrink-0">
-                  <span className={`text-xs font-bold tabular-nums font-sans ${mine ? "text-zinc-200 font-bold" : "text-muted-foreground"}`}>
+                  <span className={`text-xs font-bold tabular-nums font-sans ${mine ? "text-foreground font-bold" : "text-muted-foreground"}`}>
                     {votes}
                   </span>
                   {mine && (
-                    <span className="px-1.5 py-0.5 rounded-md bg-zinc-700/80 border border-zinc-600/80 text-zinc-200 text-[10px] font-bold flex items-center gap-0.5">
+                    <span className="px-1.5 py-0.5 rounded-md bg-muted/80 border border-border/60 text-foreground text-[10px] font-bold flex items-center gap-0.5">
                       <Check className="w-3 h-3 stroke-[3]" /> Selected
                     </span>
                   )}

@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bot, Plus, Trash2, MessageSquarePlus, ExternalLink, Pin, Info } from "lucide-react";
+import { Bot, Plus, Trash2, MessageSquarePlus, ExternalLink, Pin, Info, Save, Eraser } from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
 
-import type { DemoRoomRow } from "@/actions/admin/demo";
-import { createDemoRoom, deleteDemoRoom, addDemoCries } from "@/actions/admin/demo";
+import type { DemoRoomRow, BotRow } from "@/actions/admin/demo";
+import {
+  createDemoRoom, deleteDemoRoom, addDemoCries, updateBot, purgeDemoContent,
+} from "@/actions/admin/demo";
 import { setRoomFeatured } from "@/actions/admin/rooms";
 import type { AdminEntity } from "@/actions/admin/roster";
 import type { Category } from "@/actions/admin/config";
@@ -23,13 +26,18 @@ import { formatSince } from "@/lib/time";
  */
 export default function DemoPanel({
   rooms,
+  bots,
   roster,
   categories,
 }: {
   rooms: DemoRoomRow[];
+  bots: BotRow[];
   roster: AdminEntity[];
   categories: Category[];
 }) {
+  const [botDraft, setBotDraft] = useState<Record<string, { username: string; persona: string }>>(
+    {}
+  );
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(categories[0]?.label ?? "Sports");
   const [roomType, setRoomType] = useState<"1v1" | "global">("1v1");
@@ -244,6 +252,94 @@ export default function DemoPanel({
                 </div>
               </li>
             ))}
+          </ul>
+        )}
+      </Panel>
+
+      {/* --------------------------------------------------------- BOTS */}
+      <Panel
+        title="Bot supporters"
+        subtitle="Every one is shown with an orange dot and a labelled demo profile."
+        action={
+          <div className="flex items-center gap-2">
+            <Badge tone="hot">{bots.length} bots</Badge>
+            <ActionButton
+              variant="danger"
+              confirm="Remove everything?"
+              onRun={async () => {
+                const res = await purgeDemoContent();
+                return res.ok ? { ok: true } : res;
+              }}
+            >
+              <Eraser className="w-3 h-3" /> Retire all demo content
+            </ActionButton>
+          </div>
+        }
+      >
+        {bots.length === 0 ? (
+          <EmptyState message="No bots yet — they are created with your first demo arena" />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {bots.map((b) => {
+              const draft = botDraft[b.id] ?? {
+                username: b.username ?? "",
+                persona: b.bot_persona ?? "",
+              };
+
+              return (
+                <li
+                  key={b.id}
+                  className="flex flex-wrap items-center gap-3 p-3 bg-muted/30 border border-border/60 rounded-xl"
+                >
+                  <Avatar src={b.avatar_url} name={b.username ?? "Bot"} size={36} />
+
+                  <div className="flex flex-col sm:flex-row gap-2 flex-1 min-w-[200px]">
+                    <input
+                      value={draft.username}
+                      onChange={(e) =>
+                        setBotDraft({ ...botDraft, [b.id]: { ...draft, username: e.target.value } })
+                      }
+                      aria-label="Bot name"
+                      className={`${inputClass} sm:max-w-[160px]`}
+                    />
+                    <input
+                      value={draft.persona}
+                      onChange={(e) =>
+                        setBotDraft({ ...botDraft, [b.id]: { ...draft, persona: e.target.value } })
+                      }
+                      placeholder="Persona line"
+                      aria-label="Bot persona"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">
+                    {b.cries} cries
+                  </span>
+
+                  <div className="flex items-start gap-2">
+                    <Link
+                      href={`/u/${b.id}`}
+                      target="_blank"
+                      className="rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 font-mono
+                                 text-[10px] font-bold uppercase tracking-wider text-muted-foreground
+                                 hover:text-primary transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Profile
+                    </Link>
+
+                    <ActionButton
+                      variant="primary"
+                      onRun={() =>
+                        updateBot(b.id, { username: draft.username, persona: draft.persona })
+                      }
+                    >
+                      <Save className="w-3 h-3" /> Save
+                    </ActionButton>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Panel>

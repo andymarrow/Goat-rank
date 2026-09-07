@@ -39,7 +39,7 @@ export default function ProfileClient({ initialProfileData }: { initialProfileDa
           <div className="flex flex-col sm:flex-row sm:items-end gap-5">
             {/* Contender Avatar Frame */}
             <div
-              className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl bg-zinc-900 border-4 border-card relative overflow-hidden shadow-2xl shrink-0"
+              className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl bg-muted border-4 border-card relative overflow-hidden shadow-2xl shrink-0"
               style={{ boxShadow: `0 10px 30px -10px ${profileData.color || '#3b82f6'}40` }}
             >
               {profileData.image ? (
@@ -51,7 +51,7 @@ export default function ProfileClient({ initialProfileData }: { initialProfileDa
                   className="object-cover object-top"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-zinc-900">
+                <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-muted">
                   {profileData.name?.charAt(0)}
                 </div>
               )}
@@ -135,7 +135,7 @@ export default function ProfileClient({ initialProfileData }: { initialProfileDa
 
                 <div className="flex justify-between items-start z-10">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-zinc-900 border border-border/80 overflow-hidden flex items-center justify-center">
+                    <div className="w-9 h-9 rounded-full bg-muted border border-border/80 overflow-hidden flex items-center justify-center">
                       <Image src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${t.user}`} alt={t.user} width={36} height={36} />
                     </div>
                     <div className="flex flex-col">
@@ -146,7 +146,7 @@ export default function ProfileClient({ initialProfileData }: { initialProfileDa
                   <div
                     className={`flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-xl ${isWhale
                       ? 'bg-amber-500/20 border border-amber-500/40 text-amber-400'
-                      : 'bg-zinc-800/80 text-foreground border border-border/60'
+                      : 'bg-muted/60 text-foreground border border-border/60'
                       }`}
                   >
                     <Zap className="w-3.5 h-3.5" /> ${t.amount}

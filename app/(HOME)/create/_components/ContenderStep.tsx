@@ -179,7 +179,7 @@ export default function ContenderStep({
       <AnimatePresence mode="wait">
         {roomType === "1v1" ? (
           <motion.div key="1v1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="relative grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 mb-6 md:mb-8">
-            <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-zinc-900 border-2 border-amber-500/80 text-amber-500 font-extrabold text-sm items-center justify-center shadow-lg select-none">
+            <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-muted border-2 border-amber-500/80 text-amber-500 font-extrabold text-sm items-center justify-center shadow-lg select-none">
               VS
             </div>
             

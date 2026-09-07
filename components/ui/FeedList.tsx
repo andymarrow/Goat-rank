@@ -88,7 +88,7 @@ export default function FeedList({
                       off as a real supporter. */}
                   {entry.is_demo && <DemoDot />}
 
-                  {entry.voter_id && !entry.is_demo ? (
+                  {entry.voter_id ? (
                     <Link
                       href={`/u/${entry.voter_id}`}
                       className="font-semibold text-xs text-foreground hover:text-primary transition-colors truncate"
@@ -101,8 +101,8 @@ export default function FeedList({
                     </span>
                   )}
 
-                  <span className="px-1.5 py-0.2 rounded-full bg-zinc-800 border border-zinc-700/80 text-zinc-200 text-[9px] font-bold inline-flex items-center gap-0.5 shrink-0">
-                    <Zap className="w-2.5 h-2.5 fill-current text-zinc-400" />
+                  <span className="px-1.5 py-0.2 rounded-full bg-muted border border-border/60 text-foreground text-[9px] font-bold inline-flex items-center gap-0.5 shrink-0">
+                    <Zap className="w-2.5 h-2.5 fill-current text-muted-foreground" />
                     {money(entry.amount)}
                   </span>
 

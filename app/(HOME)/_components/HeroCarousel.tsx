@@ -101,7 +101,7 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                 {current.category}
               </span>
               <span className="text-muted-foreground/30">•</span>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[10px] font-mono font-bold text-primary shadow-xs">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted border border-border/60 text-[10px] font-mono font-bold text-primary shadow-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span>LIVE</span>
               </div>
@@ -186,13 +186,13 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                     <span className={!isLeftWinning ? "text-primary font-bold" : ""}>({rightPct}%)</span> {rightContender.name}
                   </span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-zinc-800/90 overflow-hidden flex">
+                <div className="w-full h-2 rounded-full bg-muted/60 overflow-hidden flex">
                   <div
-                    className={`h-full transition-all duration-500 ${isLeftWinning ? "bg-primary" : "bg-zinc-700/80"}`}
+                    className={`h-full transition-all duration-500 ${isLeftWinning ? "bg-primary" : "bg-muted/80"}`}
                     style={{ width: `${leftPct}%` }}
                   />
                   <div
-                    className={`h-full flex-1 transition-all duration-500 ${!isLeftWinning ? "bg-primary" : "bg-zinc-700/80"}`}
+                    className={`h-full flex-1 transition-all duration-500 ${!isLeftWinning ? "bg-primary" : "bg-muted/80"}`}
                   />
                 </div>
               </div>

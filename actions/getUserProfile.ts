@@ -14,6 +14,9 @@ export type PublicUserProfile = {
   /** Lifetime commission. Deliberately NOT wallet_balance, which is private. */
   totalEarned: number;
   isBanned: boolean;
+  /** Seeded demo account — labelled on the profile page. */
+  isBot: boolean;
+  botPersona: string | null;
   createdAt: string;
   arenasCreated: number;
   arenasSettled: number;
@@ -41,7 +44,7 @@ export async function getUserProfile(userId: string): Promise<PublicUserProfile 
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, username, avatar_url, total_earned, is_banned, created_at")
+    .select("id, username, avatar_url, total_earned, is_banned, created_at, is_bot, bot_persona")
     .eq("id", userId)
     .single();
 
@@ -68,6 +71,8 @@ export async function getUserProfile(userId: string): Promise<PublicUserProfile 
     avatar_url: profile.avatar_url,
     totalEarned: Number(profile.total_earned) || 0,
     isBanned: Boolean(profile.is_banned),
+    isBot: Boolean((profile as { is_bot?: boolean }).is_bot),
+    botPersona: (profile as { bot_persona?: string }).bot_persona ?? null,
     createdAt: profile.created_at,
     arenasCreated: list.length,
     arenasSettled: list.filter((r) => r.status === "settled").length,

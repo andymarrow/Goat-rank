@@ -45,7 +45,7 @@ export default async function RosterPage() {
               href={`/profile/${entity.id}`}
               className="relative bg-card border border-border/80 rounded-2xl overflow-hidden group hover:border-primary/50 transition-all shadow-xs flex flex-col"
             >
-              <div className="relative aspect-square bg-zinc-900">
+              <div className="relative aspect-square bg-muted">
                 {entity.image_url ? (
                   <Image
                     src={entity.image_url}

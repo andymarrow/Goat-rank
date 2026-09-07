@@ -49,7 +49,7 @@ export default function ReviewStep({
                 {[0, 1].map((i) => (
                   <div key={i} className={`flex flex-col w-[42%] ${i === 1 ? "items-end" : "items-start"}`}>
                     <div
-                      className="relative w-full aspect-[3/4] bg-zinc-900 border border-border/80 rounded-xl overflow-hidden mb-2 shadow-xs"
+                      className="relative w-full aspect-[3/4] bg-muted border border-border/80 rounded-xl overflow-hidden mb-2 shadow-xs"
                       style={{ borderColor: `${contenders[i].color}55` }}
                     >
                       {contenders[i].image ? (
@@ -91,10 +91,10 @@ export default function ReviewStep({
                 {contenders.map((c: any, i: number) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 bg-zinc-900/60 border border-border/60 rounded-xl p-2 px-3"
+                    className="flex items-center gap-3 bg-muted/40 border border-border/60 rounded-xl p-2 px-3"
                     style={{ borderLeftColor: c.color, borderLeftWidth: "3px" }}
                   >
-                    <div className="relative w-9 h-9 shrink-0 bg-zinc-900 border border-border/80 rounded-lg overflow-hidden">
+                    <div className="relative w-9 h-9 shrink-0 bg-muted border border-border/80 rounded-lg overflow-hidden">
                       {c.image ? (
                         <Image
                           src={c.image}
@@ -132,7 +132,7 @@ export default function ReviewStep({
         {/* --- RIGHT: TERMINAL RECEIPT --- */}
         <div>
            <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-4">AUTHORIZATION RECEIPT</h3>
-           <div className="bg-zinc-900/60 border border-border/80 p-6 rounded-2xl text-sm flex flex-col gap-4 shadow-sm">
+           <div className="bg-muted/40 border border-border/80 p-6 rounded-2xl text-sm flex flex-col gap-4 shadow-sm">
               <div className="flex justify-between items-center text-foreground font-semibold border-b border-border/60 pb-4">
                 <span>CREATOR PASS (3 ROOMS)</span>
                 <span className="font-extrabold tabular-nums">$10.00</span>

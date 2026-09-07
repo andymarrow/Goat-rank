@@ -38,7 +38,7 @@ export default function DashboardClient({
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0 rounded-2xl bg-zinc-900 border-2 border-border/80 p-1 shadow-xl relative overflow-hidden">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0 rounded-2xl bg-muted border-2 border-border/80 p-1 shadow-xl relative overflow-hidden">
             <Image src={data.avatar} alt={data.name} width={96} height={96} className="w-full h-full object-cover rounded-xl" />
           </div>
           <div className="min-w-0">
@@ -196,14 +196,14 @@ export default function DashboardClient({
                     {/* Contender art — overlapped */}
                     <div className="flex shrink-0">
                       {battle.contenders.length === 0 ? (
-                        <div className="w-12 h-12 rounded-full bg-zinc-900 border border-border/80 flex items-center justify-center text-muted-foreground">
+                        <div className="w-12 h-12 rounded-full bg-muted border border-border/80 flex items-center justify-center text-muted-foreground">
                           <ImageOff className="w-4 h-4" />
                         </div>
                       ) : (
                         battle.contenders.map((c, i) => (
                           <div
                             key={i}
-                            className="relative w-12 h-12 rounded-full bg-zinc-900 border-2 border-card overflow-hidden shadow-xs"
+                            className="relative w-12 h-12 rounded-full bg-muted border-2 border-card overflow-hidden shadow-xs"
                             style={{ marginLeft: i === 0 ? 0 : -14, zIndex: 10 - i }}
                           >
                             {c.image_url ? (
@@ -224,13 +224,13 @@ export default function DashboardClient({
                     <div className="flex flex-col gap-1 min-w-0">
                       <div className="flex items-center gap-2">
                         {battle.status === "active" ? (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[10px] font-bold text-primary shadow-xs">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted border border-border/60 text-[10px] font-bold text-primary shadow-xs">
                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                             <span>LIVE</span>
                           </div>
                         ) : (
                           <>
-                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                               {battle.status.replace("_", " ")}
                             </span>
@@ -246,18 +246,18 @@ export default function DashboardClient({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:flex items-center gap-4 md:gap-8 bg-zinc-900/60 border border-border/60 rounded-xl p-3 md:p-4 shrink-0">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">TOTAL POOL</span>
+                  <div className="grid grid-cols-2 md:flex items-stretch gap-2 md:gap-2.5 shrink-0 w-full md:w-auto">
+                    <div className="flex flex-col justify-center rounded-xl border border-border/60 bg-muted/30 px-3 py-2 min-w-[92px]">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Pool</span>
                       <span className="text-sm font-extrabold text-foreground tabular-nums">{money(battle.total_pool)}</span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">YOU EARNED (10%)</span>
+                    <div className="flex flex-col justify-center rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 min-w-[92px]">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">You earned</span>
                       <span className="text-sm font-extrabold text-primary tabular-nums">{money(battle.my_cut)}</span>
                     </div>
-                    <div className="hidden md:flex flex-col">
+                    <div className="hidden md:flex flex-col justify-center rounded-xl border border-border/60 bg-muted/30 px-3 py-2 min-w-[92px]">
                       <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> CLOSES IN
+                        <Clock className="w-3 h-3" /> Closes in
                       </span>
                       <span
                         className="text-xs font-bold text-foreground tabular-nums"
@@ -276,7 +276,7 @@ export default function DashboardClient({
           {/* TAB 2: Financial Ledger */}
           {activeTab === "ledger" && (
             <div className="rounded-2xl bg-card border border-border/80 overflow-hidden flex flex-col shadow-sm">
-              <div className="bg-zinc-900/60 border-b border-border/60 p-4 flex items-center gap-3">
+              <div className="bg-muted/40 border-b border-border/60 p-4 flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-primary/10 text-primary">
                   <History className="w-4 h-4" />
                 </div>

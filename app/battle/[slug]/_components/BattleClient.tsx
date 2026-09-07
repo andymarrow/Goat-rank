@@ -77,7 +77,7 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
 
   return (
     <>
-      <div className="w-full max-w-[1600px] mx-auto p-3 sm:p-5 md:p-6 flex flex-col lg:flex-row gap-6 items-start">
+      <div className="w-full max-w-[1600px] mx-auto p-3 sm:p-5 md:p-6 pb-28 lg:pb-6 flex flex-col lg:flex-row gap-6 items-start">
         {/* Center Main Arena Column */}
         <div className="flex-1 w-full min-w-0 flex flex-col gap-6">
           <BattleArena battle={battleData} onVoteClick={handleVoteClick} />
@@ -121,7 +121,7 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
               onClick={() => handleVoteClick(i)}
               className={`flex-1 min-w-0 rounded-xl py-3 px-2.5 font-arcade font-bold text-xs shadow-md flex items-center justify-center gap-1 uppercase transition-all active:scale-[0.98] cursor-pointer ${isWinning
                 ? "bg-primary text-primary-foreground hover:opacity-95"
-                : "bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:bg-zinc-700"
+                : "bg-muted border border-border/60 text-foreground hover:bg-muted"
                 }`}
             >
               <span className="opacity-90 shrink-0">Vote</span>

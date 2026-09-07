@@ -5,6 +5,7 @@ import { Swords, TrendingUp, Trophy, ArrowUpRight, Ban } from "lucide-react";
 
 import { getUserProfile } from "@/actions/getUserProfile";
 import { formatSince } from "@/lib/time";
+import { DemoBadge } from "@/components/ui/DemoBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +42,9 @@ export default async function PublicUserPage({
           </div>
 
           <div className="min-w-0 flex-1">
-            <span className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50 block mb-1">
-              Creator
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-2 mb-1">
+              {profile.isBot ? "Demo account" : "Creator"}
+              {profile.isBot && <DemoBadge />}
             </span>
             <h1 className="font-arcade text-2xl md:text-4xl font-black uppercase tracking-wider text-foreground truncate">
               {profile.username}
@@ -59,6 +61,15 @@ export default async function PublicUserPage({
           )}
         </div>
       </div>
+
+      {profile.isBot && (
+        <p className="mb-6 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs
+                      text-muted-foreground font-sans leading-relaxed">
+          This is a <strong className="text-foreground">seeded demo account</strong>, not a real
+          person. It exists so new arenas aren&apos;t empty. Its battle cries and pledges are
+          demonstration content and are excluded from platform earnings.
+        </p>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
@@ -117,7 +128,7 @@ export default async function PublicUserPage({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     {arena.status === "active" ? (
-                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[9px] font-mono font-bold text-primary shadow-xs">
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted border border-border/60 text-[9px] font-mono font-bold text-primary shadow-xs">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                         <span>LIVE</span>
                       </div>

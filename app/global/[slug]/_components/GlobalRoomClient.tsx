@@ -150,7 +150,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
 
             {/* Title & Live Status Section */}
             <div className="flex flex-col gap-2">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[10px] font-mono font-bold text-primary shadow-xs w-fit">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-muted border border-border/60 text-[10px] font-mono font-bold text-primary shadow-xs w-fit">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span>LIVE GLOBAL ARENA</span>
               </div>
@@ -420,7 +420,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                       onClick={() => handleVoteClick(contender.id)}
                       className={`w-full py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 mt-1 active:scale-[0.98] ${isLeader
                         ? "bg-primary text-primary-foreground hover:opacity-95"
-                        : "bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:bg-zinc-700"
+                        : "bg-muted border border-border/60 text-foreground hover:bg-muted"
                         }`}
                     >
                       <Sparkles className="w-3.5 h-3.5" />

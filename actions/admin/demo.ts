@@ -354,3 +354,134 @@ export async function listDemoRooms(): Promise<DemoRoomRow[]> {
     cries: counts.get(r.id) ?? 0,
   }));
 }
+
+export type BotRow = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  bot_persona: string | null;
+  cries: number;
+  created_at: string;
+};
+
+export async function listBots(): Promise<BotRow[]> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url, bot_persona, created_at")
+    .eq("is_bot", true)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("listBots failed:", error);
+    return [];
+  }
+
+  const bots = data ?? [];
+  if (bots.length === 0) return [];
+
+  const { data: votes } = await supabase
+    .from("votes")
+    .select("voter_id")
+    .in("voter_id", bots.map((b) => b.id));
+
+  const counts = new Map<string, number>();
+  for (const v of votes ?? []) {
+    if (v.voter_id) counts.set(v.voter_id, (counts.get(v.voter_id) ?? 0) + 1);
+  }
+
+  return bots.map((b) => ({ ...b, cries: counts.get(b.id) ?? 0 }));
+}
+
+/** Rename a bot or change the persona line shown on its profile. */
+export async function updateBot(
+  botId: string,
+  patch: { username?: string; persona?: string }
+): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+
+    const clean: Record<string, string> = {};
+    if (patch.username?.trim()) clean.username = patch.username.trim().slice(0, 24);
+    if (patch.persona !== undefined) clean.bot_persona = patch.persona.trim().slice(0, 80);
+
+    if (Object.keys(clean).length === 0) return { ok: false, error: "Nothing to update." };
+
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update(clean)
+      .eq("id", botId)
+      .eq("is_bot", true); // never let this touch a real account
+
+    if (error) {
+      if ((error as { code?: string }).code === "23505") {
+        return { ok: false, error: "That name is taken." };
+      }
+      throw error;
+    }
+
+    revalidatePath("/admin/demo");
+    return { ok: true };
+  } catch (error) {
+    return adminError(error, "Could not update the bot.");
+  }
+}
+
+/**
+ * Remove every trace of the demo layer.
+ *
+ * The point of seeded content is to be temporary — this is the exit. Deletes
+ * demo votes, demo rooms and their contenders, then the bot accounts. Refuses
+ * to touch anything not flagged demo.
+ */
+export async function purgeDemoContent(): Promise<
+  AdminResult<{ rooms: number; cries: number; bots: number }>
+> {
+  try {
+    await requireAdmin();
+    const supabase = createAdminClient();
+
+    const { data: rooms } = await supabase.from("rooms").select("id").eq("is_demo", true);
+    const roomIds = (rooms ?? []).map((r) => r.id);
+
+    let cries = 0;
+    if (roomIds.length > 0) {
+      const { count } = await supabase
+        .from("votes")
+        .select("id", { count: "exact", head: true })
+        .in("room_id", roomIds);
+      cries = count ?? 0;
+
+      await supabase.from("votes").delete().in("room_id", roomIds);
+      await supabase.from("room_contenders").delete().in("room_id", roomIds);
+      await supabase.from("rooms").delete().in("id", roomIds);
+    }
+
+    // Demo entities no longer attached to any room.
+    const { data: orphans } = await supabase.from("entities").select("id").eq("is_demo", true);
+    for (const e of orphans ?? []) {
+      const { count } = await supabase
+        .from("room_contenders")
+        .select("id", { count: "exact", head: true })
+        .eq("entity_id", e.id);
+      if ((count ?? 0) === 0) {
+        await supabase.from("entities").delete().eq("id", e.id).eq("is_demo", true);
+      }
+    }
+
+    const { data: bots } = await supabase.from("profiles").select("id").eq("is_bot", true);
+    await supabase.from("profiles").delete().eq("is_bot", true);
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/");
+    return {
+      ok: true,
+      data: { rooms: roomIds.length, cries, bots: (bots ?? []).length },
+    };
+  } catch (error) {
+    return adminError(error, "Could not purge demo content.");
+  }
+}

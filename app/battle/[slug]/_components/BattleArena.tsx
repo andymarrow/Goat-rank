@@ -77,7 +77,7 @@ export default function BattleArena({
           <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gradient-to-b from-transparent via-amber-500/40 to-transparent z-10 pointer-events-none" />
 
           {/* Center Floating VS Circle Badge */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-zinc-900 border-2 border-amber-500/80 text-amber-500 font-extrabold text-base sm:text-xl z-20 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.35)] select-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted border-2 border-amber-500/80 text-amber-500 font-extrabold text-base sm:text-xl z-20 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.35)] select-none">
             VS
           </div>
 
@@ -96,7 +96,7 @@ export default function BattleArena({
                 className="object-contain object-bottom group-hover/left:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-zinc-900">
+              <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-muted">
                 {leftContender.name.charAt(0)}
               </div>
             )}
@@ -108,7 +108,7 @@ export default function BattleArena({
                 {leftContender.name}
               </span>
               <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 ${
-                isLeftWinning ? "text-primary" : "text-zinc-400"
+                isLeftWinning ? "text-primary" : "text-muted-foreground"
               }`}>
                 {isLeftWinning ? "👑 LEADER" : "CONTENDER #1"}
               </span>
@@ -126,7 +126,7 @@ export default function BattleArena({
                 className={`w-full py-2 sm:py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 z-20 ${
                   isLeftWinning
                     ? "bg-primary hover:opacity-90 text-primary-foreground"
-                    : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200"
+                    : "bg-muted hover:bg-muted border border-border/60 text-foreground"
                 }`}
               >
                 <span>Vote {leftContender.name.split(" ")[0]}</span>
@@ -149,7 +149,7 @@ export default function BattleArena({
                 className="object-contain object-bottom group-hover/right:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-zinc-900">
+              <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-muted">
                 {rightContender.name.charAt(0)}
               </div>
             )}
@@ -161,7 +161,7 @@ export default function BattleArena({
                 {rightContender.name}
               </span>
               <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 ${
-                isRightWinning ? "text-primary" : "text-zinc-400"
+                isRightWinning ? "text-primary" : "text-muted-foreground"
               }`}>
                 {isRightWinning ? "👑 LEADER" : "CONTENDER #2"}
               </span>
@@ -179,7 +179,7 @@ export default function BattleArena({
                 className={`w-full py-2 sm:py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 z-20 ${
                   isRightWinning
                     ? "bg-primary hover:opacity-90 text-primary-foreground"
-                    : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200"
+                    : "bg-muted hover:bg-muted border border-border/60 text-foreground"
                 }`}
               >
                 <span>Vote {rightContender.name.split(" ")[0]}</span>
@@ -202,12 +202,12 @@ export default function BattleArena({
           {/* Left Contender Stats */}
           <div className="flex flex-col min-w-0">
             <span className={`font-bold text-sm sm:text-base uppercase truncate ${
-              isLeftWinning ? "text-primary" : "text-zinc-400"
+              isLeftWinning ? "text-primary" : "text-muted-foreground"
             }`}>
               {leftContender.name}
             </span>
             <span className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tabular-nums ${
-              isLeftWinning ? "text-primary" : "text-zinc-400"
+              isLeftWinning ? "text-primary" : "text-muted-foreground"
             }`}>
               {Math.round(leftPercentage)}%
             </span>
@@ -224,7 +224,7 @@ export default function BattleArena({
               className={`px-3.5 sm:px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer ${
                 isLeftWinning
                   ? "bg-primary text-primary-foreground hover:opacity-90"
-                  : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200"
+                  : "bg-muted hover:bg-muted border border-border/60 text-foreground"
               }`}
             >
               Vote {leftContender.name.split(" ")[0]}
@@ -235,7 +235,7 @@ export default function BattleArena({
               className={`px-3.5 sm:px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer ${
                 isRightWinning
                   ? "bg-primary text-primary-foreground hover:opacity-90"
-                  : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200"
+                  : "bg-muted hover:bg-muted border border-border/60 text-foreground"
               }`}
             >
               Vote {rightContender.name.split(" ")[0]}
@@ -245,12 +245,12 @@ export default function BattleArena({
           {/* Right Contender Stats */}
           <div className="flex flex-col items-end text-right min-w-0">
             <span className={`font-bold text-sm sm:text-base uppercase truncate ${
-              isRightWinning ? "text-primary" : "text-zinc-400"
+              isRightWinning ? "text-primary" : "text-muted-foreground"
             }`}>
               {rightContender.name}
             </span>
             <span className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tabular-nums ${
-              isRightWinning ? "text-primary" : "text-zinc-400"
+              isRightWinning ? "text-primary" : "text-muted-foreground"
             }`}>
               {Math.round(rightPercentage)}%
             </span>
@@ -261,15 +261,15 @@ export default function BattleArena({
         </div>
 
         {/* Dual Progress Bar */}
-        <div className="w-full h-3 rounded-full bg-zinc-900 overflow-hidden flex border border-border/50 relative">
+        <div className="w-full h-3 rounded-full bg-muted overflow-hidden flex border border-border/50 relative">
           <motion.div
-            className={`h-full relative transition-all duration-500 ${isLeftWinning ? "bg-primary" : "bg-zinc-800"}`}
+            className={`h-full relative transition-all duration-500 ${isLeftWinning ? "bg-primary" : "bg-muted"}`}
             initial={{ width: "50%" }}
             animate={{ width: `${leftPercentage}%` }}
             transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}
           />
           <motion.div
-            className={`h-full flex-1 transition-all duration-500 ${isRightWinning ? "bg-primary" : "bg-zinc-800"}`}
+            className={`h-full flex-1 transition-all duration-500 ${isRightWinning ? "bg-primary" : "bg-muted"}`}
             initial={{ width: "50%" }}
             animate={{ width: `${rightPercentage}%` }}
             transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}

@@ -164,7 +164,7 @@ export default function ProfileEditor({
                           onClick={() => setAvatar(a.image_url)}
                           title={a.name}
                           aria-pressed={active}
-                          className={`relative aspect-square rounded-xl bg-zinc-900 border overflow-hidden transition-all cursor-pointer ${
+                          className={`relative aspect-square rounded-xl bg-muted border overflow-hidden transition-all cursor-pointer ${
                             active
                               ? "border-primary ring-2 ring-primary/40"
                               : "border-border/80 hover:border-foreground/40"
