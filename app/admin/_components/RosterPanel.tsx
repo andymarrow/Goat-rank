@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Check, X, Save, Trash2, Plus, ImageOff, Info } from "lucide-react";
+import ImageUpload from "./ImageUpload";
 
 import type { AdminEntity } from "@/actions/admin/roster";
 import {
@@ -230,17 +231,12 @@ export default function RosterPanel({
                         </Field>
                       </div>
 
-                      <Field label="Replacement image URL">
-                        <input
-                          value={draft.image_url}
-                          onChange={(e) => setDraft({ ...draft, image_url: e.target.value })}
-                          placeholder="https://images.unsplash.com/…"
-                          className={inputClass}
+                      <Field label="Replacement image">
+                        <ImageUpload
+                          value={draft.image_url || null}
+                          onChange={(url) => setDraft({ ...draft, image_url: url ?? "" })}
                         />
                       </Field>
-                      <p className="text-[10px] text-muted-foreground font-sans -mt-1">
-                        Allowed hosts: {ALLOWED_HOSTS.join(", ")}
-                      </p>
 
                       <div className="flex gap-2 pt-1">
                         <ActionButton

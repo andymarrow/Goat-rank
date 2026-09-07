@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireAdmin, adminError, type AdminResult } from "@/utils/supabase/admin-auth";
+import { isAllowedImageHost } from "@/lib/imageHosts";
 
 export type AdminEntity = {
   id: string;
@@ -70,22 +71,8 @@ export async function updateEntity(
     }
 
     if (patch.image_url?.trim()) {
-      // next.config.ts only allow-lists images.unsplash.com and
-      // api.dicebear.com — an off-list host renders as a broken image.
-      let host: string;
-      try {
-        host = new URL(patch.image_url.trim()).hostname;
-      } catch {
-        return { ok: false, error: "Image URL is not a valid URL." };
-      }
-
-      const allowed = ["images.unsplash.com", "api.dicebear.com"];
-      if (!allowed.includes(host)) {
-        return {
-          ok: false,
-          error: `Host "${host}" is not in next.config.ts remotePatterns. Add it there first.`,
-        };
-      }
+      const check = isAllowedImageHost(patch.image_url.trim());
+      if (!check.ok) return { ok: false, error: check.error };
 
       clean.image_url = patch.image_url.trim();
     }

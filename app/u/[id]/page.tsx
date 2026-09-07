@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Swords, TrendingUp, Trophy, ArrowUpRight, Ban } from "lucide-react";
+import { Swords, TrendingUp, Trophy, ArrowUpRight, Ban, Zap, MessageSquare } from "lucide-react";
 
 import { getUserProfile } from "@/actions/getUserProfile";
 import { formatSince } from "@/lib/time";
@@ -22,6 +22,20 @@ export default async function PublicUserPage({
 
   if (!profile) notFound();
 
+  // Bots never host, so their profile is about participation.
+  const isHost = profile.arenasCreated > 0;
+
+  const shown = isHost
+    ? profile.arenas
+    : profile.backed.map((b) => ({
+        id: b.id,
+        title: b.title,
+        room_type: b.room_type,
+        status: b.status,
+        total_pool: b.pledged,
+        leader: null as null | { name: string; image_url: string | null; brand_color: string | null },
+      }));
+
   return (
     <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 py-6 md:py-10 pb-28">
       {/* Identity */}
@@ -36,7 +50,7 @@ export default async function PublicUserPage({
 
           <div className="min-w-0 flex-1">
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">
-              Creator
+              {isHost ? "Creator" : "Supporter"}
             </span>
 
             <h1 className="flex items-center gap-2.5 text-2xl md:text-4xl font-extrabold tracking-tight text-foreground">
@@ -62,42 +76,70 @@ export default async function PublicUserPage({
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats. A host and a supporter are different things — show whichever
+          this account actually is rather than four zeros. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-        <Stat
-          label="Lifetime earned"
-          value={money(profile.totalEarned)}
-          accent="text-emerald-500"
-          icon={<TrendingUp className="w-4 h-4" />}
-        />
-        <Stat
-          label="Pool raised"
-          value={money(profile.poolRaised)}
-          accent="text-amber-500"
-          icon={<Trophy className="w-4 h-4" />}
-        />
-        <Stat
-          label="Arenas hosted"
-          value={String(profile.arenasCreated)}
-          icon={<Swords className="w-4 h-4" />}
-        />
-        <Stat label="Settled" value={String(profile.arenasSettled)} />
+        {isHost ? (
+          <>
+            <Stat
+              label="Lifetime earned"
+              value={money(profile.totalEarned)}
+              accent="text-emerald-500"
+              icon={<TrendingUp className="w-4 h-4" />}
+            />
+            <Stat
+              label="Pool raised"
+              value={money(profile.poolRaised)}
+              accent="text-amber-500"
+              icon={<Trophy className="w-4 h-4" />}
+            />
+            <Stat
+              label="Arenas hosted"
+              value={String(profile.arenasCreated)}
+              icon={<Swords className="w-4 h-4" />}
+            />
+            <Stat label="Settled" value={String(profile.arenasSettled)} />
+          </>
+        ) : (
+          <>
+            <Stat
+              label="Total backed"
+              value={money(profile.totalPledged)}
+              accent="text-amber-500"
+              icon={<Zap className="w-4 h-4" />}
+            />
+            <Stat
+              label="Arenas backed"
+              value={String(profile.arenasBacked)}
+              icon={<Swords className="w-4 h-4" />}
+            />
+            <Stat
+              label="Battle cries"
+              value={String(profile.criesPosted)}
+              icon={<MessageSquare className="w-4 h-4" />}
+            />
+            <Stat
+              label="Member since"
+              value={formatSince(profile.createdAt).replace(" ago", "")}
+            />
+          </>
+        )}
       </div>
 
       {/* Arenas */}
       <h2 className="font-mono text-xs md:text-sm font-bold uppercase tracking-wider text-foreground mb-4">
-        Arenas hosted
+        {isHost ? "Arenas hosted" : "Arenas backed"}
       </h2>
 
-      {profile.arenas.length === 0 ? (
+      {shown.length === 0 ? (
         <div className="border border-dashed border-border/60 rounded-2xl py-12 text-center">
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-            No arenas hosted yet
+            {isHost ? "No arenas hosted yet" : "Hasn't backed an arena yet"}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {profile.arenas.map((arena) => (
+          {shown.map((arena) => (
             <Link
               key={arena.id}
               href={`/${arena.room_type === "global" ? "global" : "battle"}/${arena.id}`}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Pin, PinOff, Save, Gavel, Trash2, Search, Info } from "lucide-react";
+import { Fragment, useState } from "react";
+import { Pin, PinOff, Save, Gavel, Trash2, Search, Info, Users, ChevronDown } from "lucide-react";
 import ContenderStack from "./ContenderStack";
+import ContenderEditor from "./ContenderEditor";
 
 import type { AdminRoom } from "@/actions/admin/rooms";
 import { setRoomFeatured, updateRoom, forceSettleRoom, deleteRoom } from "@/actions/admin/rooms";
@@ -24,6 +25,7 @@ export default function ArenaPanel({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [editing, setEditing] = useState<string | null>(null);
+  const [openContenders, setOpenContenders] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ title: string; category: string }>({
     title: "",
     category: "",
@@ -113,7 +115,8 @@ export default function ArenaPanel({
                   .filter(Boolean) as string[];
 
                 return (
-                  <tr key={room.id} className="border-b border-border/50 align-top">
+                  <Fragment key={room.id}>
+                  <tr className="border-b border-border/50 align-top">
                     <td className="py-3 pr-3 max-w-[280px]">
                       {isEditing ? (
                         <div className="flex flex-col gap-2 w-64">
@@ -204,6 +207,24 @@ export default function ArenaPanel({
 
                             <button
                               type="button"
+                              onClick={() =>
+                                setOpenContenders(openContenders === room.id ? null : room.id)
+                              }
+                              className="rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5
+                                         font-mono text-[10px] font-bold uppercase tracking-wider
+                                         text-muted-foreground hover:text-foreground transition-colors
+                                         cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <Users className="w-3 h-3" /> Contenders
+                              <ChevronDown
+                                className={`w-3 h-3 transition-transform ${
+                                  openContenders === room.id ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => {
                                 setEditing(room.id);
                                 setDraft({ title: room.title, category: room.category });
@@ -237,6 +258,15 @@ export default function ArenaPanel({
                       </div>
                     </td>
                   </tr>
+
+                  {openContenders === room.id && (
+                    <tr key={`${room.id}-contenders`} className="border-b border-border/60">
+                      <td colSpan={6} className="py-3 pr-3">
+                        <ContenderEditor contenders={room.room_contenders ?? []} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
                 );
               })}
             </tbody>

@@ -18,6 +18,17 @@ export type PublicUserProfile = {
   isBot: boolean;
   botPersona: string | null;
   createdAt: string;
+  /** Participation — what a supporter does, as opposed to hosting. */
+  totalPledged: number;
+  arenasBacked: number;
+  criesPosted: number;
+  backed: {
+    id: string;
+    title: string;
+    room_type: string;
+    status: string;
+    pledged: number;
+  }[];
   arenasCreated: number;
   arenasSettled: number;
   poolRaised: number;
@@ -65,6 +76,45 @@ export async function getUserProfile(userId: string): Promise<PublicUserProfile 
 
   const list = rooms ?? [];
 
+  // Bots host nothing — they back contenders. Without this the profile showed
+  // four zeros for every seeded account and told the visitor nothing.
+  const { data: myVotes } = await createAdminClient()
+    .from("votes")
+    .select("amount, message, room_id, rooms ( title, room_type, status )")
+    .eq("voter_id", userId)
+    .eq("refunded", false)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const votes = myVotes ?? [];
+
+  const byRoom = new Map<
+    string,
+    { id: string; title: string; room_type: string; status: string; pledged: number }
+  >();
+
+  for (const v of votes) {
+    const room = v.rooms as unknown as
+      | { title?: string; room_type?: string; status?: string }
+      | null;
+    if (!v.room_id) continue;
+
+    const existing = byRoom.get(v.room_id);
+    const amount = Number(v.amount) || 0;
+
+    if (existing) existing.pledged += amount;
+    else
+      byRoom.set(v.room_id, {
+        id: v.room_id,
+        title: room?.title ?? "Arena",
+        room_type: room?.room_type ?? "1v1",
+        status: room?.status ?? "active",
+        pledged: amount,
+      });
+  }
+
+  const backed = [...byRoom.values()].sort((a, b) => b.pledged - a.pledged);
+
   return {
     id: profile.id,
     username: profile.username ?? "Operator",
@@ -74,6 +124,10 @@ export async function getUserProfile(userId: string): Promise<PublicUserProfile 
     isBot: Boolean((profile as { is_bot?: boolean }).is_bot),
     botPersona: (profile as { bot_persona?: string }).bot_persona ?? null,
     createdAt: profile.created_at,
+    totalPledged: votes.reduce((sum, v) => sum + (Number(v.amount) || 0), 0),
+    arenasBacked: backed.length,
+    criesPosted: votes.filter((v) => v.message?.trim()).length,
+    backed: backed.slice(0, 24),
     arenasCreated: list.length,
     arenasSettled: list.filter((r) => r.status === "settled").length,
     poolRaised: list.reduce((sum, r) => sum + (Number(r.total_pool) || 0), 0),
