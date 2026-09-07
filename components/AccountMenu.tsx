@@ -65,47 +65,45 @@ export default function AccountMenu({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label="Account menu"
-        className={`pressable flex items-center gap-1.5 pl-1 pr-2 py-1 cut-corner border transition-colors ${
+        className={`flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full border transition-all ${
           open
-            ? "border-primary bg-primary/5"
-            : "border-border bg-background hover:border-foreground/40"
+            ? "border-primary bg-primary/10"
+            : "border-border/60 bg-card hover:bg-muted/60"
         }`}
       >
-        <Avatar src={avatarUrl} name={username} size={28} className="!border-0" />
+        <Avatar src={avatarUrl} name={username} size={26} className="!border-0" />
         <ChevronDown
-          className={`w-3.5 h-3.5 text-foreground/40 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-2 w-60 bg-card border border-border cut-corner
-                     shadow-2xl overflow-hidden z-50"
+          className="absolute right-0 top-full mt-2 w-60 bg-card/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-2xl overflow-hidden z-50 p-1.5"
         >
-          <div className="flex items-center gap-3 p-3 border-b border-border">
-            <Avatar src={avatarUrl} name={username} size={38} />
+          <div className="flex items-center gap-3 p-2.5 mb-1 rounded-xl bg-muted/40 border border-border/40">
+            <Avatar src={avatarUrl} name={username} size={36} />
             <div className="min-w-0">
-              <p className="font-arcade text-xs font-bold text-foreground truncate">{username}</p>
-              <p className="text-[10px] text-foreground/40 font-sans">
+              <p className="font-semibold text-xs font-sans text-foreground truncate">{username}</p>
+              <p className="text-[11px] text-muted-foreground font-sans">
                 {isAdmin ? "Administrator" : "Creator"}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col p-1.5 gap-0.5">
-            <MenuLink href="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Command centre" />
-            <MenuLink href={`/u/${userId}`} icon={<User className="w-4 h-4" />} label="Public profile" />
+          <div className="flex flex-col gap-0.5">
+            <MenuLink href="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Command Centre" />
+            <MenuLink href={`/u/${userId}`} icon={<User className="w-4 h-4" />} label="Public Profile" />
             {isAdmin && (
-              <MenuLink href="/admin" icon={<ShieldCheck className="w-4 h-4" />} label="Admin console" />
+              <MenuLink href="/admin" icon={<ShieldCheck className="w-4 h-4" />} label="Admin Console" />
             )}
 
             <button
               type="button"
               role="menuitem"
               onClick={signOut}
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 font-arcade text-[10px] uppercase
-                         tracking-widest text-battle-red hover:bg-battle-red/10 transition-colors text-left"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-sans font-medium text-rose-500 hover:bg-rose-500/10 transition-colors text-left"
             >
               <LogOut className="w-4 h-4" /> Sign out
             </button>
@@ -129,8 +127,7 @@ function MenuLink({
     <Link
       href={href}
       role="menuitem"
-      className="w-full flex items-center gap-2.5 px-2.5 py-2 font-arcade text-[10px] uppercase
-                 tracking-widest text-foreground/75 hover:bg-foreground/5 hover:text-foreground transition-colors"
+      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-sans text-xs font-medium text-foreground/80 hover:bg-muted hover:text-foreground transition-colors"
     >
       {icon}
       {label}

@@ -2,203 +2,278 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Timer, ArrowLeft, HeartHandshake } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Countdown from "@/components/ui/Countdown";
 
-export default function BattleArena({ battle }: { battle: any }) {
-  const totalPool = battle.contenders[0].amount + battle.contenders[1].amount;
-  const leftPercentage = (battle.contenders[0].amount / totalPool) * 100;
-  const rightPercentage = (battle.contenders[1].amount / totalPool) * 100;
+export default function BattleArena({
+  battle,
+  onVoteClick
+}: {
+  battle: any;
+  onVoteClick?: (index: number) => void;
+}) {
+  const leftAmount = Number(battle.contenders?.[0]?.amount) || 0;
+  const rightAmount = Number(battle.contenders?.[1]?.amount) || 0;
+  const totalPool = battle.totalPool ?? (leftAmount + rightAmount);
+
+  const leftPercentage = totalPool > 0 ? (leftAmount / totalPool) * 100 : 50;
+  const rightPercentage = totalPool > 0 ? (rightAmount / totalPool) * 100 : 50;
+
+  const leftContender = battle.contenders?.[0] || { name: "Contender 1", amount: leftAmount };
+  const rightContender = battle.contenders?.[1] || { name: "Contender 2", amount: rightAmount };
+
+  const isLeftWinning = leftAmount >= rightAmount;
+  const isRightWinning = rightAmount >= leftAmount;
 
   return (
-    <div className="relative w-full h-full flex flex-col justify-between overflow-hidden">
-      
-      {/* --- BACKGROUND EFFECTS --- */}
-      <div className="absolute inset-0 z-0 flex">
-        {/* Left Side Glow */}
-        <div className="w-1/2 h-full opacity-10 dark:opacity-20 transition-colors duration-1000" 
-             style={{ background: `radial-gradient(circle at 30% 50%, ${battle.contenders[0].color} 0%, transparent 60%)` }} />
-        {/* Right Side Glow */}
-        <div className="w-1/2 h-full opacity-10 dark:opacity-20 transition-colors duration-1000" 
-             style={{ background: `radial-gradient(circle at 70% 50%, ${battle.contenders[1].color} 0%, transparent 60%)` }} />
-      </div>
-      
-      {/* Arena floor. Was a remote transparenttextures.com PNG on every
-          load — now CSS-generated, so it costs no request and can't 404. */}
-      <div className="absolute inset-0 z-0 pointer-events-none tex-grid" />
-      <div className="absolute inset-0 z-0 pointer-events-none tex-hatch" />
+    <div className="w-full flex flex-col gap-6 font-sans">
 
-      {/* --- TOP BAR (Nav & Timer) --- */}
-      <div className="relative z-30 flex items-start justify-between gap-2 p-3 md:p-8">
+      {/* =========================================================================
+          1. TOP BAR HEADER (Navigation & Battle Countdown)
+      ========================================================================= */}
+      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Back to Lobby Link */}
         <Link
           href="/"
-          className="pressable cut-corner bg-card/80 backdrop-blur-md border border-border hover:bg-card/100
-                     text-foreground px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-1.5 shrink-0
-                     font-arcade text-xs md:text-sm transition-all shadow-lg"
+          className="group flex items-center gap-2 px-3.5 py-2 rounded-xl bg-card hover:bg-card/80 border border-border/80 text-foreground text-xs font-bold tracking-wider transition-all shadow-xs"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden xs:inline">ARENA</span>
+          <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:-translate-x-0.5 transition-all" />
+          <span>Back to Lobby</span>
         </Link>
 
-        <div className="flex flex-col items-end gap-1.5 min-w-0">
-          <div className="cut-corner bg-card/90 border border-border backdrop-blur-md px-2 py-1.5 md:px-6 md:py-2
-                          flex items-center gap-1.5 md:gap-3 shadow-xl max-w-full">
-            <Timer className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse shrink-0" />
-            <Countdown target={battle.expiresAt} size="auto" />
-          </div>
-
-          <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-arcade text-foreground/70
-                          bg-background/80 px-2 py-1 md:px-3 cut-corner border border-border max-w-[60vw] md:max-w-none">
-            <HeartHandshake className="w-3 h-3 text-battle-pink shrink-0" />
-            <span className="truncate">{battle.charity}</span>
-          </div>
+        {/* Countdown Timer Header Box */}
+        <div className="flex flex-col items-center gap-1 bg-card/80 border border-border/80 px-4 py-2 rounded-2xl shadow-xs">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            BATTLE STARTS IN
+          </span>
+          <Countdown target={battle.expiresAt} size="auto" />
         </div>
       </div>
 
-      {/* --- CENTER: THE CONTENDERS & VS --- */}
-      {/* Portraits stop above the HUD on phones. Previously this layer was
-          inset-0, so the tall mobile HUD covered everything below the
-          foreheads. */}
-      <div className="absolute inset-x-0 top-16 bottom-[46%] sm:bottom-[40%] md:inset-0 md:top-0
-                      z-10 flex justify-between items-end pointer-events-none">
-        
-        {/* Massive Background VS */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0">
-          <div className="font-arcade text-5xl sm:text-7xl md:text-[150px] font-black italic text-foreground opacity-[0.03] dark:opacity-[0.05] transform -skew-x-12 select-none">
+      {/* =========================================================================
+          2. HERO VS BATTLE CARD (Real Arena Data)
+      ========================================================================= */}
+      <motion.div
+        initial={{ y: 15, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full rounded-3xl bg-card border border-border/80 p-4 sm:p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden"
+      >
+        {/* Card Header Title */}
+        <div className="flex flex-col items-center text-center">
+          <span className="text-primary text-xs font-semibold uppercase tracking-[0.25em]">
+            {battle.category ? battle.category.toUpperCase() : "LIVE ARENA"}
+          </span>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight uppercase mt-0.5">
+            {battle.title || "BATTLE ARENA"}
+          </h1>
+        </div>
+
+        {/* Split Contenders Matchup Stage */}
+        <div className="relative w-full h-[320px] xs:h-[360px] sm:h-[400px] md:h-[460px] rounded-2xl overflow-hidden bg-black/40 border border-border/50 flex flex-row items-center justify-between p-2">
+          
+          {/* Glowing Center Vertical Line */}
+          <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gradient-to-b from-transparent via-amber-500/40 to-transparent z-10 pointer-events-none" />
+
+          {/* Center Floating VS Circle Badge */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-zinc-900 border-2 border-amber-500/80 text-amber-500 font-extrabold text-base sm:text-xl z-20 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.35)] select-none">
             VS
           </div>
+
+          {/* Left Contender Section */}
+          <Link
+            href={`/profile/${leftContender.entityId || "1"}`}
+            aria-label={`View ${leftContender.name}'s profile`}
+            className="relative w-1/2 h-full rounded-xl overflow-hidden block group/left"
+          >
+            {leftContender.image ? (
+              <Image
+                src={leftContender.image}
+                alt={leftContender.name}
+                fill
+                priority
+                className="object-contain object-bottom group-hover/left:scale-105 transition-transform duration-500"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-zinc-900">
+                {leftContender.name.charAt(0)}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-90" />
+
+            {/* Left Contender Name & Subtitle Overlay */}
+            <div className="absolute top-4 left-4 z-10 flex flex-col">
+              <span className="font-extrabold text-lg sm:text-2xl md:text-3xl text-foreground uppercase tracking-tight leading-tight truncate max-w-[180px] sm:max-w-[240px]">
+                {leftContender.name}
+              </span>
+              <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 ${
+                isLeftWinning ? "text-primary" : "text-zinc-400"
+              }`}>
+                {isLeftWinning ? "👑 LEADER" : "CONTENDER #1"}
+              </span>
+            </div>
+
+            {/* Left Contender Vote Button Overlay */}
+            <div className="absolute bottom-3 left-3 right-3 sm:right-6 z-10">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onVoteClick?.(0);
+                }}
+                className={`w-full py-2 sm:py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 z-20 ${
+                  isLeftWinning
+                    ? "bg-primary hover:opacity-90 text-primary-foreground"
+                    : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200"
+                }`}
+              >
+                <span>Vote {leftContender.name.split(" ")[0]}</span>
+              </button>
+            </div>
+          </Link>
+
+          {/* Right Contender Section */}
+          <Link
+            href={`/profile/${rightContender.entityId || "2"}`}
+            aria-label={`View ${rightContender.name}'s profile`}
+            className="relative w-1/2 h-full rounded-xl overflow-hidden block group/right"
+          >
+            {rightContender.image ? (
+              <Image
+                src={rightContender.image}
+                alt={rightContender.name}
+                fill
+                priority
+                className="object-contain object-bottom group-hover/right:scale-105 transition-transform duration-500"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-zinc-900">
+                {rightContender.name.charAt(0)}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-90" />
+
+            {/* Right Contender Name & Subtitle Overlay */}
+            <div className="absolute top-4 right-4 z-10 flex flex-col items-end text-right">
+              <span className="font-extrabold text-lg sm:text-2xl md:text-3xl text-foreground uppercase tracking-tight leading-tight truncate max-w-[180px] sm:max-w-[240px]">
+                {rightContender.name}
+              </span>
+              <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 ${
+                isRightWinning ? "text-primary" : "text-zinc-400"
+              }`}>
+                {isRightWinning ? "👑 LEADER" : "CONTENDER #2"}
+              </span>
+            </div>
+
+            {/* Right Contender Vote Button Overlay */}
+            <div className="absolute bottom-3 left-3 sm:left-6 right-3 z-10">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onVoteClick?.(1);
+                }}
+                className={`w-full py-2 sm:py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 z-20 ${
+                  isRightWinning
+                    ? "bg-primary hover:opacity-90 text-primary-foreground"
+                    : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200"
+                }`}
+              >
+                <span>Vote {rightContender.name.split(" ")[0]}</span>
+              </button>
+            </div>
+          </Link>
         </div>
+      </motion.div>
 
-        {/* Player 1 */}
-        <motion.div 
-          initial={{ x: -100, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative w-[46%] md:w-1/2 h-full md:h-[85%] flex items-end justify-start pl-1 md:pl-16 z-10"
-        >
-          {/* maskImage creates a smooth fade at the bottom so they don't clip harshly into the HUD */}
-          <Link
-            href={`/profile/${battle.contenders[0].entityId}`}
-            aria-label={`View ${battle.contenders[0].name}'s profile`}
-            className="pointer-events-auto relative w-full max-w-[500px] h-full block group/contender"
-            style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }}
-          >
-            <Image
-              src={battle.contenders[0].image}
-              alt={battle.contenders[0].name}
-              fill
-              className="object-contain object-bottom drop-shadow-2xl transition-transform duration-300 group-hover/contender:scale-[1.03]"
-            />
-          </Link>
-        </motion.div>
+      {/* =========================================================================
+          3. VOTING & PROGRESS BAR SECTION (Choose Your Side)
+      ========================================================================= */}
+      <div className="w-full rounded-2xl bg-card border border-border/80 p-4 sm:p-6 shadow-xl flex flex-col gap-4">
+        <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest text-center">
+          CHOOSE YOUR CONTENDER
+        </span>
 
-        {/* Player 2 */}
-        <motion.div 
-          initial={{ x: 100, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative w-[46%] md:w-1/2 h-full md:h-[85%] flex items-end justify-end pr-1 md:pr-16 z-10"
-        >
-          <Link
-            href={`/profile/${battle.contenders[1].entityId}`}
-            aria-label={`View ${battle.contenders[1].name}'s profile`}
-            className="pointer-events-auto relative w-full max-w-[500px] h-full block group/contender"
-            style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }}
-          >
-            <Image
-              src={battle.contenders[1].image}
-              alt={battle.contenders[1].name}
-              fill
-              className="object-contain object-bottom drop-shadow-2xl transition-transform duration-300 group-hover/contender:scale-[1.03]"
-            />
-          </Link>
-        </motion.div>
-      </div>
-
-      {/* --- BOTTOM: THE HUD (Heads Up Display) --- */}
-      <div className="relative z-30 w-full max-w-5xl mx-auto px-3 md:px-4 pb-24 lg:pb-12 mt-auto">
-        
-        {/* The Glass Panel */}
-        <div className="corner-ticks bg-card/95 dark:bg-[#0A0A0C]/85 backdrop-blur-xl border border-border
-                        cut-corner-lg p-4 md:p-6 shadow-2xl flex flex-col gap-3 md:gap-6">
-
-          {/* Total pool. Was hidden below md, so the headline number the whole
-              arena is about simply vanished on phones. */}
-          <div className="flex md:hidden items-center justify-center gap-2 pb-1 border-b border-border/60">
-            <span className="font-arcade text-[9px] text-foreground/40 tracking-widest">TOTAL POOL</span>
-            <span className="font-arcade text-base text-primary font-bold tabular-nums">
-              ${totalPool.toLocaleString()}
+        {/* Voting Row */}
+        <div className="flex items-center justify-between gap-4">
+          {/* Left Contender Stats */}
+          <div className="flex flex-col min-w-0">
+            <span className={`font-bold text-sm sm:text-base uppercase truncate ${
+              isLeftWinning ? "text-primary" : "text-zinc-400"
+            }`}>
+              {leftContender.name}
+            </span>
+            <span className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tabular-nums ${
+              isLeftWinning ? "text-primary" : "text-zinc-400"
+            }`}>
+              {Math.round(leftPercentage)}%
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {leftAmount.toLocaleString()} votes
             </span>
           </div>
 
-          {/* Stats Row. min-w-0 + truncate are what stop the two names running
-              together into "RONALDOMESSI" on a narrow screen. */}
-          <div className="flex justify-between items-end gap-3 md:gap-6">
-            <div className="flex flex-col items-start min-w-0 flex-1">
-              <h2
-                className="brand-text w-full truncate text-lg sm:text-2xl md:text-5xl font-arcade
-                           font-black tracking-wide md:tracking-wider uppercase mb-0.5 md:mb-1"
-                style={{ "--brand": battle.contenders[0].color } as React.CSSProperties}
-              >
-                {battle.contenders[0].name}
-              </h2>
-              <span className="text-base sm:text-xl md:text-3xl font-arcade font-bold text-foreground tabular-nums">
-                ${battle.contenders[0].amount.toLocaleString()}
-              </span>
-            </div>
-
-            {/* Center VS Indicator for the panel */}
-            <div className="hidden md:flex flex-col items-center justify-center pb-2 shrink-0">
-              <span className="font-arcade text-xs text-foreground/40 tracking-widest mb-1">TOTAL POOL</span>
-              <span className="font-arcade text-xl text-primary font-bold tabular-nums">
-                ${totalPool.toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex flex-col items-end min-w-0 flex-1">
-              <h2
-                className="brand-text w-full truncate text-right text-lg sm:text-2xl md:text-5xl font-arcade
-                           font-black tracking-wide md:tracking-wider uppercase mb-0.5 md:mb-1"
-                style={{ "--brand": battle.contenders[1].color } as React.CSSProperties}
-              >
-                {battle.contenders[1].name}
-              </h2>
-              <span className="text-base sm:text-xl md:text-3xl font-arcade font-bold text-foreground tabular-nums">
-                ${battle.contenders[1].amount.toLocaleString()}
-              </span>
-            </div>
+          {/* Center Submit Vote Action Buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => onVoteClick?.(0)}
+              className={`px-3.5 sm:px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer ${
+                isLeftWinning
+                  ? "bg-primary text-primary-foreground hover:opacity-90"
+                  : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200"
+              }`}
+            >
+              Vote {leftContender.name.split(" ")[0]}
+            </button>
+            <button
+              type="button"
+              onClick={() => onVoteClick?.(1)}
+              className={`px-3.5 sm:px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer ${
+                isRightWinning
+                  ? "bg-primary text-primary-foreground hover:opacity-90"
+                  : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-200"
+              }`}
+            >
+              Vote {rightContender.name.split(" ")[0]}
+            </button>
           </div>
 
-          {/* The Sleek Energy Bar */}
-          <div className="w-full h-4 md:h-6 bg-background cut-corner flex overflow-hidden border border-border relative">
-            
-            {/* Left Bar */}
-            <motion.div 
-              className="h-full relative shadow-[0_0_15px_currentColor]"
-              style={{ backgroundColor: battle.contenders[0].color }}
-              initial={{ width: "50%" }}
-              animate={{ width: `${leftPercentage}%` }}
-              transition={{ type: "spring", bounce: 0.2, duration: 1 }}
-            />
-            
-            {/* Right Bar */}
-            <motion.div 
-              className="h-full relative shadow-[0_0_15px_currentColor]"
-              style={{ backgroundColor: battle.contenders[1].color }}
-              initial={{ width: "50%" }}
-              animate={{ width: `${rightPercentage}%` }}
-              transition={{ type: "spring", bounce: 0.2, duration: 1 }}
-            />
-            
-            {/* Scanlines over the fills, so the bar reads as a lit HUD
-                element rather than two flat blocks of colour. */}
-            <div className="tex-scanlines absolute inset-0 z-10 pointer-events-none" />
-
-            {/* Center Divider Line (Skewed for motion) */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-full bg-foreground z-10 skew-x-12" />
+          {/* Right Contender Stats */}
+          <div className="flex flex-col items-end text-right min-w-0">
+            <span className={`font-bold text-sm sm:text-base uppercase truncate ${
+              isRightWinning ? "text-primary" : "text-zinc-400"
+            }`}>
+              {rightContender.name}
+            </span>
+            <span className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tabular-nums ${
+              isRightWinning ? "text-primary" : "text-zinc-400"
+            }`}>
+              {Math.round(rightPercentage)}%
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {rightAmount.toLocaleString()} votes
+            </span>
           </div>
+        </div>
 
+        {/* Dual Progress Bar */}
+        <div className="w-full h-3 rounded-full bg-zinc-900 overflow-hidden flex border border-border/50 relative">
+          <motion.div
+            className={`h-full relative transition-all duration-500 ${isLeftWinning ? "bg-primary" : "bg-zinc-800"}`}
+            initial={{ width: "50%" }}
+            animate={{ width: `${leftPercentage}%` }}
+            transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}
+          />
+          <motion.div
+            className={`h-full flex-1 transition-all duration-500 ${isRightWinning ? "bg-primary" : "bg-zinc-800"}`}
+            initial={{ width: "50%" }}
+            animate={{ width: `${rightPercentage}%` }}
+            transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}
+          />
         </div>
       </div>
 

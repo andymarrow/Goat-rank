@@ -22,7 +22,7 @@ export default async function BattlePage({ params }: { params: Promise<{ slug: s
   }
 
   return (
-    <div className="w-full h-[calc(100dvh-80px)] md:h-[calc(100dvh-64px)] flex flex-col md:flex-row overflow-hidden bg-background">
+    <div className="w-full min-h-[calc(100dvh-64px)] bg-background">
       {/* Pass the real data into our client component */}
       <BattleClient initialBattleData={battleData} />
     </div>

@@ -72,87 +72,81 @@ export default function DesktopNavbar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header
-      className="hidden md:flex fixed top-0 w-full h-16 z-40 bg-background/80 backdrop-blur-md
-                 border-b border-border items-center justify-between px-6 lg:px-12"
-    >
-      <div className="flex items-center gap-10">
-        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-          <Image
-            src="/image/logo.png"
-            alt=""
-            width={222}
-            height={256}
-            priority
-            className="h-9 w-auto object-contain transition-transform group-hover:rotate-6"
-          />
-          <span className="font-arcade text-xl font-bold tracking-wider">GOATRANK</span>
-        </Link>
+    <header className="hidden md:flex fixed top-0 w-full h-16 z-40 bg-background items-center">
+      <div className="w-[80%] max-w-[1920px] mx-auto h-full flex items-center justify-between">
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+            <Image
+              src="/image/logo.png"
+              alt="GOATRANK"
+              width={222}
+              height={256}
+              priority
+              className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+            />
+            <span className="font-bold text-lg tracking-tight font-sans text-foreground">
+              GOAT<span className="text-primary">RANK</span>
+            </span>
+          </Link>
 
-        <nav aria-label="Primary" className="flex items-center gap-7 text-sm">
-          {LINKS.map((link) => {
-            const active = isActive(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={active ? "page" : undefined}
-                className={`relative font-arcade text-xs font-bold uppercase tracking-widest
-                  transition-colors ${
-                    active ? "text-primary" : "text-foreground/60 hover:text-foreground"
+          <nav aria-label="Primary" className="flex items-center gap-1.5">
+            {LINKS.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    active
+                      ? "bg-muted text-foreground font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                   }`}
-              >
-                {link.label}
-                {active && (
-                  <span className="absolute -bottom-1.5 inset-x-0 h-0.5 bg-primary" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-      <div className="flex items-center gap-3">
-        {mounted && (
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            className="pressable p-2 rounded-full transition-colors text-foreground/70
-                       hover:text-primary hover:bg-black/5 dark:hover:bg-white/5"
-          >
-            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-        )}
-
-        <Link
-          href="/create"
-          className="pressable sheen cut-corner relative overflow-hidden flex items-center gap-2
-                     bg-primary text-primary-foreground px-5 py-2.5 font-arcade font-bold text-xs
-                     uppercase tracking-widest hover:brightness-110 transition-all"
-        >
-          <Swords className="w-4 h-4" />
-          <span>Host Battle</span>
-        </Link>
-
-        {mounted && user ? (
-          <AccountMenu
-            userId={user.id}
-            username={profile?.username ?? "Operator"}
-            avatarUrl={profile?.avatar_url ?? null}
-            isAdmin={Boolean(profile?.is_admin)}
-          />
-        ) : (
-          mounted && (
-            <Link
-              href="/login"
-              className="pressable cut-corner flex items-center gap-2 bg-background border border-border
-                         text-foreground px-4 py-2 font-arcade text-xs uppercase tracking-widest
-                         hover:border-primary hover:text-primary transition-colors"
+        <div className="flex items-center gap-3">
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
             >
-              <LogIn className="w-4 h-4" /> Login
-            </Link>
-          )
-        )}
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          )}
+
+          <Link
+            href="/create"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-medium text-xs px-4 py-2 rounded-full hover:bg-primary/90 transition-all shadow-sm active:scale-95"
+          >
+            <Swords className="w-4 h-4" />
+            <span>Host Battle</span>
+          </Link>
+
+          {mounted && user ? (
+            <AccountMenu
+              userId={user.id}
+              username={profile?.username ?? "Operator"}
+              avatarUrl={profile?.avatar_url ?? null}
+              isAdmin={Boolean(profile?.is_admin)}
+            />
+          ) : (
+            mounted && (
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 text-xs font-medium px-4 py-2 rounded-full bg-muted/60 text-foreground hover:bg-muted transition-all"
+              >
+                <LogIn className="w-4 h-4" /> Login
+              </Link>
+            )
+          )}
+        </div>
       </div>
     </header>
   );

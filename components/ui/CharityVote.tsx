@@ -82,26 +82,25 @@ export default function CharityVote({
 
   if (active.length === 0) {
     return (
-      <p className="text-xs text-foreground/40 font-sans text-center py-6">
-        No charities are registered yet.
+      <p className="text-xs text-muted-foreground font-sans text-center py-4">
+        No charities registered yet.
       </p>
     );
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-start gap-2">
-        <HeartHandshake className="w-4 h-4 text-battle-pink shrink-0 mt-0.5" />
-        <p className="text-[11px] text-foreground/55 font-sans leading-relaxed">
-          30% of this arena goes to charity. If the winner doesn&apos;t nominate a cause, the one
-          with the most votes here receives it.
+      <div className="flex items-start gap-2.5">
+        <HeartHandshake className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <p className="text-xs text-muted-foreground font-sans leading-relaxed">
+          30% of pool goes to charity. Nominate your preferred cause below.
           {runningTotal > 0 && (
-            <span className="text-foreground/35"> {runningTotal} vote{runningTotal === 1 ? "" : "s"} so far.</span>
+            <span className="text-foreground font-medium"> ({runningTotal} vote{runningTotal === 1 ? "" : "s"} so far)</span>
           )}
         </p>
       </div>
 
-      <ul className="flex flex-col gap-1.5">
+      <ul className="flex flex-col gap-2">
         {active.map((c) => {
           const votes = Number(votesFor(c.id));
           const pct = runningTotal > 0 ? (votes / runningTotal) * 100 : 0;
@@ -111,50 +110,54 @@ export default function CharityVote({
             <li key={c.id}>
               <button
                 type="button"
-                disabled={closed || pending}
+                disabled={closed || pending || mine}
                 onClick={() => pick(c.id)}
                 aria-pressed={mine}
-                className={`pressable relative w-full overflow-hidden flex items-center gap-2.5 p-2.5
-                  border cut-corner text-left transition-colors disabled:cursor-not-allowed
-                  disabled:opacity-60 ${
-                    mine
-                      ? "border-battle-pink bg-battle-pink/10"
-                      : "border-border bg-background hover:border-foreground/40"
-                  }`}
+                className={`relative w-full overflow-hidden flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all ${
+                  mine
+                    ? "bg-zinc-800 border-zinc-700 text-zinc-100 font-semibold cursor-default shadow-xs"
+                    : "border-border/60 bg-muted/30 text-foreground hover:border-border hover:bg-muted/60 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]"
+                }`}
               >
-                {/* Share bar, behind the content */}
+                {/* Share bar, behind content */}
                 <span
-                  className="absolute inset-y-0 left-0 bg-battle-pink/10 transition-all duration-500"
+                  className={`absolute inset-y-0 left-0 transition-all duration-500 pointer-events-none ${
+                    mine ? "bg-zinc-700/60" : "bg-zinc-800/30"
+                  }`}
                   style={{ width: `${pct}%` }}
                   aria-hidden="true"
                 />
 
-                <span className="relative w-7 h-7 shrink-0 cut-corner overflow-hidden bg-card border border-border">
+                <span className="relative w-7 h-7 rounded-lg overflow-hidden bg-card border border-border/60 shrink-0">
                   {c.logo_url ? (
                     <Image src={c.logo_url} alt={c.name} fill sizes="28px" className="object-cover" />
                   ) : (
-                    <span className="w-full h-full flex items-center justify-center font-arcade text-[10px] text-foreground/50">
+                    <span className="w-full h-full flex items-center justify-center font-bold text-xs text-muted-foreground">
                       {c.name.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </span>
 
                 <span className="relative min-w-0 flex-1">
-                  <span className="font-arcade text-[11px] font-bold text-foreground truncate block">
+                  <span className="font-bold text-xs text-foreground truncate block">
                     {c.name}
                   </span>
                   {c.description && (
-                    <span className="text-[10px] text-foreground/40 font-sans truncate block">
+                    <span className="text-[10px] text-muted-foreground truncate block font-sans">
                       {c.description}
                     </span>
                   )}
                 </span>
 
                 <span className="relative flex items-center gap-1.5 shrink-0">
-                  <span className="font-arcade text-[11px] tabular-nums text-foreground/60">
+                  <span className={`text-xs font-bold tabular-nums font-sans ${mine ? "text-zinc-200 font-bold" : "text-muted-foreground"}`}>
                     {votes}
                   </span>
-                  {mine && <Check className="w-3.5 h-3.5 text-battle-pink" />}
+                  {mine && (
+                    <span className="px-1.5 py-0.5 rounded-md bg-zinc-700/80 border border-zinc-600/80 text-zinc-200 text-[10px] font-bold flex items-center gap-0.5">
+                      <Check className="w-3 h-3 stroke-[3]" /> Selected
+                    </span>
+                  )}
                 </span>
               </button>
             </li>
@@ -163,20 +166,20 @@ export default function CharityVote({
       </ul>
 
       {pending && (
-        <span className="inline-flex items-center gap-1.5 text-[10px] text-foreground/40 font-sans">
-          <Loader2 className="w-3 h-3 animate-spin" /> Saving
+        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-sans">
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" /> Saving preference...
         </span>
       )}
 
       {error && (
-        <p role="alert" className="text-[11px] text-battle-red font-sans">
+        <p role="alert" className="text-xs text-red-500 font-medium">
           {error}
         </p>
       )}
 
       {closed && (
-        <p className="text-[10px] text-foreground/35 font-sans text-center">
-          This arena has closed — preferences are locked.
+        <p className="text-[11px] text-muted-foreground font-sans text-center">
+          This arena is closed — preferences are locked.
         </p>
       )}
     </div>

@@ -116,11 +116,14 @@ export default async function PublicUserPage({
 
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        arena.status === "active" ? "bg-battle-green animate-pulse" : "bg-foreground/20"
-                      }`}
-                    />
+                    {arena.status === "active" ? (
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[9px] font-mono font-bold text-primary shadow-xs">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        <span>LIVE</span>
+                      </div>
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-foreground/20" />
+                    )}
                     <span className="font-arcade text-[9px] uppercase tracking-widest text-foreground/40">
                       {arena.status} · {arena.room_type}
                     </span>

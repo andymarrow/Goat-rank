@@ -33,93 +33,97 @@ export default function DashboardClient({
     startTransition(async () => setPayoutState(await requestPayout()));
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto p-4 md:p-8 lg:p-12">
-      
+    <div className="w-full max-w-[1400px] mx-auto p-4 md:p-8 lg:p-12 font-sans">
+
       {/* --- HEADER --- */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
-          <div className="w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0 cut-corner bg-background border border-border p-1.5 sm:p-2 shadow-lg">
-            <Image src={data.avatar} alt={data.name} width={96} height={96} className="w-full h-full object-cover" />
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0 rounded-2xl bg-zinc-900 border-2 border-border/80 p-1 shadow-xl relative overflow-hidden">
+            <Image src={data.avatar} alt={data.name} width={96} height={96} className="w-full h-full object-cover rounded-xl" />
           </div>
-          <div>
-            <span className="font-arcade text-xs text-foreground/50 tracking-widest block mb-1">COMMAND CENTER</span>
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-arcade font-bold text-foreground uppercase tracking-wider truncate">
+          <div className="min-w-0">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">COMMAND CENTER</span>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-foreground uppercase tracking-tight truncate">
               {data.name}
             </h1>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        <ProfileEditor
-          currentName={data.name}
-          currentAvatar={data.avatar}
-          avatars={avatars}
-        />
-        <Link href="/create" className="pressable cut-corner bg-primary text-primary-foreground hover:bg-primary/90 px-4 sm:px-6 py-3 font-arcade font-bold text-[10px] sm:text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(255,122,0,0.3)] whitespace-nowrap">
-          <Swords className="w-4 h-4" /> DEPLOY NEW BATTLE
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <ProfileEditor
+            currentName={data.name}
+            currentAvatar={data.avatar}
+            avatars={avatars}
+          />
+          <Link
+            href="/create"
+            className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-primary text-primary-foreground hover:opacity-90 font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 transition-all shadow-md active:scale-95 whitespace-nowrap cursor-pointer"
+          >
+            <Swords className="w-4 h-4" />
+            <span>DEPLOY NEW BATTLE</span>
+          </Link>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* =========================================
             LEFT COLUMN: THE WALLET & STATS
         ============================================= */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          
+
           {/* Main Wallet Card */}
-          <div className="bg-card border border-border cut-corner-lg p-6 shadow-xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors duration-700" />
-            
-            <div className="flex items-center justify-between mb-8 relative z-10">
-              <div className="flex items-center gap-2 text-foreground/50 font-arcade text-xs tracking-widest">
+          <div className="rounded-3xl bg-card border border-border/80 p-6 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/15 transition-colors duration-700" />
+
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs font-bold uppercase tracking-wider">
                 <Wallet className="w-4 h-4 text-primary" />
-                AVAILABLE BALANCE
+                <span>AVAILABLE BALANCE</span>
               </div>
             </div>
 
-            <div className="mb-8 relative z-10">
-              <div className="text-4xl sm:text-5xl md:text-6xl font-arcade font-black text-foreground tracking-wider striped-text break-all">
+            <div className="mb-6 relative z-10">
+              <div className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground tracking-tight break-all tabular-nums">
                 {money(data.walletBalance)}
               </div>
-              <span className="text-xs text-foreground/40 font-sans mt-2 block">
-                Total lifetime earned: <strong className="text-foreground/70">{money(data.totalEarned)}</strong>
+              <span className="text-xs text-muted-foreground font-sans mt-2 block">
+                Total lifetime earned: <strong className="text-foreground font-semibold">{money(data.totalEarned)}</strong>
               </span>
             </div>
 
             <button
               onClick={submitPayout}
               disabled={!canWithdraw || pending}
-              className="pressable w-full cut-corner border border-primary text-primary
-                         hover:bg-primary hover:text-primary-foreground py-4 font-arcade font-bold
-                         text-sm flex items-center justify-center gap-2 transition-colors relative
-                         z-10 bg-background disabled:opacity-40 disabled:cursor-not-allowed
-                         disabled:hover:bg-background disabled:hover:text-primary"
+              className="w-full rounded-xl border border-primary/80 bg-primary/10 hover:bg-primary
+                         text-primary hover:text-primary-foreground py-3.5 font-bold
+                         text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2
+                         transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-40
+                         disabled:cursor-not-allowed disabled:hover:bg-primary/10 disabled:hover:text-primary"
             >
               {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {data.pendingPayout > 0 ? "PAYOUT QUEUED" : "REQUEST PAYOUT"}
+              <span>{data.pendingPayout > 0 ? "PAYOUT QUEUED" : "REQUEST PAYOUT"}</span>
             </button>
 
             {data.pendingPayout > 0 && (
-              <p className="relative z-10 mt-2 text-[11px] text-foreground/50 font-sans text-center">
+              <p className="relative z-10 mt-2 text-xs text-muted-foreground font-sans text-center">
                 {money(data.pendingPayout)} awaiting review.
               </p>
             )}
 
             {!canWithdraw && data.pendingPayout === 0 && !data.isBanned && (
-              <p className="relative z-10 mt-2 text-[11px] text-foreground/40 font-sans text-center">
+              <p className="relative z-10 mt-2 text-xs text-muted-foreground font-sans text-center">
                 Minimum withdrawal is ${MIN_PAYOUT_USD}.
               </p>
             )}
 
             {payoutState.error && (
-              <p role="alert" className="relative z-10 mt-2 text-[11px] text-battle-red font-sans text-center">
+              <p role="alert" className="relative z-10 mt-2 text-xs text-destructive font-sans font-semibold text-center">
                 {payoutState.error}
               </p>
             )}
             {payoutState.ok && (
-              <p role="status" className="relative z-10 mt-2 text-[11px] text-battle-green font-sans text-center">
+              <p role="status" className="relative z-10 mt-2 text-xs text-emerald-400 font-sans font-semibold text-center">
                 Payout queued — we&apos;ll email you when it&apos;s sent.
               </p>
             )}
@@ -127,19 +131,19 @@ export default function DashboardClient({
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-card border border-border cut-corner p-4 flex flex-col gap-2">
-              <TrendingUp className="w-4 h-4 text-battle-green" />
-              <span className="font-arcade text-[10px] text-foreground/50 tracking-widest">COMMISSION</span>
-              <span className="font-arcade text-xl font-bold text-foreground">10%</span>
+            <div className="bg-card border border-border/80 rounded-2xl p-4 flex flex-col gap-1.5 shadow-sm">
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <span className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">COMMISSION</span>
+              <span className="text-xl font-extrabold text-foreground tabular-nums">10%</span>
             </div>
-            <div className="bg-card border border-border cut-corner p-4 flex flex-col gap-2">
-              <Swords className="w-4 h-4 text-battle-yellow" />
-              <span className="font-arcade text-[10px] text-foreground/50 tracking-widest">DEPLOYS LEFT</span>
-              <span className="font-arcade text-xl font-bold text-foreground">
+            <div className="bg-card border border-border/80 rounded-2xl p-4 flex flex-col gap-1.5 shadow-sm">
+              <Swords className="w-4 h-4 text-amber-400" />
+              <span className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">DEPLOYS LEFT</span>
+              <span className="text-xl font-extrabold text-foreground tabular-nums">
                 {data.roomCredits}
-                <span className="text-foreground/30 text-sm"> / 5</span>
+                <span className="text-muted-foreground text-sm font-semibold"> / 5</span>
               </span>
-              <span className="text-[10px] text-foreground/40 font-sans leading-snug">
+              <span className="text-[11px] text-muted-foreground leading-snug">
                 {data.roomCredits > 0
                   ? "Free with your pass"
                   : "Next deploy costs $10 (buys 5)"}
@@ -154,18 +158,24 @@ export default function DashboardClient({
             RIGHT COLUMN: BATTLES & LEDGER
         ============================================= */}
         <div className="lg:col-span-8 flex flex-col gap-6">
-          
+
           {/* Custom Tabs */}
-          <div className="flex border-b border-border mb-2">
-            <button 
+          <div className="flex border-b border-border/60 gap-2 mb-1">
+            <button
               onClick={() => setActiveTab("overview")}
-              className={`px-6 py-3 font-arcade text-sm font-bold transition-colors ${activeTab === "overview" ? "text-primary border-b-2 border-primary" : "text-foreground/50 hover:text-foreground"}`}
+              className={`px-5 py-3 font-bold text-xs sm:text-sm uppercase tracking-wider transition-all border-b-2 cursor-pointer ${activeTab === "overview"
+                ? "text-primary border-primary"
+                : "text-muted-foreground hover:text-foreground border-transparent"
+                }`}
             >
               MY ARENAS
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab("ledger")}
-              className={`px-6 py-3 font-arcade text-sm font-bold transition-colors ${activeTab === "ledger" ? "text-primary border-b-2 border-primary" : "text-foreground/50 hover:text-foreground"}`}
+              className={`px-5 py-3 font-bold text-xs sm:text-sm uppercase tracking-wider transition-all border-b-2 cursor-pointer ${activeTab === "ledger"
+                ? "text-primary border-primary"
+                : "text-muted-foreground hover:text-foreground border-transparent"
+                }`}
             >
               EARNINGS HISTORY
             </button>
@@ -178,32 +188,30 @@ export default function DashboardClient({
                 <Link
                   key={battle.id}
                   href={`/${battle.room_type === "global" ? "global" : "battle"}/${battle.id}`}
-                  className="pressable hover-lift corner-ticks relative bg-card border border-border cut-corner p-5
+                  className="rounded-2xl bg-card border border-border/80 p-5
                              flex flex-col md:flex-row md:items-center justify-between gap-4
-                             hover:border-primary/50 transition-colors overflow-hidden group"
+                             hover:border-primary/50 transition-all shadow-sm group"
                 >
-                  <div className="tex-dots absolute inset-0 pointer-events-none" />
-
                   <div className="relative flex items-center gap-4 min-w-0">
-                    {/* Contender art — overlapped, so an arena reads as a match-up */}
+                    {/* Contender art — overlapped */}
                     <div className="flex shrink-0">
                       {battle.contenders.length === 0 ? (
-                        <div className="w-12 h-12 bg-background border border-border cut-corner flex items-center justify-center text-foreground/20">
+                        <div className="w-12 h-12 rounded-full bg-zinc-900 border border-border/80 flex items-center justify-center text-muted-foreground">
                           <ImageOff className="w-4 h-4" />
                         </div>
                       ) : (
                         battle.contenders.map((c, i) => (
                           <div
                             key={i}
-                            className="relative w-12 h-12 bg-background border border-border cut-corner overflow-hidden"
+                            className="relative w-12 h-12 rounded-full bg-zinc-900 border-2 border-card overflow-hidden shadow-xs"
                             style={{ marginLeft: i === 0 ? 0 : -14, zIndex: 10 - i }}
                           >
                             {c.image_url ? (
                               <Image src={c.image_url} alt={c.name} fill sizes="48px" className="object-cover" />
                             ) : (
                               <span
-                                className="w-full h-full flex items-center justify-center font-arcade text-sm font-bold"
-                                style={{ backgroundColor: c.brand_color ?? "#333", color: "#000" }}
+                                className="w-full h-full flex items-center justify-center font-extrabold text-xs"
+                                style={{ backgroundColor: c.brand_color ?? "#333", color: "#fff" }}
                               >
                                 {c.name.charAt(0).toUpperCase()}
                               </span>
@@ -215,41 +223,50 @@ export default function DashboardClient({
 
                     <div className="flex flex-col gap-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${battle.status === "active" ? "bg-battle-green animate-pulse" : "bg-foreground/20"}`} />
-                        <span className="font-arcade text-[10px] text-foreground/50 uppercase">
-                          {battle.status.replace("_", " ")}
-                        </span>
-                        <span className="font-arcade text-[10px] text-foreground/30 uppercase">
-                          {battle.room_type === "global" ? "Global" : "1v1"}
+                        {battle.status === "active" ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[10px] font-bold text-primary shadow-xs">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                            <span>LIVE</span>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                              {battle.status.replace("_", " ")}
+                            </span>
+                          </>
+                        )}
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          • {battle.room_type === "global" ? "Global" : "1v1"}
                         </span>
                       </div>
-                      <span className="font-arcade text-xl font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                      <span className="text-lg sm:text-xl font-extrabold text-foreground group-hover:text-primary transition-colors truncate">
                         {battle.title}
                       </span>
                     </div>
                   </div>
 
-                  <div className="relative grid grid-cols-2 md:flex items-center gap-6 md:gap-12 bg-background border border-border cut-corner p-3 md:p-4 shrink-0">
+                  <div className="grid grid-cols-2 md:flex items-center gap-4 md:gap-8 bg-zinc-900/60 border border-border/60 rounded-xl p-3 md:p-4 shrink-0">
                     <div className="flex flex-col">
-                      <span className="font-arcade text-[10px] text-foreground/40 mb-1">TOTAL POOL</span>
-                      <span className="font-arcade text-foreground font-bold">{money(battle.total_pool)}</span>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">TOTAL POOL</span>
+                      <span className="text-sm font-extrabold text-foreground tabular-nums">{money(battle.total_pool)}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-arcade text-[10px] text-primary mb-1">YOU EARNED (10%)</span>
-                      <span className="font-arcade text-primary font-bold">{money(battle.my_cut)}</span>
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">YOU EARNED (10%)</span>
+                      <span className="text-sm font-extrabold text-primary tabular-nums">{money(battle.my_cut)}</span>
                     </div>
                     <div className="hidden md:flex flex-col">
-                      <span className="font-arcade text-[10px] text-foreground/40 mb-1 flex items-center gap-1">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 flex items-center gap-1">
                         <Clock className="w-3 h-3" /> CLOSES IN
                       </span>
                       <span
-                        className="font-arcade text-foreground font-bold tabular-nums"
+                        className="text-xs font-bold text-foreground tabular-nums"
                         title={formatAbsolute(battle.expires_at)}
                       >
                         {formatCountdown(battle.expires_at)}
                       </span>
                     </div>
-                    <ArrowUpRight className="hidden md:block w-4 h-4 text-foreground/30 group-hover:text-primary transition-colors" />
+                    <ArrowUpRight className="hidden md:block w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 </Link>
               ))}
@@ -258,28 +275,30 @@ export default function DashboardClient({
 
           {/* TAB 2: Financial Ledger */}
           {activeTab === "ledger" && (
-            <div className="bg-card border border-border cut-corner overflow-hidden flex flex-col">
-              <div className="bg-background border-b border-border p-4 flex items-center gap-2">
-                <History className="w-4 h-4 text-foreground/50" />
+            <div className="rounded-2xl bg-card border border-border/80 overflow-hidden flex flex-col shadow-sm">
+              <div className="bg-zinc-900/60 border-b border-border/60 p-4 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <History className="w-4 h-4" />
+                </div>
                 <div className="flex flex-col">
-                  <span className="font-arcade text-xs text-foreground/70 tracking-widest">WHERE YOUR MONEY CAME FROM</span>
-                  <span className="text-[11px] text-foreground/40 font-sans mt-0.5">
+                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">WHERE YOUR MONEY CAME FROM</span>
+                  <span className="text-[11px] text-muted-foreground font-sans mt-0.5">
                     Your 10% commission on every vote, plus withdrawals. Tap a row to open the arena.
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex flex-col">
                 {data.ledger.map((tx, index) => {
-                  const border = index !== data.ledger.length - 1 ? "border-b border-border" : "";
+                  const border = index !== data.ledger.length - 1 ? "border-b border-border/60" : "";
                   const body = (
                     <>
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="font-sans text-sm text-foreground font-medium truncate">
+                        <span className="text-sm text-foreground font-semibold truncate">
                           {tx.type === "commission" ? `Your 10% from ${tx.label}` : tx.label}
                         </span>
                         <span
-                          className="font-arcade text-[10px] text-foreground/40"
+                          className="text-[11px] font-semibold text-muted-foreground"
                           title={formatAbsolute(tx.created_at)}
                         >
                           {formatSince(tx.created_at)}
@@ -287,23 +306,21 @@ export default function DashboardClient({
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className={`font-arcade font-bold ${tx.amount >= 0 ? "text-battle-green" : "text-foreground"}`}>
+                        <span className={`text-sm font-extrabold tabular-nums ${tx.amount >= 0 ? "text-emerald-400" : "text-foreground"}`}>
                           {tx.amount >= 0 ? "+" : "-"}{money(Math.abs(tx.amount))}
                         </span>
                         {tx.room_id && (
-                          <ArrowUpRight className="w-3.5 h-3.5 text-foreground/30 group-hover:text-primary transition-colors" />
+                          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         )}
                       </div>
                     </>
                   );
 
-                  // Commission rows link back to the arena that produced them,
-                  // so the number can actually be cross-checked.
                   return tx.room_id ? (
                     <Link
                       key={tx.id}
                       href={`/${tx.room_type === "global" ? "global" : "battle"}/${tx.room_id}`}
-                      className={`group flex items-center justify-between gap-3 p-4 hover:bg-foreground/[0.03] transition-colors ${border}`}
+                      className={`group flex items-center justify-between gap-3 p-4 hover:bg-muted/40 transition-colors ${border}`}
                     >
                       {body}
                     </Link>

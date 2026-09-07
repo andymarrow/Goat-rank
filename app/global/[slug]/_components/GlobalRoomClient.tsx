@@ -1,10 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Timer, Flame, Trophy, Search, UserPlus, TrendingUp, TrendingDown, Minus, Users, MessageSquare } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  Globe,
+  Trophy,
+  Timer,
+  Users,
+  Heart,
+  Crown,
+  UserPlus,
+  Search,
+  MessageSquare,
+  ChevronDown,
+  Sparkles,
+  SlidersHorizontal,
+  X,
+  Check,
+  Hash,
+  ArrowUpDown
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import AddContenderModal from "./AddContenderModal";
 import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
 import FeedList from "@/components/ui/FeedList";
@@ -13,39 +30,53 @@ import CharityVote from "@/components/ui/CharityVote";
 import Countdown from "@/components/ui/Countdown";
 
 export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
-  // Initialize with live server data!
   const [roomData, setRoomData] = useState(initialRoomData);
+  const [sortBy, setSortBy] = useState<"rank" | "votes" | "name">("rank");
+  const [isSortOpen, setIsSortOpen] = useState(false);
   const [search, setSearch] = useState("");
-  
+
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
   const [selectedContenderIndex, setSelectedContenderIndex] = useState(0);
 
-  // Filter and slice data for UI
-  const filteredRankings = roomData.rankings.filter((p: any) => p.name.toLowerCase().includes(search.toLowerCase()));
-  const topThree = filteredRankings.slice(0, 3);
-  const theRest = filteredRankings.slice(3);
+  // Filter & sort rankings based solely on real DB fetched data
+  const processedRankings = useMemo(() => {
+    let list = [...(roomData.rankings || [])];
 
-  const getTrendIcon = (trend: string) => {
-    if (trend === "up") return <TrendingUp className="w-4 h-4 text-battle-green" />;
-    if (trend === "down") return <TrendingDown className="w-4 h-4 text-battle-red" />;
-    return <Minus className="w-4 h-4 text-foreground/30" />;
-  };
+    if (search.trim()) {
+      list = list.filter((p: any) =>
+        p.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
-  // Safe handler to find the exact index in the main array even if search is active
+    if (sortBy === "name") {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === "votes") {
+      list.sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
+    } else {
+      list.sort((a, b) => (a.rank || 0) - (b.rank || 0));
+    }
+
+    return list;
+  }, [roomData.rankings, search, sortBy]);
+
+  const poolTotalSum = useMemo(() => {
+    const sum = (roomData.rankings || []).reduce((acc: number, r: any) => acc + (Number(r.amount) || 0), 0);
+    return sum > 0 ? sum : (roomData.totalPool || 1);
+  }, [roomData]);
+
   const handleVoteClick = (entityId: string) => {
     const actualIndex = roomData.rankings.findIndex((r: any) => r.id === entityId);
-    setSelectedContenderIndex(actualIndex);
+    setSelectedContenderIndex(actualIndex >= 0 ? actualIndex : 0);
     setIsVoteModalOpen(true);
   };
 
-  // Create a synthetic "battle" object to pass to our reusable VoteModal
   const syntheticBattleForModal = {
     id: roomData.id,
     charity: roomData.charity,
     contenders: roomData.rankings.map((r: any) => ({
-      id: r.contender_id, 
+      id: r.contender_id,
       name: r.name,
       color: r.color,
       image: r.img
@@ -53,280 +84,376 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
   };
 
   return (
-    <div className="w-full max-w-[1600px] mx-auto p-4 md:p-8 lg:p-12">
-      
-      {/* Top Nav */}
-      <Link href="/" className="inline-flex items-center gap-2 text-foreground/50 hover:text-primary font-arcade text-xs transition-colors mb-8">
-        <ArrowLeft className="w-4 h-4" /> RETURN TO ARENA
-      </Link>
+    <div className="w-full mx-auto py-4 sm:py-6 lg:py-8 bg-background text-foreground font-sans min-h-screen">
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-        
-        {/* =========================================
-            LEFT COLUMN: STICKY COMMAND CENTER
-        ============================================= */}
-        <div className="lg:col-span-4 lg:sticky lg:top-24 flex flex-col gap-6">
-          
-          {/* Room Identity Card */}
-          <div className="bg-card border border-border cut-corner-lg overflow-hidden flex flex-col shadow-xl">
-            {/* Image Banner */}
-            <div className="relative w-full h-40 sm:h-48 bg-black">
-              <Image
-                src={roomData.image}
-                alt={roomData.leader?.name ?? roomData.title}
-                fill
-                sizes="(max-width: 1024px) 100vw, 33vw"
-                className="object-cover opacity-70"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-              <div className="tex-scanlines absolute inset-0 pointer-events-none" />
+      {/* =========================================================================
+          SIDE-BY-SIDE ARENA LAYOUT (LEFT INFO BANNER CARD + RIGHT CONTENDER GRID)
+      ========================================================================= */}
+      <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start">
 
-              <div className="absolute top-3 right-3 cut-corner px-3 py-1 bg-primary text-primary-foreground font-arcade text-[10px] font-bold">
-                {roomData.category}
+        {/* LEFT COLUMN: ARENA INFO & BANNER SECTION (Refined sidebar width + Vertical Separator) */}
+        <div className="w-full lg:w-[22vw] xl:w-[22vw] shrink-0 lg:sticky lg:top-20 flex flex-col gap-5 lg:pr-6 lg:border-r lg:border-border/40">
+
+          {/* Main Info Card Wrapper */}
+          <div className="relative w-full rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-sm flex flex-col gap-4 overflow-hidden">
+            {/* Cover Image Box */}
+            <div className="relative w-full h-[170px] sm:h-[185px] rounded-xl overflow-hidden bg-muted/60 border border-border/50 shrink-0">
+              {roomData.image ? (
+                <Image
+                  src={roomData.image}
+                  alt={roomData.title}
+                  fill
+                  priority
+                  sizes="380px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                  <Globe className="w-10 h-10" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+
+              {/* Category Pill */}
+              <div className="absolute top-3 left-3 z-10">
+                <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-muted-foreground border border-white/10 text-[10px] sm:text-xs font-medium">
+                  {roomData.category || "Global Arena"}
+                </span>
               </div>
 
-              {/* Who is actually winning. The card used to show one generic
-                  stock photo, which said nothing about the room. */}
+              {/* Current Leader Chip */}
               {roomData.leader && (
-                <Link
-                  href={`/profile/${roomData.leader.entityId}`}
-                  className="pressable absolute bottom-3 left-3 flex items-center gap-2 bg-black/60
-                             backdrop-blur-md border border-white/15 cut-corner pl-1.5 pr-3 py-1.5
-                             hover:border-primary/60 transition-colors group/leader max-w-[90%]"
-                >
-                  <span className="relative w-8 h-8 shrink-0 cut-corner overflow-hidden bg-background">
-                    {roomData.leader.img ? (
-                      <Image
-                        src={roomData.leader.img}
-                        alt={roomData.leader.name}
-                        fill
-                        sizes="32px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <span
-                        className="w-full h-full flex items-center justify-center font-arcade text-xs font-bold text-black"
-                        style={{ backgroundColor: roomData.leader.color ?? "#FF7A00" }}
-                      >
-                        {roomData.leader.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </span>
-
-                  <span className="flex flex-col min-w-0">
-                    <span className="font-arcade text-[8px] uppercase tracking-widest text-battle-yellow leading-none">
-                      Leading
+                <div className="absolute bottom-3 left-3 right-3 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md text-foreground font-semibold text-xs border border-white/10 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="relative w-5 h-5 rounded-md overflow-hidden bg-muted shrink-0">
+                      {roomData.leader.img ? (
+                        <Image src={roomData.leader.img} alt={roomData.leader.name} fill className="object-cover" />
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center font-bold text-[9px] text-black"
+                          style={{ backgroundColor: roomData.leader.color || "#FF7A00" }}
+                        >
+                          {roomData.leader.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <span className="truncate text-xs">
+                      <span className="text-yellow-500 font-bold">👑 #1</span> {roomData.leader.name}
                     </span>
-                    <span className="font-arcade text-xs font-bold text-white truncate group-hover/leader:text-primary transition-colors">
-                      {roomData.leader.name}
-                    </span>
+                  </div>
+                  <span className="text-[11px] text-yellow-500 font-sans font-semibold shrink-0 ml-2">
+                    ${(Number(roomData.leader.amount) || 0).toLocaleString()}
                   </span>
-                </Link>
+                </div>
               )}
             </div>
-            
-            {/* Details */}
-            <div className="p-6 -mt-8 relative z-10">
-              <h1 className="text-3xl md:text-4xl font-arcade font-black text-foreground uppercase tracking-wider mb-4 leading-none">
+
+            {/* Title & Live Status Section */}
+            <div className="flex flex-col gap-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[10px] font-mono font-bold text-primary shadow-xs w-fit">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span>LIVE GLOBAL ARENA</span>
+              </div>
+              <h1 className="text-xl font-bold tracking-tight text-foreground leading-snug">
                 {roomData.title}
               </h1>
-              
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between p-4 bg-background border border-border cut-corner">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-battle-yellow" />
-                    <span className="font-arcade text-foreground/50 text-xs">TOTAL POOL</span>
-                  </div>
-                  <span className="text-xl font-arcade font-bold text-battle-yellow">${roomData.totalPool.toLocaleString()}</span>
-                </div>
+            </div>
 
-                <div className="flex items-center justify-between p-4 bg-background border border-border cut-corner">
-                  <div className="flex items-center gap-2">
-                    <Timer className="w-5 h-5 text-primary" />
-                    <span className="font-arcade text-foreground/50 text-xs">TIME LEFT</span>
-                  </div>
+            {/* Stats Section */}
+            <div className="flex flex-col gap-2 text-xs pt-3 border-t border-border/40">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium flex items-center gap-2">
+                  <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                  <span>Prize Pool</span>
+                </span>
+                <span className="font-semibold text-yellow-500 text-sm font-sans">
+                  {(roomData.totalPool || 0).toLocaleString()}
+                </span>
+              </div>
+
+              {roomData.expiresAt && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground font-medium flex items-center gap-2">
+                    <Timer className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Time Left</span>
+                  </span>
                   <Countdown target={roomData.expiresAt} size="sm" />
                 </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>Active Contenders</span>
+                </span>
+                <span className="font-semibold text-foreground">
+                  {roomData.rankings?.length || 0}
+                </span>
               </div>
-              
-              <p className="mt-6 text-xs text-foreground/50 font-sans border-l-2 border-battle-pink pl-3">
-                30% of total pool proceeds will be donated to <strong className="text-foreground">{roomData.charity}</strong>.
-              </p>
+
+              {roomData.charity && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground font-medium flex items-center gap-2">
+                    <Heart className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Charity Allocation</span>
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    30% to {roomData.charity}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Primary Action Button */}
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs uppercase tracking-wider hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2 mt-1"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add Contender</span>
+            </button>
           </div>
 
-          {/* Action Panel */}
-          <div className="bg-card border border-border cut-corner p-6 flex flex-col gap-4 shadow-xl">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
-              <input 
-                type="text" 
-                placeholder="Search contenders..." 
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-background border border-border cut-corner pl-10 pr-4 py-3 text-foreground font-sans text-sm outline-none focus:border-primary transition-colors"
-              />
+          {/* CHARITY ALLOCATION CARD WRAPPER */}
+          <div className="relative w-full rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-sm flex flex-col gap-3">
+            <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+              <Heart className="w-4 h-4 text-primary" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                Charity Allocation (30%)
+              </h3>
             </div>
-            
-            <button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="w-full cut-corner border border-primary/50 hover:bg-primary hover:text-primary-foreground px-6 py-3 flex items-center justify-center gap-2 text-primary font-arcade text-xs transition-all group shadow-[0_0_15px_rgba(255,122,0,0.1)]"
-            >
-              <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              ADD MISSING CONTENDER ($5)
-            </button>
+            <CharityVote
+              roomId={roomData.id}
+              charities={roomData.charities ?? []}
+              tally={roomData.charityTally ?? []}
+              myChoice={roomData.charityChoice ?? null}
+              total={roomData.charityTotal ?? 0}
+            />
           </div>
 
         </div>
 
+        {/* RIGHT COLUMN: SEARCH & SORT TOOLBAR + CONTENDER CARDS GRID */}
+        <div className="flex-1 min-w-0 flex flex-col gap-6">
 
-        {/* =========================================
-            RIGHT COLUMN: THE LEADERBOARD
-        ============================================= */}
-        <div className="lg:col-span-8 flex flex-col gap-8 pb-24">
-          
-          {/* --- THE VANGUARD (TOP 3 PODIUM) --- */}
-          {topThree.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <Flame className="w-5 h-5 text-primary" />
-                <h3 className="font-arcade text-foreground/50 tracking-widest text-sm">THE VANGUARD</h3>
-                <div className="flex-1 h-px bg-border" />
-              </div>
+          {/* TOOLBAR: Search Input, Counter Badge & Professional Sort Dropdown */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border/80 p-3 rounded-2xl shadow-sm">
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {topThree.map((entity: any, index: number) => {
-                  const isFirst = index === 0;
-                  return (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}
-                      key={entity.id} 
-                      className={`relative flex flex-col bg-card border cut-corner p-5 group overflow-hidden ${
-                        isFirst ? "border-battle-yellow shadow-[0_0_30px_rgba(255,214,0,0.15)]" : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      {/* Rank Number Background Watermark */}
-                      <div className={`absolute -right-4 -bottom-8 font-arcade font-black text-9xl opacity-5 select-none ${isFirst ? 'text-battle-yellow opacity-10' : 'text-foreground'}`}>
-                        {entity.rank}
-                      </div>
-
-                      <div className="flex justify-between items-start mb-6 relative z-10">
-                        <span className={`text-3xl font-arcade font-black ${isFirst ? 'striped-text' : 'text-foreground/30'}`}>
-                          #{entity.rank}
-                        </span>
-                        {getTrendIcon(entity.trend)}
-                      </div>
-
-                      <div className="flex flex-col items-center text-center relative z-10 mb-6">
-                        <div className="w-24 h-24 cut-corner overflow-hidden bg-background mb-4 border-b-4" style={{ borderColor: entity.color }}>
-                          <Image src={entity.img} alt={entity.name} width={96} height={96} className="object-cover w-full h-full group-hover:scale-110 transition-transform" />
-                        </div>
-                        <h4 className="font-arcade font-bold text-foreground text-lg mb-1 group-hover:text-primary transition-colors cursor-pointer">
-                          <Link href={`/profile/${entity.id}`}>{entity.name}</Link>
-                        </h4>
-                        <span className={`font-arcade font-bold ${isFirst ? 'text-battle-yellow text-xl' : 'text-foreground text-lg'}`}>
-                          ${entity.amount.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <button 
-                        onClick={() => handleVoteClick(entity.id)}
-                        className="w-full cut-corner py-3 font-arcade font-bold text-xs transition-all hover:brightness-110 relative z-10" 
-                        style={{ backgroundColor: entity.color, color: "#000" }}
-                      >
-                        BACK CONTENDER
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </div>
+            {/* Search Bar */}
+            <div className="relative flex-1 group">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search contenders by name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-9 py-2 text-xs sm:text-sm rounded-xl bg-muted/30 border border-border/60 text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all font-sans"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-          )}
 
-          {/* --- THE CHASERS (RANK 4+) --- */}
-          {theRest.length > 0 && (
-            <div className="mt-4">
-              <div className="flex items-center gap-3 mb-6">
-                <Users className="w-5 h-5 text-foreground/40" />
-                <h3 className="font-arcade text-foreground/50 tracking-widest text-sm">THE CHASERS</h3>
-                <div className="flex-1 h-px bg-border" />
+            {/* Right: Counter Badge & Custom Sort Dropdown */}
+            <div className="flex items-center gap-2 shrink-0">
+
+              {/* Contender Counter Badge */}
+              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted/30 border border-border/50 text-[11px] font-medium text-muted-foreground font-sans select-none">
+                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="font-semibold text-foreground">{processedRankings.length}</span>
+                <span>/ {roomData.rankings?.length || 0}</span>
+              </span>
+
+              {/* Custom Sort Dropdown Trigger */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsSortOpen(!isSortOpen)}
+                  aria-expanded={isSortOpen}
+                  aria-label="Sort contenders"
+                  className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer select-none ${isSortOpen
+                    ? "bg-primary text-primary-foreground border-transparent shadow-sm"
+                    : "bg-muted/40 border-border/60 text-foreground hover:bg-muted hover:border-border active:scale-[0.98]"
+                    }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span className="capitalize font-sans">
+                    Sort: <span className="font-bold">{sortBy}</span>
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {isSortOpen && (
+                    <>
+                      {/* Click Outside Backdrop */}
+                      <div
+                        className="fixed inset-0 z-30"
+                        onClick={() => setIsSortOpen(false)}
+                        aria-hidden="true"
+                      />
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute right-0 mt-2 w-52 bg-card border border-border/80 rounded-2xl shadow-2xl z-40 p-1.5 flex flex-col gap-1 backdrop-blur-xl"
+                      >
+                        {[
+                          { id: "rank", label: "Rank (#1 Top)", icon: Hash, desc: "Highest ranked first" },
+                          { id: "votes", label: "Pool ($ Highest)", icon: Sparkles, desc: "Most pool votes first" },
+                          { id: "name", label: "Alphabetical (A-Z)", icon: ArrowUpDown, desc: "Sorted by contender name" },
+                        ].map((opt) => {
+                          const Icon = opt.icon;
+                          const selected = sortBy === opt.id;
+
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setSortBy(opt.id as any);
+                                setIsSortOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${selected
+                                ? "bg-muted/80 text-foreground font-semibold"
+                                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                                }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <Icon className={`w-4 h-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-xs font-semibold leading-tight truncate">
+                                    {opt.label}
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground font-sans font-normal truncate">
+                                    {opt.desc}
+                                  </span>
+                                </div>
+                              </div>
+                              {selected && <Check className="w-3.5 h-3.5 text-primary shrink-0 ml-1 stroke-[2.5]" />}
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <div className="flex flex-col gap-2">
-                {theRest.map((entity: any, index: number) => (
-                  <motion.div 
-                    initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}
-                    key={entity.id}
-                    className="flex items-center p-3 bg-card border border-border cut-corner hover:border-primary/50 transition-all group"
+            </div>
+
+          </div>
+
+          {/* CONTENDERS GRID (3 Columns - Home Screen Card Aesthetics) */}
+          {processedRankings.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {processedRankings.map((contender: any) => {
+                const totalVotes = Number(contender.amount) || 0;
+                const percentage = poolTotalSum > 0 ? Math.round((totalVotes / poolTotalSum) * 100) : 0;
+                const isLeader = contender.rank === 1;
+
+                return (
+                  <div
+                    key={contender.id}
+                    className="relative rounded-2xl bg-card border border-border/80 p-3.5 sm:p-4 shadow-sm flex flex-col justify-between gap-3 hover:border-border hover:bg-white/[0.02] transition-all duration-200 ease-out group"
                   >
-                    <div className="w-12 text-center font-arcade font-bold text-foreground/30 text-lg">
-                      #{entity.rank}
-                    </div>
-                    
-                    <Link href={`/profile/${entity.id}`} className="flex-1 flex items-center gap-4 cursor-pointer px-4 border-l border-border">
-                      <div className="w-10 h-10 cut-corner overflow-hidden bg-background border-b-2" style={{ borderColor: entity.color }}>
-                        <Image src={entity.img} alt={entity.name} width={40} height={40} className="object-cover w-full h-full" />
-                      </div>
-                      <span className="font-arcade font-bold text-foreground group-hover:text-primary transition-colors md:text-lg">
-                        {entity.name}
-                      </span>
-                    </Link>
+                    {/* Top Contender Poster Box */}
+                    <div className="relative w-full h-[150px] sm:h-[160px] rounded-xl overflow-hidden bg-muted/60 border border-border/50 shrink-0">
+                      {contender.img ? (
+                        <Image
+                          src={contender.img}
+                          alt={contender.name}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 300px"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center font-bold text-xl text-black"
+                          style={{ backgroundColor: contender.color || "#FF7A00" }}
+                        >
+                          {contender.name.charAt(0)}
+                        </div>
+                      )}
 
-                    <div className="flex items-center gap-6 pr-4">
-                      <div className="hidden md:flex flex-col items-end">
-                        <span className="font-arcade font-bold text-foreground">${entity.amount.toLocaleString()}</span>
-                      </div>
-                      <div className="w-4 flex justify-center">
-                        {getTrendIcon(entity.trend)}
-                      </div>
-                      <button 
-                        onClick={() => handleVoteClick(entity.id)}
-                        className="hidden md:block cut-corner px-6 py-2 font-arcade font-bold text-xs transition-all hover:brightness-110" 
-                        style={{ backgroundColor: entity.color, color: "#000" }}
-                      >
-                        VOTE
-                      </button>
-                      <button 
-                        onClick={() => handleVoteClick(entity.id)}
-                        className="md:hidden cut-corner p-2 font-arcade font-bold text-xs transition-all hover:brightness-110" 
-                        style={{ backgroundColor: entity.color, color: "#000" }}
-                      >
-                        +
-                      </button>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80" />
                     </div>
-                  </motion.div>
-                ))}
-              </div>
+
+                    {/* Contender Details & Progress */}
+                    <div className="flex flex-col gap-2">
+                      <h3 className="font-semibold text-foreground text-sm line-clamp-1 tracking-tight group-hover:text-primary transition-colors">
+                        {contender.name}
+                      </h3>
+
+                      <div className="flex items-center justify-between text-xs font-medium">
+                        <span className="font-semibold text-yellow-500 font-sans">
+                          {totalVotes.toLocaleString()}{" "}
+                          <span className="font-normal text-muted-foreground text-[11px]">pool</span>
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {percentage}%
+                        </span>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${isLeader ? "bg-yellow-500" : "bg-primary"
+                            }`}
+                          style={{ width: `${Math.max(percentage, 3)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Vote Action Button */}
+                    <button
+                      onClick={() => handleVoteClick(contender.id)}
+                      className={`w-full py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 mt-1 active:scale-[0.98] ${isLeader
+                        ? "bg-primary text-primary-foreground hover:opacity-95"
+                        : "bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:bg-zinc-700"
+                        }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Back {contender.name}</span>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
-          )}
-
-          {filteredRankings.length === 0 && (
-            <div className="text-center py-16 bg-card border border-border cut-corner">
-              <p className="text-foreground/40 font-arcade text-sm mb-4">NO CONTENDER FOUND.</p>
-              <button 
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border py-12 text-center flex flex-col items-center justify-center gap-3">
+              <Users className="w-8 h-8 text-muted-foreground/40" />
+              <p className="text-sm font-semibold text-muted-foreground">
+                No contenders match "{search}"
+              </p>
+              <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="cut-corner border border-primary text-primary px-6 py-2 font-arcade text-xs hover:bg-primary hover:text-primary-foreground transition-colors"
+                className="rounded-xl border border-primary text-primary px-5 py-2 font-bold text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
               >
-                ADD THEM TO THE ARENA ($5)
+                Inject Contender
               </button>
             </div>
           )}
 
-        </div>
+          {/* BOTTOM BATTLE CRIES FEED SECTION */}
+          <div className="flex flex-col gap-3 pt-3 border-t border-border/40">
+            <div className="flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5 text-primary" />
+              <h2 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                Battle Cries Feed
+              </h2>
+            </div>
 
-      </div>
-
-      {/* Paid battle cries. Paged — an arena with thousands of messages must
-          not ship all of them in the initial payload. */}
-      <section className="hidden lg:block w-full max-w-5xl mx-auto px-4 md:px-0 py-8 md:py-10">
-        <div className="flex items-center gap-2 mb-4">
-          <MessageSquare className="w-5 h-5 text-primary" />
-          <h2 className="font-arcade text-base md:text-xl font-bold uppercase tracking-widest text-foreground">
-            Battle cries
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-2">
             <FeedList
               roomId={roomData.id}
               initialItems={roomData.feed ?? []}
@@ -335,27 +462,11 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
             />
           </div>
 
-          <aside className="corner-ticks relative bg-card border border-border cut-corner p-4 overflow-hidden lg:sticky lg:top-24">
-            <div className="tex-dots absolute inset-0 pointer-events-none" />
-            <h3 className="relative font-arcade text-xs font-bold uppercase tracking-widest text-foreground mb-3">
-              Where the 30% goes
-            </h3>
-            <div className="relative">
-              <CharityVote
-                roomId={roomData.id}
-                charities={roomData.charities ?? []}
-                tally={roomData.charityTally ?? []}
-                myChoice={roomData.charityChoice ?? null}
-                total={roomData.charityTotal ?? 0}
-              />
-            </div>
-          </aside>
         </div>
-      </section>
 
-      {/* Mobile: battle cries and the charity vote as a slide-over, the same
-          pattern as a 1v1 arena. No bottom vote bar here, so the trigger sits
-          just above the tab bar. */}
+      </div>
+
+      {/* Mobile Feed Drawer */}
       <MobileFeedDrawer
         roomId={roomData.id}
         feed={roomData.feed ?? []}
@@ -369,20 +480,20 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
       />
 
       {/* --- MODALS --- */}
-      <AddContenderModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        roomTitle={roomData.title} 
+      <AddContenderModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        roomTitle={roomData.title}
         roomId={roomData.id}
       />
 
-      <VoteModal 
-        isOpen={isVoteModalOpen} 
-        onClose={() => setIsVoteModalOpen(false)} 
+      <VoteModal
+        isOpen={isVoteModalOpen}
+        onClose={() => setIsVoteModalOpen(false)}
         battle={syntheticBattleForModal}
         contenderIndex={selectedContenderIndex}
       />
-      
+
     </div>
   );
 }
