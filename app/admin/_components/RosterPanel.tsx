@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Avatar from "@/components/ui/Avatar";
+import ColorPicker from "@/components/ui/ColorPicker";
 import { Check, X, Save, Trash2, Plus, ImageOff, Info } from "lucide-react";
 
 import type { AdminEntity } from "@/actions/admin/roster";
@@ -101,17 +102,16 @@ export default function RosterPanel({
 
                   <div className="relative flex gap-3 p-3">
                     {/* Image preview — the whole point of the review queue */}
-                    <div className="relative w-20 h-20 shrink-0 bg-black cut-corner border border-border overflow-hidden">
+                    <div className="relative w-20 h-20 shrink-0">
                       {renderable ? (
-                        <Image
-                          src={entity.image_url as string}
-                          alt={entity.name}
-                          fill
-                          sizes="80px"
-                          className="object-cover"
+                        <Avatar
+                          src={entity.image_url}
+                          name={entity.name}
+                          size={80}
+                          color={entity.brand_color}
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-foreground/25">
+                        <div className="w-full h-full bg-background border border-border cut-corner flex flex-col items-center justify-center gap-1 text-foreground/25">
                           <ImageOff className="w-4 h-4" />
                           <span className="font-arcade text-[8px] uppercase">
                             {entity.image_url ? "Bad host" : "None"}
@@ -119,7 +119,7 @@ export default function RosterPanel({
                         </div>
                       )}
                       <span
-                        className="absolute bottom-0 inset-x-0 h-1.5"
+                        className="absolute bottom-0 inset-x-0 h-1.5 z-10"
                         style={{ backgroundColor: entity.brand_color ?? "#FFFFFF" }}
                       />
                     </div>
@@ -214,20 +214,11 @@ export default function RosterPanel({
                           />
                         </Field>
                         <Field label="Brand colour">
-                          <div className="flex gap-1.5">
-                            <input
-                              type="color"
-                              value={draft.brand_color}
-                              onChange={(e) => setDraft({ ...draft, brand_color: e.target.value })}
-                              aria-label="Brand colour picker"
-                              className="w-9 h-9 shrink-0 bg-background border border-border cut-corner cursor-pointer"
-                            />
-                            <input
-                              value={draft.brand_color}
-                              onChange={(e) => setDraft({ ...draft, brand_color: e.target.value })}
-                              className={inputClass}
-                            />
-                          </div>
+                          <ColorPicker
+                            value={draft.brand_color}
+                            onChange={(brand_color) => setDraft({ ...draft, brand_color })}
+                            compact
+                          />
                         </Field>
                       </div>
 

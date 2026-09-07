@@ -5,6 +5,7 @@ import { Download, BadgeCheck, X, Check } from "lucide-react";
 
 import type { AdminPayout, CharityRow } from "@/actions/admin/payouts";
 import { setPayoutStatus, exportCharityCsv } from "@/actions/admin/payouts";
+import { formatSince, formatAbsolute } from "@/lib/time";
 import {
   Panel, ActionButton, Badge, EmptyState, Scroller, inputClass, money,
 } from "./AdminPrimitives";
@@ -77,7 +78,9 @@ export default function LedgerPanel({
                       {p.profiles?.username ?? "unnamed"}
                     </td>
                     <td className="py-3 pr-3 text-[11px] text-foreground/45 font-sans whitespace-nowrap">
-                      {new Date(p.requested_at).toLocaleDateString()}
+                      <span title={formatAbsolute(p.requested_at)}>
+                        {formatSince(p.requested_at)}
+                      </span>
                     </td>
                     <td className="py-3 pr-3 font-arcade text-xs tabular-nums text-battle-green">
                       {money(p.amount)}

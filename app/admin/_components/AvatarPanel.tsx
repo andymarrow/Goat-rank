@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Avatar from "@/components/ui/Avatar";
 import { Upload, Loader2, Trash2, Shuffle, Plus } from "lucide-react";
 
 import type { AdminAvatar } from "@/actions/admin/avatars";
@@ -154,7 +155,7 @@ export default function AvatarPanel({ avatars }: { avatars: AdminAvatar[] }) {
                 }`}
               >
                 <div className="relative aspect-square">
-                  <Image src={a.image_url} alt={a.name} fill sizes="96px" className="object-cover" />
+                  <Avatar src={a.image_url} name={a.name} size={96} className="!w-full !h-full !border-0" />
                 </div>
 
                 <div className="p-1.5">

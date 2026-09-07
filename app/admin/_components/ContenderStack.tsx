@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Avatar from "@/components/ui/Avatar";
 import { ImageOff } from "lucide-react";
 
 type Contender = {
@@ -61,25 +61,13 @@ export default function ContenderStack({
             zIndex: 10 - i,
           }}
         >
-          {c.entities!.image_url ? (
-            <Image
-              src={c.entities!.image_url}
-              alt={c.entities!.name}
-              fill
-              sizes={`${size}px`}
-              className="object-cover"
-            />
-          ) : (
-            <span
-              className="w-full h-full flex items-center justify-center font-arcade font-bold text-black"
-              style={{
-                backgroundColor: c.entities!.brand_color ?? "#FF7A00",
-                fontSize: Math.round(size * 0.4),
-              }}
-            >
-              {c.entities!.name.charAt(0).toUpperCase()}
-            </span>
-          )}
+          <Avatar
+            src={c.entities!.image_url}
+            name={c.entities!.name}
+            size={size}
+            color={c.entities!.brand_color}
+            className="!border-0"
+          />
         </span>
       ))}
 

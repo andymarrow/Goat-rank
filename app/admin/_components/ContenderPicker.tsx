@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import { Search, Plus, X, Upload, Loader2, ImageOff, Check } from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
+import { Search, Plus, X, Upload, Loader2, Check } from "lucide-react";
 
 import type { AdminEntity } from "@/actions/admin/roster";
 import { createClient } from "@/utils/supabase/client";
@@ -197,13 +198,13 @@ export default function ContenderPicker({
                            overflow-hidden hover:border-primary transition-colors disabled:opacity-40"
               >
                 <span className="relative block aspect-square bg-card">
-                  {e.image_url ? (
-                    <Image src={e.image_url} alt={e.name} fill sizes="80px" className="object-cover" />
-                  ) : (
-                    <span className="w-full h-full flex items-center justify-center text-foreground/20">
-                      <ImageOff className="w-4 h-4" />
-                    </span>
-                  )}
+                  <Avatar
+                    src={e.image_url}
+                    name={e.name}
+                    size={80}
+                    color={e.brand_color}
+                    className="!w-full !h-full !border-0"
+                  />
                   <span
                     className="absolute bottom-0 inset-x-0 h-1"
                     style={{ backgroundColor: e.brand_color ?? "#FF7A00" }}

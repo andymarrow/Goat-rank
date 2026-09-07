@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Activity, Swords, Hammer, Users, MessageSquare, Wallet, Settings,
@@ -43,15 +44,23 @@ export default function AdminSidebar({
     >
       <div className="corner-ticks relative px-4 py-4 lg:py-6 border-b border-border overflow-hidden">
         <div className="tex-grid absolute inset-0 pointer-events-none" />
-        <div className="relative flex items-center gap-2 mb-1">
-          <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span className="font-arcade text-[9px] uppercase tracking-[0.2em] text-foreground/50">
-            Restricted
-          </span>
+        <div className="relative flex items-center gap-2.5">
+          <Image
+            src="/image/logo.png"
+            alt=""
+            width={222}
+            height={256}
+            className="h-8 w-auto object-contain shrink-0"
+          />
+          <div className="min-w-0">
+            <span className="flex items-center gap-1.5 font-arcade text-[9px] uppercase tracking-[0.2em] text-foreground/50">
+              <ShieldCheck className="w-3 h-3 text-primary shrink-0" /> Restricted
+            </span>
+            <p className="font-arcade font-black uppercase tracking-wider text-lg lg:text-xl text-foreground leading-tight">
+              GOD<span className="text-primary italic"> MODE</span>
+            </p>
+          </div>
         </div>
-        <p className="relative font-arcade font-black uppercase tracking-wider text-xl lg:text-2xl text-foreground">
-          GOD<span className="text-primary italic"> MODE</span>
-        </p>
         <p className="relative mt-0.5 text-[11px] text-foreground/45 font-sans truncate">
           {adminName}
         </p>

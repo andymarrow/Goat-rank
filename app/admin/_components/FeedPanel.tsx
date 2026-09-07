@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Image from "next/image";
+import Avatar from "@/components/ui/Avatar";
 import Link from "next/link";
 import {
   Bomb, Undo2, Gavel, ShieldCheck, ShieldOff, Search, ArrowLeft,
@@ -218,17 +218,7 @@ export default function FeedPanel({
                       : "border-border bg-background"
                   }`}
                 >
-                  <div className="relative w-9 h-9 shrink-0 bg-card border border-border cut-corner overflow-hidden">
-                    {vote.voter_avatar && (
-                      <Image
-                        src={vote.voter_avatar}
-                        alt={vote.voter_name}
-                        fill
-                        sizes="36px"
-                        className="object-cover"
-                      />
-                    )}
-                  </div>
+                  <Avatar src={vote.voter_avatar} name={vote.voter_name} size={36} />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">

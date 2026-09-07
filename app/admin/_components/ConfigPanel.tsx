@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2, Megaphone, XCircle, Save } from "lucide-react";
 
 import type { Category, Charity, SiteBanner } from "@/actions/admin/config";
+import ColorPicker from "@/components/ui/ColorPicker";
 import {
   upsertCategory, deleteCategory, upsertCharity, deleteCharity,
   publishBanner, clearBanners,
@@ -131,13 +132,13 @@ export default function ConfigPanel({
                 />
               </Field>
             </div>
-            <input
-              type="color"
-              value={newCategory.accent}
-              onChange={(e) => setNewCategory({ ...newCategory, accent: e.target.value })}
-              aria-label="Category accent colour"
-              className="w-9 h-9 bg-background border border-border cut-corner cursor-pointer"
-            />
+            <div className="w-full sm:w-auto">
+              <ColorPicker
+                value={newCategory.accent}
+                onChange={(accent) => setNewCategory({ ...newCategory, accent })}
+                compact
+              />
+            </div>
             <ActionButton
               variant="primary"
               disabled={!newCategory.label.trim()}
