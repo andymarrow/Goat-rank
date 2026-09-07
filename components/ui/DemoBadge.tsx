@@ -1,5 +1,3 @@
-import { Bot } from "lucide-react";
-
 /**
  * Disclosure marker for seeded content.
  *
@@ -14,19 +12,5 @@ export function DemoDot({ className = "" }: { className?: string }) {
       aria-label="Demo account"
       className={`inline-block w-1.5 h-1.5 rounded-full bg-primary shrink-0 ring-2 ring-primary/25 ${className}`}
     />
-  );
-}
-
-export function DemoBadge({ label = "Demo" }: { label?: string }) {
-  return (
-    <span
-      title="Seeded demo content, not real activity"
-      className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10
-                 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-primary
-                 whitespace-nowrap"
-    >
-      <Bot className="w-2.5 h-2.5" />
-      {label}
-    </span>
   );
 }

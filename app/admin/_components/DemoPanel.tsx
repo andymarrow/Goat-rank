@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bot, Plus, Trash2, MessageSquarePlus, ExternalLink, Pin, Info, Save, Eraser } from "lucide-react";
+import { Bot, Plus, Trash2, MessageSquarePlus, ExternalLink, Pin, Info, Save, Eraser, Sparkles } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 
 import type { DemoRoomRow, BotRow } from "@/actions/admin/demo";
 import {
-  createDemoRoom, deleteDemoRoom, addDemoCries, updateBot, purgeDemoContent,
+  createDemoRoom, deleteDemoRoom, addDemoCries, updateBot, purgeDemoContent, seedStarterArenas,
 } from "@/actions/admin/demo";
 import { setRoomFeatured } from "@/actions/admin/rooms";
 import type { AdminEntity } from "@/actions/admin/roster";
@@ -38,6 +38,7 @@ export default function DemoPanel({
   const [botDraft, setBotDraft] = useState<Record<string, { username: string; persona: string }>>(
     {}
   );
+  const [seedNote, setSeedNote] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(categories[0]?.label ?? "Sports");
   const [roomType, setRoomType] = useState<"1v1" | "global">("1v1");
@@ -66,6 +67,41 @@ export default function DemoPanel({
           .
         </span>
       </p>
+
+      {/* One-click catalogue. The original fixtures rendered from a constants
+          file; deleting it left the feed empty until these exist as rows. */}
+      <Panel
+        title="Starter arenas"
+        subtitle="Seed the full catalogue at once — Ronaldo vs Messi, GOAT footballer, sci-fi franchises and the rest."
+        action={
+          <ActionButton
+            variant="primary"
+            onRun={async () => {
+              const res = await seedStarterArenas();
+              if (res.ok) {
+                setSeedNote(
+                  `${res.data.created} arena(s) created` +
+                    (res.data.skipped ? `, ${res.data.skipped} already existed` : "")
+                );
+              }
+              return res.ok ? { ok: true } : res;
+            }}
+          >
+            <Sparkles className="w-3 h-3" /> Seed starter arenas
+          </ActionButton>
+        }
+      >
+        <p className="text-[11px] leading-relaxed text-muted-foreground font-sans">
+          Creates eleven demo arenas with contenders, artwork and bot battle cries. Safe to run
+          twice — anything already seeded is skipped. Pools fill from the bot cries at believable
+          amounts rather than the invented five-figure sums the old fixtures displayed.
+        </p>
+        {seedNote && (
+          <p role="status" className="mt-2 text-[11px] text-emerald-500 font-sans">
+            {seedNote}
+          </p>
+        )}
+      </Panel>
 
       {/* ------------------------------------------------------- CREATE */}
       <Panel title="New demo arena" subtitle="Seeded contest with disclosed bot supporters.">

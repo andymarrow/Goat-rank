@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { requireAdmin, adminError, type AdminResult } from "@/utils/supabase/admin-auth";
 import { generatedAvatar } from "@/lib/avatar";
 import { colorForIndex } from "@/lib/palette";
+import { STARTER_ARENAS } from "@/lib/starterArenas";
 
 /**
  * Demo arenas and bot accounts.
@@ -483,5 +484,56 @@ export async function purgeDemoContent(): Promise<
     };
   } catch (error) {
     return adminError(error, "Could not purge demo content.");
+  }
+}
+
+/**
+ * Seed the starter catalogue in one action.
+ *
+ * The original fixtures rendered straight from a constants file, so deleting
+ * that file left the feed empty. This creates each of them as a real demo
+ * room instead. Skips any title already seeded, so it is safe to re-run.
+ */
+export async function seedStarterArenas(): Promise<
+  AdminResult<{ created: number; skipped: number }>
+> {
+  try {
+    await requireAdmin();
+    const supabase = createAdminClient();
+
+    const { data: existing } = await supabase
+      .from("rooms")
+      .select("title")
+      .eq("is_demo", true);
+
+    const seen = new Set((existing ?? []).map((r) => r.title.toLowerCase()));
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const arena of STARTER_ARENAS) {
+      if (seen.has(arena.title.toLowerCase())) {
+        skipped++;
+        continue;
+      }
+
+      const res = await createDemoRoom({
+        title: arena.title,
+        category: arena.category,
+        roomType: arena.roomType,
+        contenders: arena.contenders,
+        cries: arena.cries,
+        featured: arena.featured,
+      });
+
+      if (res.ok) created++;
+      else console.error(`Seeding "${arena.title}" failed:`, res.error);
+    }
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/");
+    return { ok: true, data: { created, skipped } };
+  } catch (error) {
+    return adminError(error, "Could not seed the starter arenas.");
   }
 }

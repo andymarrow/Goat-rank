@@ -1,11 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Swords, TrendingUp, Trophy, ArrowUpRight, Ban } from "lucide-react";
 
 import { getUserProfile } from "@/actions/getUserProfile";
 import { formatSince } from "@/lib/time";
-import { DemoBadge } from "@/components/ui/DemoBadge";
+import { DemoDot } from "@/components/ui/DemoBadge";
+import Avatar from "@/components/ui/Avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -25,69 +25,73 @@ export default async function PublicUserPage({
   return (
     <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 py-6 md:py-10 pb-28">
       {/* Identity */}
-      <div className="corner-ticks relative bg-card border border-border cut-corner-lg overflow-hidden mb-6">
-        <div className="tex-grid absolute inset-0 pointer-events-none" />
-
-        <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 md:p-8">
-          <div className="relative w-16 h-16 md:w-24 md:h-24 shrink-0 bg-background border border-border cut-corner overflow-hidden">
-            {profile.avatar_url && (
-              <Image
-                src={profile.avatar_url}
-                alt={profile.username}
-                fill
-                sizes="96px"
-                className="object-cover"
-              />
-            )}
-          </div>
+      <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden mb-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 md:p-8">
+          <Avatar
+            src={profile.avatar_url}
+            name={profile.username}
+            size={96}
+            className="!w-16 !h-16 md:!w-24 md:!h-24 !rounded-2xl"
+          />
 
           <div className="min-w-0 flex-1">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-2 mb-1">
-              {profile.isBot ? "Demo account" : "Creator"}
-              {profile.isBot && <DemoBadge />}
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">
+              Creator
             </span>
-            <h1 className="font-arcade text-2xl md:text-4xl font-black uppercase tracking-wider text-foreground truncate">
-              {profile.username}
+
+            <h1 className="flex items-center gap-2.5 text-2xl md:text-4xl font-extrabold tracking-tight text-foreground">
+              <span className="truncate">{profile.username}</span>
+              {/* Seeded account. The dot is the disclosure — its tooltip says
+                  what it means, so no label is needed beside it. */}
+              {profile.isBot && <DemoDot className="!w-2.5 !h-2.5" />}
             </h1>
-            <p className="text-xs text-foreground/40 font-sans mt-1">
+
+            <p className="text-xs text-muted-foreground font-sans mt-1">
               Joined {formatSince(profile.createdAt)}
             </p>
           </div>
 
           {profile.isBanned && (
-            <span className="cut-corner border border-battle-red/40 bg-battle-red/10 text-battle-red px-3 py-1.5 font-arcade text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5">
+            <span
+              className="rounded-full border border-red-500/40 bg-red-500/10 text-red-500 px-3 py-1.5
+                         font-mono text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5"
+            >
               <Ban className="w-3 h-3" /> Suspended
             </span>
           )}
         </div>
       </div>
 
-      {profile.isBot && (
-        <p className="mb-6 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs
-                      text-muted-foreground font-sans leading-relaxed">
-          This is a <strong className="text-foreground">seeded demo account</strong>, not a real
-          person. It exists so new arenas aren&apos;t empty. Its battle cries and pledges are
-          demonstration content and are excluded from platform earnings.
-        </p>
-      )}
-
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-        <Stat label="Lifetime earned" value={money(profile.totalEarned)} accent="text-battle-green" icon={<TrendingUp className="w-4 h-4" />} />
-        <Stat label="Pool raised" value={money(profile.poolRaised)} accent="text-battle-yellow" icon={<Trophy className="w-4 h-4" />} />
-        <Stat label="Arenas hosted" value={String(profile.arenasCreated)} icon={<Swords className="w-4 h-4" />} />
+        <Stat
+          label="Lifetime earned"
+          value={money(profile.totalEarned)}
+          accent="text-emerald-500"
+          icon={<TrendingUp className="w-4 h-4" />}
+        />
+        <Stat
+          label="Pool raised"
+          value={money(profile.poolRaised)}
+          accent="text-amber-500"
+          icon={<Trophy className="w-4 h-4" />}
+        />
+        <Stat
+          label="Arenas hosted"
+          value={String(profile.arenasCreated)}
+          icon={<Swords className="w-4 h-4" />}
+        />
         <Stat label="Settled" value={String(profile.arenasSettled)} />
       </div>
 
       {/* Arenas */}
-      <h2 className="font-arcade text-sm md:text-base font-bold uppercase tracking-widest text-foreground mb-4">
+      <h2 className="font-mono text-xs md:text-sm font-bold uppercase tracking-wider text-foreground mb-4">
         Arenas hosted
       </h2>
 
       {profile.arenas.length === 0 ? (
-        <div className="corner-ticks relative border border-dashed border-border cut-corner py-12 text-center overflow-hidden">
-          <div className="tex-hatch absolute inset-0 pointer-events-none" />
-          <p className="relative font-arcade text-xs uppercase tracking-widest text-foreground/40">
+        <div className="border border-dashed border-border/60 rounded-2xl py-12 text-center">
+          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             No arenas hosted yet
           </p>
         </div>
@@ -97,53 +101,36 @@ export default async function PublicUserPage({
             <Link
               key={arena.id}
               href={`/${arena.room_type === "global" ? "global" : "battle"}/${arena.id}`}
-              className="pressable hover-lift group flex items-center justify-between gap-3 bg-card
-                         border border-border cut-corner p-4 hover:border-primary/50 transition-colors"
+              className="group flex items-center justify-between gap-3 bg-card border border-border/60
+                         rounded-2xl p-4 hover:border-primary/50 transition-colors shadow-xs cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
-                {/* Leading contender fronts the card. */}
-                <span className="relative w-12 h-12 shrink-0 cut-corner overflow-hidden bg-background border border-border">
-                  {arena.leader?.image_url ? (
-                    <Image
-                      src={arena.leader.image_url}
-                      alt={arena.leader.name}
-                      fill
-                      sizes="48px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <span
-                      className="w-full h-full flex items-center justify-center font-arcade text-base font-bold text-black"
-                      style={{ backgroundColor: arena.leader?.brand_color ?? "#FF7A00" }}
-                    >
-                      {(arena.leader?.name ?? arena.title).charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                  <span
-                    className="absolute bottom-0 inset-x-0 h-1"
-                    style={{ backgroundColor: arena.leader?.brand_color ?? "#FF7A00" }}
-                  />
-                </span>
+                <Avatar
+                  src={arena.leader?.image_url}
+                  name={arena.leader?.name ?? arena.title}
+                  size={48}
+                  color={arena.leader?.brand_color}
+                  className="!rounded-xl"
+                />
 
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    {arena.status === "active" ? (
-                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted border border-border/60 text-[9px] font-mono font-bold text-primary shadow-xs">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        <span>LIVE</span>
-                      </div>
-                    ) : (
-                      <span className="w-1.5 h-1.5 rounded-full bg-foreground/20" />
-                    )}
-                    <span className="font-arcade text-[9px] uppercase tracking-widest text-foreground/40">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        arena.status === "active" ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"
+                      }`}
+                    />
+                    <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
                       {arena.status} · {arena.room_type}
                     </span>
                   </div>
-                  <span className="font-arcade text-sm font-bold text-foreground truncate block group-hover:text-primary transition-colors">
+
+                  <span className="font-bold text-sm text-foreground truncate block group-hover:text-primary transition-colors">
                     {arena.title}
                   </span>
+
                   {arena.leader && (
-                    <span className="text-[10px] text-foreground/35 font-sans truncate block">
+                    <span className="text-[11px] text-muted-foreground font-sans truncate block">
                       {arena.status === "settled" ? "Won by" : "Leading"} {arena.leader.name}
                     </span>
                   )}
@@ -151,10 +138,10 @@ export default async function PublicUserPage({
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="font-arcade text-sm font-bold text-battle-yellow tabular-nums">
+                <span className="font-bold text-sm text-amber-500 tabular-nums">
                   {money(arena.total_pool)}
                 </span>
-                <ArrowUpRight className="w-4 h-4 text-foreground/30 group-hover:text-primary transition-colors" />
+                <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
             </Link>
           ))}
@@ -176,17 +163,14 @@ function Stat({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="corner-ticks relative bg-card border border-border cut-corner p-4 overflow-hidden">
-      <div className="tex-dots absolute inset-0 pointer-events-none" />
-      <div className="relative flex items-start justify-between gap-2">
-        <span className="font-arcade text-[9px] uppercase tracking-widest text-foreground/50">
+    <div className="relative bg-card border border-border/60 rounded-2xl p-4 shadow-xs">
+      <div className="flex items-start justify-between gap-2">
+        <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
-        {icon && <span className="text-foreground/25 shrink-0">{icon}</span>}
+        {icon && <span className="text-muted-foreground shrink-0">{icon}</span>}
       </div>
-      <p className={`relative mt-2 font-arcade text-xl md:text-2xl font-black tabular-nums ${accent}`}>
-        {value}
-      </p>
+      <p className={`mt-2 text-xl md:text-2xl font-extrabold tabular-nums ${accent}`}>{value}</p>
     </div>
   );
 }
