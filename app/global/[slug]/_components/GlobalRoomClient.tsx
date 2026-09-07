@@ -28,6 +28,7 @@ import FeedList from "@/components/ui/FeedList";
 import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 import CharityVote from "@/components/ui/CharityVote";
 import CharityCard from "@/components/ui/CharityCard";
+import DropdownPanel from "@/components/ui/DropdownPanel";
 import Countdown from "@/components/ui/Countdown";
 
 export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
@@ -296,23 +297,26 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`} />
                 </button>
 
-                {/* Dropdown Menu */}
-                <AnimatePresence>
-                  {isSortOpen && (
-                    <>
-                      {/* Click Outside Backdrop */}
-                      <div
-                        className="fixed inset-0 z-30"
-                        onClick={() => setIsSortOpen(false)}
-                        aria-hidden="true"
-                      />
+                {/* Click Outside Backdrop */}
+                {isSortOpen && (
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setIsSortOpen(false)}
+                    aria-hidden="true"
+                  />
+                )}
 
+                {/* Dropdown Menu. DropdownPanel keeps it on screen when the
+                    toolbar wraps and the trigger is no longer near the edge. */}
+                <DropdownPanel open={isSortOpen}>
+                  <AnimatePresence>
+                    {isSortOpen && (
                       <motion.div
                         initial={{ opacity: 0, y: 6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.96 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="absolute right-0 mt-2 w-52 bg-card border border-border/80 rounded-2xl shadow-2xl z-40 p-1.5 flex flex-col gap-1 backdrop-blur-xl"
+                        className="w-52 max-w-[calc(100vw-1rem)] bg-card border border-border/80 rounded-2xl shadow-2xl p-1.5 flex flex-col gap-1 backdrop-blur-xl"
                       >
                         {[
                           { id: "rank", label: "Rank (#1 Top)", icon: Hash, desc: "Highest ranked first" },
@@ -351,9 +355,9 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                           );
                         })}
                       </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
+                    )}
+                  </AnimatePresence>
+                </DropdownPanel>
               </div>
 
             </div>

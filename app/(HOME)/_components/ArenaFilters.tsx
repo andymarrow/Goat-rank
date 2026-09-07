@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Flame, Clock, Sparkles, TrendingDown, ChevronRight, SlidersHorizontal, Check, ChevronDown } from "lucide-react";
 import { FlameIcon } from "@/components/ui/flame";
 import { ROOM_SORTS, type RoomSort } from "@/lib/constants";
+import DropdownPanel from "@/components/ui/DropdownPanel";
 
 const ICONS: Record<RoomSort, typeof Flame> = {
   hot: Flame,
@@ -57,11 +58,7 @@ export default function ArenaFilters({
   const activeCategoryLabel = category.toLowerCase() === "all" ? "All Categories" : category;
 
   return (
-    /* The dropdown is positioned against this row, not against its button:
-       the row spans the full content width, so right-0 always lands on the
-       content edge. Anchored to the button it hung off the screen whenever the
-       controls wrapped to their own line on a phone. */
-    <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
       <div>
         <h2 className="text-base sm:text-lg font-semibold tracking-tight text-foreground flex items-center gap-1.5 group cursor-pointer shrink-0">
           Active Face-Offs
@@ -104,7 +101,7 @@ export default function ArenaFilters({
         <div className="flex items-center gap-2 shrink-0">
           {/* Filter Dropdown Menu Button (for Categories) */}
           {categories.length > 0 && (
-            <div className="shrink-0" ref={dropdownRef}>
+            <div className="relative shrink-0" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={(e) => {
@@ -123,36 +120,39 @@ export default function ArenaFilters({
               </button>
 
               {/* Floating Glassmorphic Dropdown Panel */}
-              {isOpen && (
-                <div
-                  className="absolute right-0 top-full mt-2 w-48 max-w-[calc(100vw-2rem)]
-                             max-h-[60vh] overflow-y-auto overscroll-contain rounded-2xl bg-card
-                             border border-border/60 p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 text-xs"
-                >
-                  <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Categories
+              <DropdownPanel open={isOpen}>
+                {isOpen && (
+                  <div
+                    className="w-48 max-w-[calc(100vw-1rem)] max-h-[60vh] overflow-y-auto
+                               overscroll-contain rounded-2xl bg-card border border-border/60 p-1.5
+                               shadow-2xl flex flex-col gap-0.5 text-xs"
+                  >
+                    <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Categories
+                    </div>
+
+                    {["all", ...categories].map((cat) => {
+                      const active = category.toLowerCase() === cat.toLowerCase();
+                      return (
+                        <Link
+                          key={cat}
+                          href={hrefWith({ category: cat })}
+                          scroll={false}
+                          onClick={() => setIsOpen(false)}
+                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground font-semibold"
+                              : "text-foreground hover:bg-muted/60"
+                          }`}
+                        >
+                          <span className="capitalize">{cat === "all" ? "All Categories" : cat}</span>
+                          {active && <Check className="w-3.5 h-3.5" />}
+                        </Link>
+                      );
+                    })}
                   </div>
-                  {["all", ...categories].map((cat) => {
-                    const active = category.toLowerCase() === cat.toLowerCase();
-                    return (
-                      <Link
-                        key={cat}
-                        href={hrefWith({ category: cat })}
-                        scroll={false}
-                        onClick={() => setIsOpen(false)}
-                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl transition-colors ${
-                          active
-                            ? "bg-primary text-primary-foreground font-semibold"
-                            : "text-foreground hover:bg-muted/60"
-                        }`}
-                      >
-                        <span className="capitalize">{cat === "all" ? "All Categories" : cat}</span>
-                        {active && <Check className="w-3.5 h-3.5" />}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+                )}
+              </DropdownPanel>
             </div>
           )}
 

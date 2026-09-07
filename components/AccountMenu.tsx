@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LayoutDashboard, User, LogOut, ShieldCheck, ChevronDown } from "lucide-react";
 
 import Avatar from "@/components/ui/Avatar";
+import DropdownPanel from "@/components/ui/DropdownPanel";
 import { createClient } from "@/utils/supabase/client";
 
 /**
@@ -77,39 +78,41 @@ export default function AccountMenu({
         />
       </button>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full mt-2 w-60 bg-card/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-2xl overflow-hidden z-50 p-1.5"
-        >
-          <div className="flex items-center gap-3 p-2.5 mb-1 rounded-xl bg-muted/40 border border-border/40">
-            <Avatar src={avatarUrl} name={username} size={36} />
-            <div className="min-w-0">
-              <p className="font-semibold text-xs font-sans text-foreground truncate">{username}</p>
-              <p className="text-[11px] text-muted-foreground font-sans">
-                {isAdmin ? "Administrator" : "Creator"}
-              </p>
+      <DropdownPanel open={open}>
+        {open && (
+          <div
+            role="menu"
+            className="w-60 max-w-[calc(100vw-1rem)] bg-card/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-2xl overflow-hidden p-1.5"
+          >
+            <div className="flex items-center gap-3 p-2.5 mb-1 rounded-xl bg-muted/40 border border-border/40">
+              <Avatar src={avatarUrl} name={username} size={36} />
+              <div className="min-w-0">
+                <p className="font-semibold text-xs font-sans text-foreground truncate">{username}</p>
+                <p className="text-[11px] text-muted-foreground font-sans">
+                  {isAdmin ? "Administrator" : "Creator"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-0.5">
+              <MenuLink href="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Command Centre" />
+              <MenuLink href={`/u/${userId}`} icon={<User className="w-4 h-4" />} label="Public Profile" />
+              {isAdmin && (
+                <MenuLink href="/admin" icon={<ShieldCheck className="w-4 h-4" />} label="Admin Console" />
+              )}
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={signOut}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-sans font-medium text-rose-500 hover:bg-rose-500/10 transition-colors text-left"
+              >
+                <LogOut className="w-4 h-4" /> Sign out
+              </button>
             </div>
           </div>
-
-          <div className="flex flex-col gap-0.5">
-            <MenuLink href="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Command Centre" />
-            <MenuLink href={`/u/${userId}`} icon={<User className="w-4 h-4" />} label="Public Profile" />
-            {isAdmin && (
-              <MenuLink href="/admin" icon={<ShieldCheck className="w-4 h-4" />} label="Admin Console" />
-            )}
-
-            <button
-              type="button"
-              role="menuitem"
-              onClick={signOut}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-sans font-medium text-rose-500 hover:bg-rose-500/10 transition-colors text-left"
-            >
-              <LogOut className="w-4 h-4" /> Sign out
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </DropdownPanel>
     </div>
   );
 }
