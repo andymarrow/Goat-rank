@@ -13,6 +13,7 @@ import { setRoomFeatured } from "@/actions/admin/rooms";
 import type { AdminEntity } from "@/actions/admin/roster";
 import type { Category } from "@/actions/admin/config";
 import ContenderPicker, { type PickedContender } from "./ContenderPicker";
+import BotAssignPanel from "./BotAssignPanel";
 import { Panel, ActionButton, Badge, EmptyState, Field, inputClass, money } from "./AdminPrimitives";
 import { formatSince } from "@/lib/time";
 
@@ -291,6 +292,9 @@ export default function DemoPanel({
           </ul>
         )}
       </Panel>
+
+      {/* ------------------------------------------------------ PLEDGES */}
+      <BotAssignPanel rooms={rooms} bots={bots} />
 
       {/* --------------------------------------------------------- BOTS */}
       <Panel

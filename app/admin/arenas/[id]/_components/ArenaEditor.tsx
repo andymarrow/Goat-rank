@@ -3,12 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Save, Pin, PinOff, Gavel, Trash2, ExternalLink, Users, Info,
+  ArrowLeft, Save, Pin, PinOff, Gavel, Trash2, ExternalLink, Users, Info, Plus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import type { AdminRoom } from "@/actions/admin/rooms";
-import { updateRoom, setRoomFeatured, forceSettleRoom, deleteRoom } from "@/actions/admin/rooms";
+import {
+  updateRoom, setRoomFeatured, forceSettleRoom, deleteRoom, addContenderToRoom,
+} from "@/actions/admin/rooms";
+import EntitySearch from "@/app/(HOME)/create/_components/EntitySearch";
+import ImageUpload from "../../../_components/ImageUpload";
 import type { Category, Charity } from "@/actions/admin/config";
 import ContenderEditor from "../../../_components/ContenderEditor";
 import { Panel, ActionButton, Badge, Field, inputClass, money } from "../../../_components/AdminPrimitives";
@@ -45,6 +49,12 @@ export default function ArenaEditor({
   const [charityName, setCharityName] = useState(room.charity_name ?? "");
   const [expiresAt, setExpiresAt] = useState(toLocalInput(room.expires_at));
   const [featured, setFeatured] = useState(room.is_featured);
+
+  const [newName, setNewName] = useState("");
+  const [newImage, setNewImage] = useState<string | null>(null);
+  const [newEntityId, setNewEntityId] = useState<string | null>(null);
+
+  const atCapacity = room.room_type === "1v1" && (room.room_contenders?.length ?? 0) >= 2;
 
   const publicHref = `/${room.room_type === "global" ? "global" : "battle"}/${room.id}`;
   const isSettled = room.status === "settled";
@@ -160,7 +170,71 @@ export default function ArenaEditor({
           </span>
         }
       >
-        <ContenderEditor contenders={room.room_contenders ?? []} />
+        <ContenderEditor contenders={room.room_contenders ?? []} roomId={room.id} />
+
+        {/* Adding one was only possible at arena creation, so a global arena
+            could never grow after the fact. */}
+        <div className="mt-5 pt-5 border-t border-border/60 flex flex-col gap-3">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Add a contender
+          </span>
+
+          {atCapacity ? (
+            <p className="text-[11px] text-muted-foreground font-sans">
+              A 1v1 arena already has both contenders. Edit one above, or switch to a global arena
+              to add more.
+            </p>
+          ) : (
+            <>
+              <EntitySearch
+                category={category}
+                placeholder="Search contenders already on GOAT Rank…"
+                onPick={(e) => {
+                  setNewEntityId(e.id);
+                  setNewName(e.name);
+                  setNewImage(e.image_url);
+                }}
+              />
+
+              <input
+                value={newName}
+                onChange={(e) => {
+                  setNewName(e.target.value);
+                  setNewEntityId(null);
+                }}
+                placeholder="…or type a new name"
+                className={inputClass}
+              />
+
+              {!newEntityId && (
+                <ImageUpload value={newImage} onChange={setNewImage} size={64} />
+              )}
+
+              <div className="flex justify-end">
+                <ActionButton
+                  variant="primary"
+                  disabled={!newName.trim()}
+                  onRun={async () => {
+                    const res = await addContenderToRoom(room.id, {
+                      entityId: newEntityId ?? undefined,
+                      name: newName,
+                      image: newImage ?? undefined,
+                    });
+                    if (res.ok) {
+                      setNewName("");
+                      setNewImage(null);
+                      setNewEntityId(null);
+                      router.refresh();
+                    }
+                    return res;
+                  }}
+                >
+                  <Plus className="w-3 h-3" /> Add contender
+                </ActionButton>
+              </div>
+            </>
+          )}
+        </div>
       </Panel>
 
       {/* Placement & lifecycle */}

@@ -71,7 +71,9 @@ export default function BattleArena({
         </div>
 
         {/* Split Contenders Matchup Stage */}
-        <div className="relative w-full h-[320px] xs:h-[360px] sm:h-[400px] md:h-[460px] rounded-2xl overflow-hidden bg-black/40 border border-border/50 flex flex-row items-center justify-between p-2">
+        {/* Each half is washed in its contender's brand colour, so the stage
+            reads as a matchup rather than the flat grey slab it was. */}
+        <div className="relative w-full h-[300px] xs:h-[360px] sm:h-[420px] md:h-[480px] rounded-2xl overflow-hidden border border-border/50 flex flex-row items-stretch justify-between gap-1 p-1.5 sm:p-2 bg-neutral-950">
           
           {/* Glowing Center Vertical Line */}
           <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gradient-to-b from-transparent via-amber-500/40 to-transparent z-10 pointer-events-none" />
@@ -86,7 +88,16 @@ export default function BattleArena({
             href={`/profile/${leftContender.entityId || "1"}`}
             aria-label={`View ${leftContender.name}'s profile`}
             className="relative w-1/2 h-full rounded-xl overflow-hidden block group/left"
+            style={{
+              background: `radial-gradient(120% 90% at 30% 100%, ${leftContender.color ?? "#FF7A00"}55 0%, ${leftContender.color ?? "#FF7A00"}18 45%, transparent 75%)`,
+            }}
           >
+            {isLeftWinning && (
+              <span
+                className="absolute inset-0 pointer-events-none"
+                style={{ boxShadow: `inset 0 0 60px ${leftContender.color ?? "#FF7A00"}55` }}
+              />
+            )}
             {leftContender.image ? (
               <Image
                 src={leftContender.image}
@@ -96,11 +107,14 @@ export default function BattleArena({
                 className="object-contain object-bottom group-hover/left:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-muted">
+              <div
+                className="w-full h-full flex items-center justify-center font-black text-5xl sm:text-7xl"
+                style={{ color: `${leftContender.color ?? "#FF7A00"}66` }}
+              >
                 {leftContender.name.charAt(0)}
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-90" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
 
             {/* Left Contender Name & Subtitle Overlay */}
             <div className="absolute top-4 left-4 z-10 flex flex-col">
@@ -115,7 +129,7 @@ export default function BattleArena({
             </div>
 
             {/* Left Contender Vote Button Overlay */}
-            <div className="absolute bottom-3 left-3 right-3 sm:right-6 z-10">
+            <div className="hidden lg:block absolute bottom-3 left-3 right-3 sm:right-6 z-10">
               <button
                 type="button"
                 onClick={(e) => {
@@ -139,7 +153,16 @@ export default function BattleArena({
             href={`/profile/${rightContender.entityId || "2"}`}
             aria-label={`View ${rightContender.name}'s profile`}
             className="relative w-1/2 h-full rounded-xl overflow-hidden block group/right"
+            style={{
+              background: `radial-gradient(120% 90% at 70% 100%, ${rightContender.color ?? "#3B82F6"}55 0%, ${rightContender.color ?? "#3B82F6"}18 45%, transparent 75%)`,
+            }}
           >
+            {isRightWinning && (
+              <span
+                className="absolute inset-0 pointer-events-none"
+                style={{ boxShadow: `inset 0 0 60px ${rightContender.color ?? "#3B82F6"}55` }}
+              />
+            )}
             {rightContender.image ? (
               <Image
                 src={rightContender.image}
@@ -149,11 +172,14 @@ export default function BattleArena({
                 className="object-contain object-bottom group-hover/right:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center font-bold text-4xl text-muted-foreground bg-muted">
+              <div
+                className="w-full h-full flex items-center justify-center font-black text-5xl sm:text-7xl"
+                style={{ color: `${rightContender.color ?? "#3B82F6"}66` }}
+              >
                 {rightContender.name.charAt(0)}
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-90" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
 
             {/* Right Contender Name & Subtitle Overlay */}
             <div className="absolute top-4 right-4 z-10 flex flex-col items-end text-right">
@@ -168,7 +194,7 @@ export default function BattleArena({
             </div>
 
             {/* Right Contender Vote Button Overlay */}
-            <div className="absolute bottom-3 left-3 sm:left-6 right-3 z-10">
+            <div className="hidden lg:block absolute bottom-3 left-3 sm:left-6 right-3 z-10">
               <button
                 type="button"
                 onClick={(e) => {
@@ -198,7 +224,7 @@ export default function BattleArena({
         </span>
 
         {/* Voting Row */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
           {/* Left Contender Stats */}
           <div className="flex flex-col min-w-0">
             <span className={`font-bold text-sm sm:text-base uppercase truncate ${
@@ -206,7 +232,7 @@ export default function BattleArena({
             }`}>
               {leftContender.name}
             </span>
-            <span className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tabular-nums ${
+            <span className={`text-3xl sm:text-3xl md:text-4xl font-extrabold tabular-nums leading-none ${
               isLeftWinning ? "text-primary" : "text-muted-foreground"
             }`}>
               {Math.round(leftPercentage)}%
@@ -216,8 +242,9 @@ export default function BattleArena({
             </span>
           </div>
 
-          {/* Center Submit Vote Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Desktop only: on mobile these collided with the percentages and
+              duplicated the fixed bottom vote bar. */}
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => onVoteClick?.(0)}
@@ -249,7 +276,7 @@ export default function BattleArena({
             }`}>
               {rightContender.name}
             </span>
-            <span className={`text-2xl sm:text-3xl md:text-4xl font-extrabold tabular-nums ${
+            <span className={`text-3xl sm:text-3xl md:text-4xl font-extrabold tabular-nums leading-none ${
               isRightWinning ? "text-primary" : "text-muted-foreground"
             }`}>
               {Math.round(rightPercentage)}%

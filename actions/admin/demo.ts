@@ -537,3 +537,129 @@ export async function seedStarterArenas(): Promise<
     return adminError(error, "Could not seed the starter arenas.");
   }
 }
+
+/**
+ * Place a chosen set of bots behind chosen contenders for chosen amounts.
+ *
+ * The bulk "+5 cries" helper picks bots, targets and amounts at random, which
+ * fills a room but can't produce a particular result — a close race, a clear
+ * leader, a named supporter on a named side at a named price. Each assignment
+ * carries its own contender and amount so one call can stage a whole arena.
+ */
+export type BotAssignment = {
+  botId: string;
+  contenderId: string;
+  amount: number;
+  message?: string;
+};
+
+export async function assignBotsToArena(input: {
+  roomId: string;
+  assignments: BotAssignment[];
+}): Promise<AdminResult<{ placed: number; total: number }>> {
+  try {
+    await requireAdmin();
+    const supabase = createAdminClient();
+
+    if (input.assignments.length === 0) {
+      return { ok: false, error: "Pick at least one bot." };
+    }
+
+    const { data: room } = await supabase
+      .from("rooms")
+      .select("id, is_demo, room_type")
+      .eq("id", input.roomId)
+      .single();
+
+    if (!room) return { ok: false, error: "Arena not found." };
+
+    // The DB guard enforces this too, but failing here gives a clearer reason
+    // than a raised exception from the trigger.
+    if (!room.is_demo) {
+      return {
+        ok: false,
+        error: "Bots can only back demo arenas — a live arena must take real pledges.",
+      };
+    }
+
+    const [{ data: bots }, { data: links }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, username, avatar_url, is_bot")
+        .in("id", input.assignments.map((a) => a.botId)),
+      supabase.from("room_contenders").select("id").eq("room_id", input.roomId),
+    ]);
+
+    const botById = new Map((bots ?? []).map((b) => [b.id, b]));
+    const validContenders = new Set((links ?? []).map((l) => l.id));
+
+    const rows = [];
+    let total = 0;
+
+    for (const a of input.assignments) {
+      const amount = Number(a.amount);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return { ok: false, error: "Every pledge needs an amount greater than zero." };
+      }
+
+      const bot = botById.get(a.botId);
+      if (!bot?.is_bot) return { ok: false, error: "One of those accounts is not a bot." };
+
+      if (!validContenders.has(a.contenderId)) {
+        return { ok: false, error: `Pick a contender for ${bot.username ?? "each bot"}.` };
+      }
+
+      total += amount;
+      rows.push({
+        // Unique per bot per call; the column is the payment idempotency key.
+        polar_transaction_id: `demo-${input.roomId}-${a.botId}-${Date.now()}`,
+        room_id: input.roomId,
+        contender_id: a.contenderId,
+        voter_id: bot.id,
+        amount,
+        voter_name: bot.username ?? "Demo",
+        voter_avatar: bot.avatar_url ?? null,
+        message: a.message?.trim().slice(0, 150) || null,
+        is_demo: true,
+      });
+    }
+
+    // One statement, so the pool moves in a single transaction — the row
+    // trigger still fires per row and does all the accounting.
+    const { error } = await supabase.from("votes").insert(rows);
+    if (error) throw error;
+
+    revalidatePath("/admin", "layout");
+    revalidatePath(`/${room.room_type === "global" ? "global" : "battle"}/${input.roomId}`);
+    revalidatePath("/");
+    return { ok: true, data: { placed: rows.length, total } };
+  } catch (error) {
+    return adminError(error, "Could not place those bot pledges.");
+  }
+}
+
+export type DemoContenderOption = {
+  contenderId: string;
+  name: string;
+};
+
+/** Contenders in a demo arena, for the assignment picker. */
+export async function listDemoContenders(roomId: string): Promise<DemoContenderOption[]> {
+  await requireAdmin();
+
+  const { data, error } = await createAdminClient()
+    .from("room_contenders")
+    .select("id, seed_index, entities ( name )")
+    .eq("room_id", roomId)
+    .order("seed_index", { ascending: true });
+
+  if (error) {
+    console.error("listDemoContenders failed:", error);
+    return [];
+  }
+
+  return (data ?? []).map((c) => ({
+    contenderId: c.id,
+    name: (c.entities as unknown as { name?: string } | null)?.name ?? "Contender",
+  }));
+}

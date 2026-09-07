@@ -1,15 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Save, ImageOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Save, ImageOff, Trash2 } from "lucide-react";
 
 import { updateEntity } from "@/actions/admin/roster";
+import { removeContenderFromRoom } from "@/actions/admin/rooms";
+import ImageFraming from "./ImageFraming";
 import ColorPicker from "@/components/ui/ColorPicker";
 import Avatar from "@/components/ui/Avatar";
 import ImageUpload from "./ImageUpload";
 import { ActionButton, Field, inputClass } from "./AdminPrimitives";
 
 type Contender = {
+  id: string;
   current_votes: number | string;
   seed_index: number;
   entities: {
@@ -28,7 +32,14 @@ type Contender = {
  * shared entities, an edit here updates them everywhere they appear — which is
  * the point, and is called out in the UI so it isn't a surprise.
  */
-export default function ContenderEditor({ contenders }: { contenders: Contender[] }) {
+export default function ContenderEditor({
+  contenders,
+  roomId,
+}: {
+  contenders: Contender[];
+  roomId: string;
+}) {
+  const router = useRouter();
   const [drafts, setDrafts] = useState<
     Record<string, { name: string; image_url: string; brand_color: string }>
   >({});
@@ -63,6 +74,8 @@ export default function ContenderEditor({ contenders }: { contenders: Contender[
         const set = (patch: Partial<typeof draft>) =>
           setDrafts({ ...drafts, [e.id]: { ...draft, ...patch } });
 
+        const backed = Number(c.current_votes) || 0;
+
         return (
           <div
             key={e.id}
@@ -79,6 +92,31 @@ export default function ContenderEditor({ contenders }: { contenders: Contender[
 
               <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 Seed #{c.seed_index + 1} · ${Number(c.current_votes) || 0} backed
+              </span>
+
+              {/* Removing one that has taken money would orphan those pledges,
+                  so the action refuses server-side; the button says so first. */}
+              <span className="ml-auto shrink-0">
+                {backed > 0 ? (
+                  <span
+                    title="This contender has been backed — removing it would orphan those pledges."
+                    className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground"
+                  >
+                    Locked
+                  </span>
+                ) : (
+                  <ActionButton
+                    variant="danger"
+                    confirm={`Remove ${e.name} from this arena?`}
+                    onRun={async () => {
+                      const res = await removeContenderFromRoom(roomId, c.id);
+                      if (res.ok) router.refresh();
+                      return res;
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" /> Remove
+                  </ActionButton>
+                )}
               </span>
             </div>
 
@@ -97,10 +135,16 @@ export default function ContenderEditor({ contenders }: { contenders: Contender[
             </div>
 
             <Field label="Image">
-              <ImageUpload
-                value={draft.image_url || null}
-                onChange={(url) => set({ image_url: url ?? "" })}
-              />
+              <div className="flex flex-col gap-2">
+                <ImageUpload
+                  value={draft.image_url || null}
+                  onChange={(url) => set({ image_url: url ?? "" })}
+                />
+                <ImageFraming
+                  value={draft.image_url}
+                  onChange={(url) => set({ image_url: url })}
+                />
+              </div>
             </Field>
 
             <div className="flex justify-end">

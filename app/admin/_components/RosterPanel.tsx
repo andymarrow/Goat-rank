@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Check, X, Save, Trash2, Plus, ImageOff, Info } from "lucide-react";
 import ImageUpload from "./ImageUpload";
+import ImageFraming from "./ImageFraming";
 
 import type { AdminEntity } from "@/actions/admin/roster";
 import {
@@ -232,10 +233,16 @@ export default function RosterPanel({
                       </div>
 
                       <Field label="Replacement image">
-                        <ImageUpload
-                          value={draft.image_url || null}
-                          onChange={(url) => setDraft({ ...draft, image_url: url ?? "" })}
-                        />
+                        <div className="flex flex-col gap-2">
+                          <ImageUpload
+                            value={draft.image_url || null}
+                            onChange={(url) => setDraft({ ...draft, image_url: url ?? "" })}
+                          />
+                          <ImageFraming
+                            value={draft.image_url}
+                            onChange={(url) => setDraft({ ...draft, image_url: url })}
+                          />
+                        </div>
                       </Field>
 
                       <div className="flex gap-2 pt-1">

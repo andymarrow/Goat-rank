@@ -209,7 +209,7 @@ export default function ArenaPanel({
                   {openContenders === room.id && (
                     <tr key={`${room.id}-contenders`} className="border-b border-border/60">
                       <td colSpan={6} className="py-3 pr-3">
-                        <ContenderEditor contenders={room.room_contenders ?? []} />
+                        <ContenderEditor contenders={room.room_contenders ?? []} roomId={room.id} />
                       </td>
                     </tr>
                   )}

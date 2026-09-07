@@ -19,6 +19,7 @@ export type AdminRoom = {
   settled_at: string | null;
   creator_id: string | null;
   room_contenders: {
+    id: string;
     current_votes: number | string;
     seed_index: number;
     entities: {
@@ -39,7 +40,7 @@ export async function listRooms(): Promise<AdminRoom[]> {
     .select(
       `id, title, category, room_type, status, total_pool, charity_name,
        is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
-       room_contenders ( current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
+       room_contenders ( id, current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -61,7 +62,7 @@ export async function getAdminRoom(roomId: string): Promise<AdminRoom | null> {
     .select(
       `id, title, category, room_type, status, total_pool, charity_name,
        is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
-       room_contenders ( current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
+       room_contenders ( id, current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
     )
     .eq("id", roomId)
     .maybeSingle();
@@ -228,5 +229,134 @@ export async function deleteRoom(roomId: string): Promise<AdminResult> {
     return { ok: true };
   } catch (error) {
     return adminError(error, "Could not delete the arena.");
+  }
+}
+
+/**
+ * Add a contender to an existing arena.
+ *
+ * Reuses an entity when one is chosen or the name already exists, so adding
+ * "Ronaldo" to a second arena links the same profile rather than minting a
+ * duplicate. 1v1 arenas are capped at two.
+ */
+export async function addContenderToRoom(
+  roomId: string,
+  input: { entityId?: string; name?: string; image?: string; color?: string }
+): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+    const supabase = createAdminClient();
+
+    const { data: room } = await supabase
+      .from("rooms")
+      .select("id, room_type, category, is_demo")
+      .eq("id", roomId)
+      .single();
+
+    if (!room) return { ok: false, error: "Arena not found." };
+
+    const { count } = await supabase
+      .from("room_contenders")
+      .select("id", { count: "exact", head: true })
+      .eq("room_id", roomId);
+
+    const seeded = count ?? 0;
+
+    if (room.room_type === "1v1" && seeded >= 2) {
+      return { ok: false, error: "A 1v1 arena already has both contenders." };
+    }
+
+    let entityId = input.entityId ?? null;
+
+    if (!entityId) {
+      const name = input.name?.trim();
+      if (!name) return { ok: false, error: "Pick a contender or give a name." };
+
+      const { data: existing } = await supabase
+        .from("entities")
+        .select("id")
+        .ilike("name", name)
+        .eq("moderation_status", "approved")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        entityId = existing.id;
+      } else {
+        const { data: created, error: createError } = await supabase
+          .from("entities")
+          .insert({
+            name: name.slice(0, 80),
+            category: room.category,
+            brand_color: input.color ?? "#FF7A00",
+            image_url: input.image ?? null,
+            moderation_status: "approved",
+            is_demo: room.is_demo ?? false,
+          })
+          .select("id")
+          .single();
+
+        if (createError || !created) throw createError ?? new Error("Entity insert failed");
+        entityId = created.id;
+      }
+    }
+
+    const { data: already } = await supabase
+      .from("room_contenders")
+      .select("id")
+      .eq("room_id", roomId)
+      .eq("entity_id", entityId)
+      .maybeSingle();
+
+    if (already) return { ok: false, error: "That contender is already in this arena." };
+
+    const { error } = await supabase.from("room_contenders").insert({
+      room_id: roomId,
+      entity_id: entityId,
+      seed_index: seeded,
+    });
+
+    if (error) throw error;
+
+    revalidatePath("/admin/arenas");
+    revalidatePath(`/admin/arenas/${roomId}`);
+    revalidatePath(`/${room.room_type === "global" ? "global" : "battle"}/${roomId}`);
+    return { ok: true };
+  } catch (error) {
+    return adminError(error, "Could not add the contender.");
+  }
+}
+
+/** Remove a contender from an arena. Refuses once it has taken votes. */
+export async function removeContenderFromRoom(
+  roomId: string,
+  contenderId: string
+): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+    const supabase = createAdminClient();
+
+    const { data: link } = await supabase
+      .from("room_contenders")
+      .select("id, current_votes")
+      .eq("id", contenderId)
+      .maybeSingle();
+
+    if (!link) return { ok: false, error: "Contender not found in this arena." };
+
+    if (Number(link.current_votes) > 0) {
+      return {
+        ok: false,
+        error: "This contender has taken votes — removing them would orphan those pledges.",
+      };
+    }
+
+    const { error } = await supabase.from("room_contenders").delete().eq("id", contenderId);
+    if (error) throw error;
+
+    revalidatePath(`/admin/arenas/${roomId}`);
+    return { ok: true };
+  } catch (error) {
+    return adminError(error, "Could not remove the contender.");
   }
 }
