@@ -8,7 +8,9 @@ import {
 
 import type { AdminProfile } from "@/actions/admin/moderation";
 import { setUserBanned, setUserAdmin, inviteAdminByEmail } from "@/actions/admin/moderation";
-import { Panel, ActionButton, Badge, EmptyState, inputClass, money } from "./AdminPrimitives";
+import {
+  Panel, ActionButton, Badge, ConfirmDialog, EmptyState, inputClass, money,
+} from "./AdminPrimitives";
 
 /**
  * Who can get in, and who is locked out.
@@ -22,6 +24,14 @@ export default function PeoplePanel({ profiles }: { profiles: AdminProfile[] }) 
   const [reason, setReason] = useState<Record<string, string>>({});
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteNote, setInviteNote] = useState<string | null>(null);
+
+  // ActionButton's two-click arming turns the label into a bare "Promote?",
+  // which reads as a question about something else entirely. Access changes
+  // say who they affect and what they grant.
+  const [confirmGrant, setConfirmGrant] = useState(false);
+  const [pendingRights, setPendingRights] = useState<{ user: AdminProfile; make: boolean } | null>(
+    null
+  );
 
   const admins = profiles.filter((p) => p.is_admin);
   const users = profiles.filter((p) =>
@@ -53,28 +63,17 @@ export default function PeoplePanel({ profiles }: { profiles: AdminProfile[] }) 
             </div>
           </div>
 
-          <ActionButton
-            variant="primary"
+          <button
+            type="button"
             disabled={!inviteEmail.trim()}
-            confirm="Grant admin?"
-            onRun={async () => {
-              setInviteNote(null);
-              const res = await inviteAdminByEmail(inviteEmail);
-
-              if (res.ok) {
-                setInviteNote(
-                  res.data.emailed
-                    ? `${res.data.username} is now an admin and has been emailed.`
-                    : `${res.data.username} is now an admin, but the email could not be sent.`
-                );
-                setInviteEmail("");
-              }
-
-              return res;
-            }}
+            onClick={() => setConfirmGrant(true)}
+            className="rounded-lg border border-primary bg-primary px-3 py-1.5 font-mono text-[10px]
+                       font-bold uppercase tracking-wider text-primary-foreground
+                       hover:brightness-110 transition-all inline-flex items-center gap-1.5
+                       cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
           >
             <UserPlus className="w-3 h-3" /> Grant admin
-          </ActionButton>
+          </button>
         </div>
 
         <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground font-sans">
@@ -117,12 +116,16 @@ export default function PeoplePanel({ profiles }: { profiles: AdminProfile[] }) 
 
                 {a.is_banned && <Badge tone="bad">Jailed</Badge>}
 
-                <ActionButton
-                  confirm="Revoke?"
-                  onRun={() => setUserAdmin(a.id, false)}
+                <button
+                  type="button"
+                  onClick={() => setPendingRights({ user: a, make: false })}
+                  className="rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 font-mono
+                             text-[10px] font-bold uppercase tracking-wider text-muted-foreground
+                             hover:text-foreground hover:bg-muted/70 transition-colors
+                             cursor-pointer inline-flex items-center gap-1.5"
                 >
                   <ShieldOff className="w-3 h-3" /> Revoke
-                </ActionButton>
+                </button>
               </li>
             ))}
           </ul>
@@ -188,7 +191,7 @@ export default function PeoplePanel({ profiles }: { profiles: AdminProfile[] }) 
                     />
                     <ActionButton
                       variant="danger"
-                      confirm="Jail?"
+                      confirm={`Suspend ${user.username ?? "user"}?`}
                       onRun={() => setUserBanned(user.id, true, reason[user.id])}
                     >
                       <Gavel className="w-3 h-3" /> Jail
@@ -196,21 +199,82 @@ export default function PeoplePanel({ profiles }: { profiles: AdminProfile[] }) 
                   </div>
                 )}
 
-                <ActionButton
-                  confirm={user.is_admin ? "Revoke?" : "Promote?"}
-                  onRun={() => setUserAdmin(user.id, !user.is_admin)}
+                <button
+                  type="button"
+                  onClick={() => setPendingRights({ user, make: !user.is_admin })}
+                  className="rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 font-mono
+                             text-[10px] font-bold uppercase tracking-wider text-muted-foreground
+                             hover:text-foreground hover:bg-muted/70 transition-colors
+                             cursor-pointer inline-flex items-center gap-1.5"
                 >
                   {user.is_admin ? (
                     <><ShieldOff className="w-3 h-3" /> Revoke admin</>
                   ) : (
                     <><ShieldCheck className="w-3 h-3" /> Make admin</>
                   )}
-                </ActionButton>
+                </button>
               </li>
             ))}
           </ul>
         )}
       </Panel>
+
+      <ConfirmDialog
+        open={confirmGrant}
+        title={`Make ${inviteEmail.trim() || "this person"} an admin?`}
+        confirmLabel="Grant admin"
+        onClose={() => setConfirmGrant(false)}
+        onConfirm={async () => {
+          setInviteNote(null);
+          const res = await inviteAdminByEmail(inviteEmail);
+
+          if (res.ok) {
+            setInviteNote(
+              res.data.emailed
+                ? `${res.data.username} is now an admin and has been emailed.`
+                : `${res.data.username} is now an admin, but the email could not be sent.`
+            );
+            setInviteEmail("");
+          }
+
+          return res;
+        }}
+      >
+        <p>
+          They will be able to settle and delete arenas, release payouts, moderate messages, edit
+          every contender, and grant admin to other people.
+        </p>
+        <p>
+          The address must already belong to a GOAT Rank account. They keep this access until an
+          admin revokes it here.
+        </p>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={!!pendingRights}
+        title={
+          pendingRights
+            ? pendingRights.make
+              ? `Make ${pendingRights.user.username ?? "this user"} an admin?`
+              : `Revoke ${pendingRights.user.username ?? "this user"}'s admin access?`
+            : ""
+        }
+        confirmLabel={pendingRights?.make ? "Make admin" : "Revoke access"}
+        onClose={() => setPendingRights(null)}
+        onConfirm={() => setUserAdmin(pendingRights!.user.id, pendingRights!.make)}
+      >
+        {pendingRights?.make ? (
+          <p>
+            They will be able to settle and delete arenas, release payouts, moderate messages, edit
+            every contender, and grant admin to other people.
+          </p>
+        ) : (
+          <p>
+            They lose access to this console immediately. Their account, arenas and wallet are
+            untouched.
+          </p>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }
