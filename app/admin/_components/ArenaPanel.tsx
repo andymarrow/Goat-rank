@@ -8,7 +8,6 @@ import ContenderEditor from "./ContenderEditor";
 
 import type { AdminRoom } from "@/actions/admin/rooms";
 import { setRoomFeatured, forceSettleRoom, deleteRoom } from "@/actions/admin/rooms";
-import type { Category } from "@/actions/admin/config";
 import {
   Panel, ActionButton, Badge, EmptyState, Scroller, inputClass, money,
 } from "./AdminPrimitives";
@@ -16,13 +15,7 @@ import {
 const statusTone = (s: string) =>
   s === "active" ? "good" : s === "settled" ? "neutral" : "warn";
 
-export default function ArenaPanel({
-  rooms,
-  categories,
-}: {
-  rooms: AdminRoom[];
-  categories: Category[];
-}) {
+export default function ArenaPanel({ rooms }: { rooms: AdminRoom[] }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [openContenders, setOpenContenders] = useState<string | null>(null);
@@ -221,11 +214,6 @@ export default function ArenaPanel({
         </Scroller>
       )}
 
-      <datalist id="admin-categories">
-        {categories.map((c) => (
-          <option key={c.id} value={c.label} />
-        ))}
-      </datalist>
     </Panel>
   );
 }

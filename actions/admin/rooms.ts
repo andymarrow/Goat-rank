@@ -12,6 +12,7 @@ export type AdminRoom = {
   status: string;
   total_pool: number;
   charity_name: string | null;
+  charity_id: string | null;
   is_featured: boolean;
   featured_rank: number | null;
   expires_at: string;
@@ -38,7 +39,7 @@ export async function listRooms(): Promise<AdminRoom[]> {
   const { data, error } = await createAdminClient()
     .from("rooms")
     .select(
-      `id, title, category, room_type, status, total_pool, charity_name,
+      `id, title, category, room_type, status, total_pool, charity_name, charity_id,
        is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
        room_contenders ( id, current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
     )
@@ -60,7 +61,7 @@ export async function getAdminRoom(roomId: string): Promise<AdminRoom | null> {
   const { data, error } = await createAdminClient()
     .from("rooms")
     .select(
-      `id, title, category, room_type, status, total_pool, charity_name,
+      `id, title, category, room_type, status, total_pool, charity_name, charity_id,
        is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
        room_contenders ( id, current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
     )

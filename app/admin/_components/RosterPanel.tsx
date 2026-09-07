@@ -207,12 +207,24 @@ export default function RosterPanel({
 
                       <div className="grid grid-cols-2 gap-2">
                         <Field label="Category">
-                          <input
-                            list="roster-categories"
+                          {/* A select, not a datalist: a datalist only suggests
+                              while you type and shows nothing on a phone. */}
+                          <select
                             value={draft.category}
                             onChange={(e) => setDraft({ ...draft, category: e.target.value })}
                             className={inputClass}
-                          />
+                          >
+                            {!categories.some((c) => c.label === draft.category) && (
+                              <option value={draft.category}>
+                                {draft.category || "Uncategorised"} — not in the list
+                              </option>
+                            )}
+                            {categories.map((c) => (
+                              <option key={c.id} value={c.label}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
                         </Field>
                         <Field label="Brand colour">
                           <div className="flex gap-1.5">
@@ -313,11 +325,6 @@ export default function RosterPanel({
         </div>
       </Panel>
 
-      <datalist id="roster-categories">
-        {categories.map((c) => (
-          <option key={c.id} value={c.label} />
-        ))}
-      </datalist>
     </div>
   );
 }

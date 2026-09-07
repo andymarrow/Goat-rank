@@ -46,7 +46,11 @@ export default function ArenaEditor({
 
   const [title, setTitle] = useState(room.title);
   const [category, setCategory] = useState(room.category);
-  const [charityName, setCharityName] = useState(room.charity_name ?? "");
+  // A datalist only suggests as you type — on a phone it shows nothing at all,
+  // so both of these read as empty text boxes. They are real selects now.
+  // "" is the legacy value: a charity_name written before the charity list
+  // existed, or none chosen yet.
+  const [charityId, setCharityId] = useState(room.charity_id ?? "");
   const [expiresAt, setExpiresAt] = useState(toLocalInput(room.expires_at));
   const [featured, setFeatured] = useState(room.is_featured);
 
@@ -108,22 +112,44 @@ export default function ArenaEditor({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Category">
-              <input
-                list="arena-editor-categories"
+              <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className={inputClass}
-              />
+              >
+                {/* A room can carry a category that predates the list, or one
+                    that was since retired. Keep it selectable so saving the
+                    title doesn't silently recategorise the arena. */}
+                {!categories.some((c) => c.label === category) && (
+                  <option value={category}>{category} — not in the list</option>
+                )}
+                {categories.map((c) => (
+                  <option key={c.id} value={c.label}>
+                    {c.label}
+                    {c.is_active ? "" : " — hidden"}
+                  </option>
+                ))}
+              </select>
             </Field>
 
             <Field label="Charity">
-              <input
-                list="arena-editor-charities"
-                value={charityName}
-                onChange={(e) => setCharityName(e.target.value)}
-                placeholder="Pending Charity"
+              <select
+                value={charityId}
+                onChange={(e) => setCharityId(e.target.value)}
                 className={inputClass}
-              />
+              >
+                <option value="">
+                  {room.charity_name && room.charity_name !== "Pending Charity" && !room.charity_id
+                    ? `${room.charity_name} — not in the list`
+                    : "Pending Charity — none chosen"}
+                </option>
+                {charities.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                    {c.is_active ? "" : " — inactive"}
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
 
@@ -144,10 +170,19 @@ export default function ArenaEditor({
             <ActionButton
               variant="primary"
               onRun={async () => {
+                const picked = charities.find((c) => c.id === charityId);
+
                 const res = await updateRoom(room.id, {
                   title,
                   category,
-                  charity_name: charityName,
+                  // Both columns move together: the id is the link, the name
+                  // is what the arena page and the payout ledger display.
+                  charity_id: picked?.id ?? null,
+                  // Clearing a linked charity resets the name too; a legacy
+                  // name with no link is left alone.
+                  charity_name:
+                    picked?.name ??
+                    (room.charity_id ? "Pending Charity" : room.charity_name ?? "Pending Charity"),
                   expires_at: expiresAt ? new Date(expiresAt).toISOString() : undefined,
                 });
                 if (res.ok) router.refresh();
@@ -298,16 +333,6 @@ export default function ArenaEditor({
         </div>
       </Panel>
 
-      <datalist id="arena-editor-categories">
-        {categories.map((c) => (
-          <option key={c.id} value={c.label} />
-        ))}
-      </datalist>
-      <datalist id="arena-editor-charities">
-        {charities.map((c) => (
-          <option key={c.id} value={c.name} />
-        ))}
-      </datalist>
     </div>
   );
 }
