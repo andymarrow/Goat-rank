@@ -1,15 +1,16 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { Pin, PinOff, Save, Gavel, Trash2, Search, Info, Users, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { Pin, PinOff, Gavel, Trash2, Search, Info, Users, ChevronDown, Pencil } from "lucide-react";
 import ContenderStack from "./ContenderStack";
 import ContenderEditor from "./ContenderEditor";
 
 import type { AdminRoom } from "@/actions/admin/rooms";
-import { setRoomFeatured, updateRoom, forceSettleRoom, deleteRoom } from "@/actions/admin/rooms";
+import { setRoomFeatured, forceSettleRoom, deleteRoom } from "@/actions/admin/rooms";
 import type { Category } from "@/actions/admin/config";
 import {
-  Panel, ActionButton, Badge, EmptyState, Scroller, Field, inputClass, money,
+  Panel, ActionButton, Badge, EmptyState, Scroller, inputClass, money,
 } from "./AdminPrimitives";
 
 const statusTone = (s: string) =>
@@ -24,12 +25,7 @@ export default function ArenaPanel({
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
-  const [editing, setEditing] = useState<string | null>(null);
   const [openContenders, setOpenContenders] = useState<string | null>(null);
-  const [draft, setDraft] = useState<{ title: string; category: string }>({
-    title: "",
-    category: "",
-  });
 
   const visible = rooms.filter((r) => {
     const matchesFilter =
@@ -109,7 +105,6 @@ export default function ArenaPanel({
             </thead>
             <tbody>
               {visible.map((room) => {
-                const isEditing = editing === room.id;
                 const names = room.room_contenders
                   ?.map((rc) => rc.entities?.name)
                   .filter(Boolean) as string[];
@@ -118,26 +113,6 @@ export default function ArenaPanel({
                   <Fragment key={room.id}>
                   <tr className="border-b border-border/50 align-top">
                     <td className="py-3 pr-3 max-w-[280px]">
-                      {isEditing ? (
-                        <div className="flex flex-col gap-2 w-64">
-                          <Field label="Title">
-                            <input
-                              value={draft.title}
-                              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                              className={inputClass}
-                            />
-                          </Field>
-                          <Field label="Category">
-                            <input
-                              list="admin-categories"
-                              value={draft.category}
-                              onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-                              className={inputClass}
-                            />
-                          </Field>
-                        </div>
-                      ) : (
-                        <>
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-xs font-bold text-foreground truncate">
                               {room.title}
@@ -147,8 +122,6 @@ export default function ArenaPanel({
                           <span className="text-[11px] text-muted-foreground font-sans">
                             {room.category}
                           </span>
-                        </>
-                      )}
                     </td>
 
                     <td className="py-3 pr-3">
@@ -174,26 +147,6 @@ export default function ArenaPanel({
 
                     <td className="py-3">
                       <div className="flex flex-wrap items-start gap-2">
-                        {isEditing ? (
-                          <>
-                            <ActionButton
-                              variant="primary"
-                              onRun={() => updateRoom(room.id, draft)}
-                              onDone={(ok) => ok && setEditing(null)}
-                            >
-                              <Save className="w-3 h-3" /> Save
-                            </ActionButton>
-                            <button
-                              type="button"
-                              onClick={() => setEditing(null)}
-                              className="pressable rounded-xl border border-border/60 px-3 py-1.5 font-mono
-                                         text-[10px] uppercase tracking-widest text-muted-foreground"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
                             <ActionButton
                               onRun={() => setRoomFeatured(room.id, !room.is_featured)}
                               variant={room.is_featured ? "ghost" : "primary"}
@@ -222,19 +175,15 @@ export default function ArenaPanel({
                                 }`}
                               />
                             </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditing(room.id);
-                                setDraft({ title: room.title, category: room.category });
-                              }}
-                              className="pressable rounded-xl border border-border/60 bg-background px-3 py-1.5
-                                         font-mono text-[10px] font-bold uppercase tracking-widest
-                                         text-foreground/70 hover:text-foreground transition-colors"
+                            <Link
+                              href={`/admin/arenas/${room.id}`}
+                              className="rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5
+                                         font-mono text-[10px] font-bold uppercase tracking-wider
+                                         text-muted-foreground hover:text-primary transition-colors
+                                         cursor-pointer inline-flex items-center gap-1.5"
                             >
-                              Edit
-                            </button>
+                              <Pencil className="w-3 h-3" /> Edit
+                            </Link>
 
                             {room.status !== "settled" && (
                               <ActionButton
@@ -253,8 +202,6 @@ export default function ArenaPanel({
                             >
                               <Trash2 className="w-3 h-3" />
                             </ActionButton>
-                          </>
-                        )}
                       </div>
                     </td>
                   </tr>

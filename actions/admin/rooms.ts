@@ -52,6 +52,28 @@ export async function listRooms(): Promise<AdminRoom[]> {
   return (data ?? []) as unknown as AdminRoom[];
 }
 
+/** One arena, for the detail editor. */
+export async function getAdminRoom(roomId: string): Promise<AdminRoom | null> {
+  await requireAdmin();
+
+  const { data, error } = await createAdminClient()
+    .from("rooms")
+    .select(
+      `id, title, category, room_type, status, total_pool, charity_name,
+       is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
+       room_contenders ( current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
+    )
+    .eq("id", roomId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getAdminRoom failed:", error);
+    return null;
+  }
+
+  return (data as unknown as AdminRoom) ?? null;
+}
+
 /** Pin/unpin a room into the homepage Hero Carousel. */
 export async function setRoomFeatured(
   roomId: string,
@@ -82,15 +104,30 @@ export async function setRoomFeatured(
 /** Moderate user-deployed rooms: fix titles, recategorise. */
 export async function updateRoom(
   roomId: string,
-  patch: { title?: string; category?: string; charity_name?: string }
+  patch: {
+    title?: string;
+    category?: string;
+    charity_name?: string;
+    charity_id?: string | null;
+    expires_at?: string;
+  }
 ): Promise<AdminResult> {
   try {
     await requireAdmin();
 
-    const clean: Record<string, string> = {};
+    const clean: Record<string, string | null> = {};
     if (patch.title?.trim()) clean.title = patch.title.trim().slice(0, 120);
     if (patch.category?.trim()) clean.category = patch.category.trim().slice(0, 60);
     if (patch.charity_name?.trim()) clean.charity_name = patch.charity_name.trim().slice(0, 120);
+    if (patch.charity_id !== undefined) clean.charity_id = patch.charity_id || null;
+
+    if (patch.expires_at) {
+      const when = new Date(patch.expires_at);
+      if (Number.isNaN(when.getTime())) {
+        return { ok: false, error: "That closing time is not a valid date." };
+      }
+      clean.expires_at = when.toISOString();
+    }
 
     if (Object.keys(clean).length === 0) {
       return { ok: false, error: "Nothing to update." };
