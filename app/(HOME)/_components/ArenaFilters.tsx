@@ -57,7 +57,11 @@ export default function ArenaFilters({
   const activeCategoryLabel = category.toLowerCase() === "all" ? "All Categories" : category;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+    /* The dropdown is positioned against this row, not against its button:
+       the row spans the full content width, so right-0 always lands on the
+       content edge. Anchored to the button it hung off the screen whenever the
+       controls wrapped to their own line on a phone. */
+    <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
       <div>
         <h2 className="text-base sm:text-lg font-semibold tracking-tight text-foreground flex items-center gap-1.5 group cursor-pointer shrink-0">
           Active Face-Offs
@@ -97,10 +101,10 @@ export default function ArenaFilters({
         </div>
 
         {/* Action Controls (Dropdown & Toggle) - Unclipped container */}
-        <div className="flex items-center gap-2 shrink-0 relative">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Filter Dropdown Menu Button (for Categories) */}
           {categories.length > 0 && (
-            <div className="relative shrink-0" ref={dropdownRef}>
+            <div className="shrink-0" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={(e) => {
@@ -120,7 +124,11 @@ export default function ArenaFilters({
 
               {/* Floating Glassmorphic Dropdown Panel */}
               {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-card border border-border/60 p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 text-xs">
+                <div
+                  className="absolute right-0 top-full mt-2 w-48 max-w-[calc(100vw-2rem)]
+                             max-h-[60vh] overflow-y-auto overscroll-contain rounded-2xl bg-card
+                             border border-border/60 p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 text-xs"
+                >
                   <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Categories
                   </div>
