@@ -3,13 +3,20 @@
 import { createClient } from "@/utils/supabase/server";
 import { FEED_PAGE_SIZE, type FeedPage } from "@/lib/feed";
 import { getMyUpvotes } from "./upvote";
+import { CURSOR_SEP } from "@/lib/feed";
 
 /**
- * One page of paid battle cries for a room, newest first.
+ * One page of paid battle cries for a room, most-backed first.
  *
- * Keyset pagination on created_at rather than range/offset: a busy arena gets
- * new votes between requests, and an offset would silently skip or repeat rows
- * as everything shifts down. A cursor is stable under inserts.
+ * The cries people upvoted rise to the top; ties fall back to newest. Ordering
+ * by time alone buried the best line in an arena the moment a few more pledges
+ * landed.
+ *
+ * Keyset pagination rather than range/offset: a busy arena gets new votes
+ * between requests, and an offset would silently skip or repeat rows as
+ * everything shifts down. The cursor is composite — "<upvotes>|<created_at>" —
+ * because the sort is now two columns deep. Upvote counts do change under a
+ * reader, so a row can shift pages mid-scroll; the caller de-duplicates by id.
  */
 export async function getRoomFeed(
   roomId: string,
@@ -27,11 +34,28 @@ export async function getRoomFeed(
     .eq("message_hidden", false)
     .eq("refunded", false)
     .not("message", "is", null)
+    .order("upvote_count", { ascending: false })
     .order("created_at", { ascending: false })
     // Fetch one extra to detect whether another page exists, without a count.
     .limit(FEED_PAGE_SIZE + 1);
 
-  if (before) query = query.lt("created_at", before);
+  if (before) {
+    const [rawUpvotes, ...rest] = before.split(CURSOR_SEP);
+    const upvotes = Number(rawUpvotes);
+    const timestamp = rest.join(CURSOR_SEP);
+
+    if (Number.isFinite(upvotes) && timestamp) {
+      // "Everything ranked below this row": fewer upvotes, or the same number
+      // and older. The timestamp is quoted because PostgREST reads an
+      // unquoted dot as the operator separator.
+      query = query.or(
+        `upvote_count.lt.${upvotes},and(upvote_count.eq.${upvotes},created_at.lt."${timestamp}")`
+      );
+    } else {
+      // A cursor minted before the ranking change: a bare timestamp.
+      query = query.lt("created_at", before);
+    }
+  }
 
   const { data, error } = await query;
 
@@ -78,7 +102,10 @@ export async function getRoomFeed(
       upvoted: mine.has(r.id),
       is_demo: Boolean((r as { is_demo?: boolean }).is_demo),
     })),
-    nextCursor: page.length > 0 ? page[page.length - 1].created_at : null,
+    nextCursor:
+      page.length > 0
+        ? `${page[page.length - 1].upvote_count ?? 0}${CURSOR_SEP}${page[page.length - 1].created_at}`
+        : null,
     hasMore,
   };
 }

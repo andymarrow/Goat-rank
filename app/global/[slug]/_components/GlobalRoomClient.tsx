@@ -120,14 +120,14 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
 
               {/* Category Pill */}
               <div className="absolute top-3 left-3 z-10">
-                <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-muted-foreground border border-white/10 text-[10px] sm:text-xs font-medium">
+                <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white/80 border border-white/10 text-[10px] sm:text-xs font-medium">
                   {roomData.category || "Global Arena"}
                 </span>
               </div>
 
               {/* Current Leader Chip */}
               {roomData.leader && (
-                <div className="absolute bottom-3 left-3 right-3 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md text-foreground font-semibold text-xs border border-white/10 flex items-center justify-between shadow-sm">
+                <div className="absolute bottom-3 left-3 right-3 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md text-white font-semibold text-xs border border-white/10 flex items-center justify-between shadow-sm">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="relative w-5 h-5 rounded-md overflow-hidden bg-muted shrink-0">
                       {roomData.leader.img ? (

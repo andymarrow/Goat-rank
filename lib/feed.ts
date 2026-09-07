@@ -8,6 +8,9 @@
 
 export const FEED_PAGE_SIZE = 25;
 
+/** Separates the two halves of the feed's composite keyset cursor. */
+export const CURSOR_SEP = "|";
+
 export type FeedItem = {
   id: string;
   amount: number;
@@ -26,7 +29,7 @@ export type FeedItem = {
 
 export type FeedPage = {
   items: FeedItem[];
-  /** created_at of the last row — pass back as `before` for the next page. */
+  /** "<upvotes>|<created_at>" of the last row — pass back as `before`. */
   nextCursor: string | null;
   hasMore: boolean;
 };

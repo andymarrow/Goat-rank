@@ -123,14 +123,18 @@ export default function BattleArena({
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+            {/* The names sit at the top, where the bottom-up gradient has
+                faded out. Without this they were dark-on-dark in light mode,
+                since text-foreground follows the theme and a photo does not. */}
+            <div className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-black/75 to-transparent pointer-events-none" />
 
             {/* Left Contender Name & Subtitle Overlay */}
             <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-10 flex flex-col min-w-0">
-              <span className="font-extrabold text-sm sm:text-2xl md:text-3xl text-foreground uppercase tracking-tight leading-tight truncate">
+              <span className="font-extrabold text-sm sm:text-2xl md:text-3xl text-white uppercase tracking-tight leading-tight truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 {leftContender.name}
               </span>
               <span className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 whitespace-nowrap ${
-                isLeftWinning ? "text-primary" : "text-muted-foreground"
+                isLeftWinning ? "text-primary" : "text-white/75"
               }`}>
                 {isLeftWinning ? "👑 LEADER" : "CONTENDER #1"}
               </span>
@@ -190,14 +194,18 @@ export default function BattleArena({
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+            {/* The names sit at the top, where the bottom-up gradient has
+                faded out. Without this they were dark-on-dark in light mode,
+                since text-foreground follows the theme and a photo does not. */}
+            <div className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-black/75 to-transparent pointer-events-none" />
 
             {/* Right Contender Name & Subtitle Overlay */}
             <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-10 flex flex-col items-end text-right min-w-0">
-              <span className="font-extrabold text-sm sm:text-2xl md:text-3xl text-foreground uppercase tracking-tight leading-tight truncate max-w-full">
+              <span className="font-extrabold text-sm sm:text-2xl md:text-3xl text-white uppercase tracking-tight leading-tight truncate max-w-full drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 {rightContender.name}
               </span>
               <span className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 whitespace-nowrap ${
-                isRightWinning ? "text-primary" : "text-muted-foreground"
+                isRightWinning ? "text-primary" : "text-white/75"
               }`}>
                 {isRightWinning ? "👑 LEADER" : "CONTENDER #2"}
               </span>
