@@ -4,42 +4,35 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Bomb, Undo2, Gavel, ShieldCheck, ShieldOff, Search, ArrowLeft,
-  MessageSquare, ExternalLink, Mail, UserPlus,
+  Bomb, Undo2, Search, ArrowLeft, MessageSquare, ExternalLink,
 } from "lucide-react";
 
-import type { AdminVote, AdminProfile } from "@/actions/admin/moderation";
-import { nukeMessage, setUserBanned, setUserAdmin, inviteAdminByEmail } from "@/actions/admin/moderation";
+import type { AdminVote } from "@/actions/admin/moderation";
+import { nukeMessage } from "@/actions/admin/moderation";
 import type { AdminRoom } from "@/actions/admin/rooms";
 import { Panel, ActionButton, Badge, EmptyState, inputClass, money } from "./AdminPrimitives";
 import ContenderStack from "./ContenderStack";
 import { formatSince } from "@/lib/time";
 
 /**
- * Moderation, organised by room.
+ * Message moderation, organised by room.
  *
  * The previous version dumped every message on the platform into one flat
  * list, which does not scale past a handful of arenas and gives no sense of
  * where a problem is. You now pick the room, see its volume at a glance, then
- * work its messages.
+ * work its messages. Accounts and admin rights moved to People, where anyone
+ * looking for them would actually look.
  */
 export default function FeedPanel({
   votes,
-  profiles,
   rooms,
 }: {
   votes: AdminVote[];
-  profiles: AdminProfile[];
   rooms: AdminRoom[];
 }) {
-  const [view, setView] = useState<"rooms" | "users">("rooms");
   const [openRoom, setOpenRoom] = useState<string | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
-  const [userQuery, setUserQuery] = useState("");
-  const [reason, setReason] = useState<Record<string, string>>({});
   const [hideNuked, setHideNuked] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteNote, setInviteNote] = useState<string | null>(null);
 
   // Group messages by room so each row can show real counts.
   const byRoom = useMemo(() => {
@@ -73,36 +66,10 @@ export default function FeedPanel({
     hideNuked ? !m.message_hidden : true
   );
 
-  const users = profiles.filter((p) =>
-    (p.username ?? "").toLowerCase().includes(userQuery.trim().toLowerCase())
-  );
-
   return (
     <div className="flex flex-col gap-6">
-      {/* View switch */}
-      <div className="flex gap-2">
-        {(["rooms", "users"] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => {
-              setView(v);
-              setOpenRoom(null);
-            }}
-            className={`pressable rounded-xl border px-4 py-2 font-mono text-[10px] font-bold
-              uppercase tracking-widest transition-colors ${
-                view === v
-                  ? "bg-primary border-primary text-primary-foreground"
-                  : "bg-card border-border/60 text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            {v === "rooms" ? "By arena" : "User jail"}
-          </button>
-        ))}
-      </div>
-
       {/* ---------------------------------------------------- ROOM LIST */}
-      {view === "rooms" && !openRoom && (
+      {!openRoom && (
         <Panel
           title="Arenas with messages"
           subtitle="Pick an arena to review and moderate its battle cries."
@@ -165,7 +132,7 @@ export default function FeedPanel({
       )}
 
       {/* ------------------------------------------------- ROOM MESSAGES */}
-      {view === "rooms" && openRoom && activeRoom && (
+      {openRoom && activeRoom && (
         <Panel
           title={activeRoom.title}
           subtitle="Nuking hides the words and keeps the money — the pool is never touched."
@@ -274,151 +241,6 @@ export default function FeedPanel({
         </Panel>
       )}
 
-      {/* ------------------------------------------------- GRANT BY EMAIL */}
-      {view === "users" && (
-        <Panel
-          title="Grant admin access"
-          subtitle="Promote someone by email and send them a notification."
-        >
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[220px]">
-              <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-1.5">
-                Email address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="teammate@example.com"
-                  className={`${inputClass} pl-8`}
-                />
-              </div>
-            </div>
-
-            <ActionButton
-              variant="primary"
-              disabled={!inviteEmail.trim()}
-              confirm="Grant admin?"
-              onRun={async () => {
-                setInviteNote(null);
-                const res = await inviteAdminByEmail(inviteEmail);
-
-                if (res.ok) {
-                  setInviteNote(
-                    res.data.emailed
-                      ? `${res.data.username} is now an admin and has been emailed.`
-                      : `${res.data.username} is now an admin, but the email could not be sent.`
-                  );
-                  setInviteEmail("");
-                }
-
-                return res;
-              }}
-            >
-              <UserPlus className="w-3 h-3" /> Grant admin
-            </ActionButton>
-          </div>
-
-          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground font-sans">
-            The person must already have a GOAT Rank account — this grants access to an existing
-            user, it cannot create one. Admins can settle arenas, release payouts and moderate
-            messages, so grant it sparingly.
-          </p>
-
-          {inviteNote && (
-            <p role="status" className="mt-2 text-[11px] text-emerald-500 font-sans">
-              {inviteNote}
-            </p>
-          )}
-        </Panel>
-      )}
-
-      {/* ------------------------------------------------------ USER JAIL */}
-      {view === "users" && (
-        <Panel
-          title="User jail"
-          subtitle="Suspended accounts cannot deploy arenas or withdraw creator funds."
-          action={
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                value={userQuery}
-                onChange={(e) => setUserQuery(e.target.value)}
-                placeholder="Search users"
-                aria-label="Search users"
-                className={`${inputClass} pl-8 w-44`}
-              />
-            </div>
-          }
-        >
-          {users.length === 0 ? (
-            <EmptyState message="No users match" />
-          ) : (
-            <ul className="flex flex-col gap-2 max-h-[560px] overflow-y-auto scrollbar-hide">
-              {users.map((user) => (
-                <li
-                  key={user.id}
-                  className="flex flex-wrap items-center gap-3 p-3 border border-border/60 bg-background rounded-xl"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        href={`/u/${user.id}`}
-                        target="_blank"
-                        className="font-mono text-[11px] font-bold text-foreground hover:text-primary transition-colors truncate"
-                      >
-                        {user.username ?? "unnamed"}
-                      </Link>
-                      {user.is_admin && <Badge tone="hot">Admin</Badge>}
-                      {user.is_banned && <Badge tone="bad">Jailed</Badge>}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground font-sans mt-0.5">
-                      Wallet {money(user.wallet_balance)} · earned {money(user.total_earned)}
-                      {user.banned_reason && ` · ${user.banned_reason}`}
-                    </p>
-                  </div>
-
-                  {user.is_banned ? (
-                    <ActionButton onRun={() => setUserBanned(user.id, false)}>
-                      <Undo2 className="w-3 h-3" /> Release
-                    </ActionButton>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <input
-                        value={reason[user.id] ?? ""}
-                        onChange={(e) => setReason({ ...reason, [user.id]: e.target.value })}
-                        placeholder="Reason"
-                        aria-label={`Ban reason for ${user.username ?? "user"}`}
-                        className={`${inputClass} w-32`}
-                      />
-                      <ActionButton
-                        variant="danger"
-                        confirm="Jail?"
-                        onRun={() => setUserBanned(user.id, true, reason[user.id])}
-                      >
-                        <Gavel className="w-3 h-3" /> Jail
-                      </ActionButton>
-                    </div>
-                  )}
-
-                  <ActionButton
-                    confirm={user.is_admin ? "Revoke?" : "Promote?"}
-                    onRun={() => setUserAdmin(user.id, !user.is_admin)}
-                  >
-                    {user.is_admin ? (
-                      <><ShieldOff className="w-3 h-3" /> Revoke admin</>
-                    ) : (
-                      <><ShieldCheck className="w-3 h-3" /> Make admin</>
-                    )}
-                  </ActionButton>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-      )}
     </div>
   );
 }

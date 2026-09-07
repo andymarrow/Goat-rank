@@ -13,6 +13,7 @@ const SECTIONS = [
   { href: "/admin/studio", label: "Studio", icon: Hammer },
   { href: "/admin/roster", label: "Roster", icon: Users, badge: "roster" },
   { href: "/admin/feed", label: "Feed", icon: MessageSquare },
+  { href: "/admin/people", label: "People", icon: ShieldCheck },
   { href: "/admin/ledger", label: "Ledger", icon: Wallet, badge: "ledger" },
   { href: "/admin/demo", label: "Demo", icon: Bot },
   { href: "/admin/avatars", label: "Avatars", icon: Smile },
