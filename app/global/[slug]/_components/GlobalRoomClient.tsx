@@ -90,7 +90,9 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
       {/* =========================================================================
           SIDE-BY-SIDE ARENA LAYOUT (LEFT INFO BANNER CARD + RIGHT CONTENDER GRID)
       ========================================================================= */}
-      <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start">
+      {/* items-start only from lg: on a phone this is a column, where it
+          shrink-wraps each child to its content instead of the screen width. */}
+      <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-stretch lg:items-start">
 
         {/* LEFT COLUMN: ARENA INFO & BANNER SECTION (Refined sidebar width + Vertical Separator) */}
         <div className="w-full lg:w-[22vw] xl:w-[22vw] shrink-0 lg:sticky lg:top-20 flex flex-col gap-5 lg:pr-6 lg:border-r lg:border-border/40">
@@ -238,7 +240,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
         </div>
 
         {/* RIGHT COLUMN: SEARCH & SORT TOOLBAR + CONTENDER CARDS GRID */}
-        <div className="flex-1 min-w-0 flex flex-col gap-6">
+        <div className="w-full flex-1 min-w-0 flex flex-col gap-6">
 
           {/* TOOLBAR: Search Input, Counter Badge & Professional Sort Dropdown */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border/80 p-3 rounded-2xl shadow-sm">

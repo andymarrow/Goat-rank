@@ -48,7 +48,7 @@ export default async function PublicUserPage({
             className="!w-16 !h-16 md:!w-24 md:!h-24 !rounded-2xl"
           />
 
-          <div className="min-w-0 flex-1">
+          <div className="w-full min-w-0 flex-1">
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">
               {isHost ? "Creator" : "Supporter"}
             </span>

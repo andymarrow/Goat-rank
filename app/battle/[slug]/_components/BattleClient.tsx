@@ -78,7 +78,7 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
 
   return (
     <>
-      <div className="w-full max-w-[1600px] mx-auto py-3 sm:py-5 md:p-6 pb-28 lg:pb-6 flex flex-col lg:flex-row gap-6 items-start">
+      <div className="w-full max-w-[1600px] mx-auto py-3 sm:py-5 md:p-6 pb-28 lg:pb-6 flex flex-col lg:flex-row gap-6 items-stretch lg:items-start">
         {/* Center Main Arena Column */}
         <div className="flex-1 w-full min-w-0 flex flex-col gap-6">
           <BattleArena battle={battleData} onVoteClick={handleVoteClick} />
