@@ -37,7 +37,7 @@ export default async function PublicUserPage({
       }));
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 py-6 md:py-10 pb-28">
+    <div className="w-full max-w-[1200px] mx-auto md:px-8 py-6 md:py-10 pb-28">
       {/* Identity */}
       <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden mb-6 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 md:p-8">

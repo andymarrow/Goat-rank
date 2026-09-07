@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
@@ -25,6 +26,11 @@ export default function BattleArena({
 
   const isLeftWinning = leftAmount >= rightAmount;
   const isRightWinning = rightAmount >= leftAmount;
+
+  // A dead image URL made next/image render raw alt text over the stage, which
+  // read as a broken page. Fall back to the contender's initial instead.
+  const [leftFailed, setLeftFailed] = useState(false);
+  const [rightFailed, setRightFailed] = useState(false);
 
   return (
     <div className="w-full flex flex-col gap-6 font-sans">
@@ -58,7 +64,7 @@ export default function BattleArena({
         initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full rounded-3xl bg-card border border-border/80 p-4 sm:p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden"
+        className="w-full rounded-3xl bg-card border border-border/80 p-3 sm:p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden"
       >
         {/* Card Header Title */}
         <div className="flex flex-col items-center text-center">
@@ -98,13 +104,15 @@ export default function BattleArena({
                 style={{ boxShadow: `inset 0 0 60px ${leftContender.color ?? "#FF7A00"}55` }}
               />
             )}
-            {leftContender.image ? (
+            {leftContender.image && !leftFailed ? (
               <Image
                 src={leftContender.image}
                 alt={leftContender.name}
                 fill
                 priority
-                className="object-contain object-bottom group-hover/left:scale-105 transition-transform duration-500"
+                sizes="(max-width: 1024px) 50vw, 25vw"
+                onError={() => setLeftFailed(true)}
+                className="object-cover object-center group-hover/left:scale-105 transition-transform duration-500"
               />
             ) : (
               <div
@@ -117,11 +125,11 @@ export default function BattleArena({
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
 
             {/* Left Contender Name & Subtitle Overlay */}
-            <div className="absolute top-4 left-4 z-10 flex flex-col">
-              <span className="font-extrabold text-lg sm:text-2xl md:text-3xl text-foreground uppercase tracking-tight leading-tight truncate max-w-[180px] sm:max-w-[240px]">
+            <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-10 flex flex-col min-w-0">
+              <span className="font-extrabold text-sm sm:text-2xl md:text-3xl text-foreground uppercase tracking-tight leading-tight truncate">
                 {leftContender.name}
               </span>
-              <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 ${
+              <span className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 whitespace-nowrap ${
                 isLeftWinning ? "text-primary" : "text-muted-foreground"
               }`}>
                 {isLeftWinning ? "👑 LEADER" : "CONTENDER #1"}
@@ -163,13 +171,15 @@ export default function BattleArena({
                 style={{ boxShadow: `inset 0 0 60px ${rightContender.color ?? "#3B82F6"}55` }}
               />
             )}
-            {rightContender.image ? (
+            {rightContender.image && !rightFailed ? (
               <Image
                 src={rightContender.image}
                 alt={rightContender.name}
                 fill
                 priority
-                className="object-contain object-bottom group-hover/right:scale-105 transition-transform duration-500"
+                sizes="(max-width: 1024px) 50vw, 25vw"
+                onError={() => setRightFailed(true)}
+                className="object-cover object-center group-hover/right:scale-105 transition-transform duration-500"
               />
             ) : (
               <div
@@ -182,11 +192,11 @@ export default function BattleArena({
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
 
             {/* Right Contender Name & Subtitle Overlay */}
-            <div className="absolute top-4 right-4 z-10 flex flex-col items-end text-right">
-              <span className="font-extrabold text-lg sm:text-2xl md:text-3xl text-foreground uppercase tracking-tight leading-tight truncate max-w-[180px] sm:max-w-[240px]">
+            <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-10 flex flex-col items-end text-right min-w-0">
+              <span className="font-extrabold text-sm sm:text-2xl md:text-3xl text-foreground uppercase tracking-tight leading-tight truncate max-w-full">
                 {rightContender.name}
               </span>
-              <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 ${
+              <span className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 whitespace-nowrap ${
                 isRightWinning ? "text-primary" : "text-muted-foreground"
               }`}>
                 {isRightWinning ? "👑 LEADER" : "CONTENDER #2"}
@@ -218,7 +228,7 @@ export default function BattleArena({
       {/* =========================================================================
           3. VOTING & PROGRESS BAR SECTION (Choose Your Side)
       ========================================================================= */}
-      <div className="w-full rounded-2xl bg-card border border-border/80 p-4 sm:p-6 shadow-xl flex flex-col gap-4">
+      <div className="w-full rounded-2xl bg-card border border-border/80 p-3 sm:p-6 shadow-xl flex flex-col gap-4">
         <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest text-center">
           CHOOSE YOUR CONTENDER
         </span>

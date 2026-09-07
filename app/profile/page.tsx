@@ -18,7 +18,7 @@ export default async function RosterPage() {
   const roster = await getRoster();
 
   return (
-    <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-6 md:py-10 pb-28 font-sans">
+    <div className="w-full max-w-[1600px] mx-auto md:px-8 py-6 md:py-10 pb-28 font-sans">
       <div className="flex items-center gap-2 mb-6">
         <div className="p-2 rounded-xl bg-primary/10 text-primary">
           <Trophy className="w-5 h-5 shrink-0" />

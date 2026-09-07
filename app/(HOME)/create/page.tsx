@@ -7,7 +7,7 @@ export default async function CreateBattlePage() {
   const categories = await getCategoryLabels();
 
   return (
-    <div className="min-h-[calc(100vh-64px)] w-full flex items-start md:items-center justify-center px-3 py-5 md:p-8 font-sans">
+    <div className="min-h-[calc(100vh-64px)] w-full flex items-start md:items-center justify-center py-5 md:p-8 font-sans">
       <CreateClient categories={categories} />
     </div>
   );

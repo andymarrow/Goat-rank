@@ -8,7 +8,7 @@ import { ChevronRight, Swords } from "lucide-react";
 export default function FaceOffsRow({ liveBattles }: { liveBattles: any[] }) {
   if (!liveBattles || liveBattles.length === 0) {
     return (
-      <section className="w-full max-w-[1920px] mx-auto px-6 md:px-12 py-8">
+      <section className="w-full max-w-[1920px] mx-auto md:px-12 py-8">
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">
           <Swords className="w-6 h-6 mx-auto mb-2 text-muted-foreground/40" />
           <p className="text-sm font-semibold text-muted-foreground">

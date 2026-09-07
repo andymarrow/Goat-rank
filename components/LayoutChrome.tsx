@@ -33,9 +33,12 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
     <div className="flex flex-col min-h-screen">
       <DesktopNavbar />
 
-      {/* pt-16 clears the fixed desktop navbar; pb-20 clears the mobile tab
-          bar so the last row of content is never trapped underneath it. */}
-      <main className="flex-1 w-[80%] max-w-[1920px] mx-auto pt-0 md:pt-16 pb-20 md:pb-0">
+      {/* The 80% inset is a desktop framing device. On a phone it threw away a
+          fifth of the viewport — a ~40px dead margin down both edges of every
+          page — so below md the page runs full width with an ordinary gutter.
+          pt-16 clears the fixed desktop navbar; pb-20 clears the mobile tab bar
+          so the last row of content is never trapped underneath it. */}
+      <main className="flex-1 w-full px-4 md:w-[80%] md:px-0 max-w-[1920px] mx-auto pt-0 md:pt-16 pb-20 md:pb-0">
         {children}
       </main>
 

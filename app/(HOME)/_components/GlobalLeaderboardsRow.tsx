@@ -27,7 +27,7 @@ export default function GlobalLeaderboardsRow({ rooms }: { rooms: LandingRoom[] 
 
   if (rooms.length === 0) {
     return (
-      <section className="w-full max-w-[1920px] mx-auto px-6 md:px-12 py-8">
+      <section className="w-full max-w-[1920px] mx-auto md:px-12 py-8">
         <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-6">
           Global Arenas
         </h2>
