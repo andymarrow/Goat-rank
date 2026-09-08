@@ -34,9 +34,9 @@ export default function PrivacyPage() {
 
       <H2>What we never store</H2>
       <p>
-        We do not store card numbers or any payment credentials. Checkout happens entirely on Lemon
-        Squeezy; we only ever see an order identifier and the amount. We do not sell personal data,
-        and we do not run advertising trackers.
+        We do not store card numbers or any payment credentials. Checkout happens entirely on
+        Stripe; we only ever see a payment identifier, the amount, and the email address you gave
+        at checkout. We do not sell personal data, and we do not run advertising trackers.
       </p>
 
       <H2>What is public</H2>
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
       <H2>Processors we use</H2>
       <ul className="list-disc pl-5 flex flex-col gap-2">
         <li><strong className="text-foreground">Supabase</strong> — database, authentication and file storage.</li>
-        <li><strong className="text-foreground">Lemon Squeezy</strong> — payments, as merchant of record.</li>
+        <li><strong className="text-foreground">Stripe</strong> — card processing.</li>
         <li><strong className="text-foreground">Resend</strong> — transactional email such as vote receipts.</li>
       </ul>
 

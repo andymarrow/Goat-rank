@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { listOrders, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
+import { stripe, toDollars } from "@/lib/stripe";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireAdmin, adminError, type AdminResult } from "@/utils/supabase/admin-auth";
 
@@ -13,49 +13,32 @@ export type SyncReport = {
   reversedTotal: number;
 };
 
-let isConfigured = false;
-function ensureConfigured() {
-  if (isConfigured) return;
-  lemonSqueezySetup({
-    apiKey: process.env.LEMONSQUEEZY_API_KEY,
-    onError: (error) => console.error("Lemon Squeezy SDK error:", error),
-  });
-  isConfigured = true;
-}
-
 /**
- * Cross-reference Lemon Squeezy orders against the `votes` table.
+ * Cross-reference Stripe payments against the `votes` table.
  *
  * Catches the two ways the ledger drifts:
- *  - an order was refunded or charged back at Lemon Squeezy but the vote is
- *    still counted here (fixed automatically — flipping `refunded` fires the
+ *  - a payment was refunded or charged back at Stripe but the vote is still
+ *    counted here (fixed automatically — flipping `refunded` fires the
  *    on_vote_refunded trigger, which reverses pool, entity and wallet),
- *  - an order exists at Lemon Squeezy with no matching vote row, meaning a
- *    webhook delivery was lost (reported, not auto-fixed: re-inserting would
- *    need the custom_data the order carries, so it wants a human look).
+ *  - a succeeded payment with no matching vote row, meaning a webhook delivery
+ *    was lost (reported, not auto-fixed: re-inserting needs the metadata the
+ *    payment carries, so it wants a human look — and Stripe can resend the
+ *    event, which is the better repair).
+ *
+ * Reads charges rather than checkout sessions: a session drops out of the API
+ * after 30 days, and the refund state lives on the charge — `refunded` and
+ * `amount_refunded` are not fields of a payment intent. Each charge carries
+ * the intent id we store, and the metadata copied from the intent.
  */
-export async function syncLemonSqueezy(): Promise<AdminResult<SyncReport>> {
+export async function syncStripe(): Promise<AdminResult<SyncReport>> {
   try {
     await requireAdmin();
 
-    const storeId = process.env.LEMONSQUEEZY_STORE_ID;
-    if (!storeId || !process.env.LEMONSQUEEZY_API_KEY) {
-      return { ok: false, error: "Lemon Squeezy is not configured." };
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return { ok: false, error: "Stripe is not configured." };
     }
 
-    ensureConfigured();
-
-    const { data: orders, error: lsError } = await listOrders({
-      filter: { storeId },
-      page: { size: 100 },
-    });
-
-    if (lsError) {
-      console.error("Lemon Squeezy listOrders failed:", lsError);
-      return { ok: false, error: "Could not reach Lemon Squeezy." };
-    }
-
-    const rows = orders?.data ?? [];
+    const charges = await stripe().charges.list({ limit: 100 });
     const supabase = createAdminClient();
 
     const { data: votes, error: voteError } = await supabase
@@ -64,31 +47,37 @@ export async function syncLemonSqueezy(): Promise<AdminResult<SyncReport>> {
 
     if (voteError) throw voteError;
 
-    const byOrderId = new Map(
+    const byPaymentId = new Map(
       (votes ?? []).map((v) => [String(v.polar_transaction_id), v])
     );
 
     const report: SyncReport = {
-      ordersScanned: rows.length,
+      ordersScanned: charges.data.length,
       refundsFound: 0,
       refundsApplied: 0,
       missingInDb: [],
       reversedTotal: 0,
     };
 
-    for (const order of rows) {
-      const orderId = String(order.id);
-      const attrs = order.attributes;
-      const isRefunded = Boolean(attrs.refunded) || attrs.status === "refunded";
-      const vote = byOrderId.get(orderId);
+    for (const charge of charges.data) {
+      // Only a vote carries this type; passes and injections have no row in
+      // `votes` and must not be reported as missing.
+      if (charge.metadata?.type !== "battle_vote") continue;
+
+      const paymentId =
+        typeof charge.payment_intent === "string"
+          ? charge.payment_intent
+          : charge.payment_intent?.id ?? charge.id;
+
+      const isRefunded = charge.refunded || (charge.amount_refunded ?? 0) > 0;
+      const vote = byPaymentId.get(paymentId);
 
       if (!vote) {
-        // Only paid, non-refunded orders are a real gap worth chasing.
-        if (attrs.status === "paid" && !isRefunded) {
+        if (charge.status === "succeeded" && !isRefunded) {
           report.missingInDb.push({
-            orderId,
-            total: (attrs.subtotal_usd ?? 0) / 100,
-            refunded: isRefunded,
+            orderId: paymentId,
+            total: toDollars(charge.amount_captured || charge.amount),
+            refunded: false,
           });
         }
         continue;
@@ -118,8 +107,9 @@ export async function syncLemonSqueezy(): Promise<AdminResult<SyncReport>> {
 
     revalidatePath("/admin");
     revalidatePath("/");
+
     return { ok: true, data: report };
   } catch (error) {
-    return adminError(error, "Sync failed.");
+    return adminError(error, "Could not reconcile Stripe payments.");
   }
 }

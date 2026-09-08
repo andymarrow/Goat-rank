@@ -34,17 +34,16 @@ export default function MoneyPage() {
 
       <H2>Fees come out of our share</H2>
       <p>
-        Lemon Squeezy is the merchant of record for every transaction. They collect the payment,
-        handle sales tax and VAT where it applies, and take a processing fee. That fee is deducted
-        from the platform&apos;s 60% — the charity and creator shares are calculated on the amount you
+        Stripe processes every payment and takes a processing fee, which is deducted from the
+        platform&apos;s 60%. The charity and creator shares are calculated on the amount you
         pledged, not on what is left after fees.
       </p>
 
-      <H2>Tax is added on top</H2>
+      <H2>Tax</H2>
       <p>
-        If your country charges tax on digital purchases, Lemon Squeezy adds it at checkout. That
-        tax is never counted toward an arena&apos;s pool. A $10 vote contributes $10 to the pool
-        whether you paid $10 or $12.10.
+        The price you see at checkout is the amount charged. Where tax applies to a pledge it is
+        settled out of the platform&apos;s share rather than added to your total, and it is never
+        counted toward an arena&apos;s pool: a $10 pledge contributes $10 either way.
       </p>
 
       <H2>When the charity is paid</H2>

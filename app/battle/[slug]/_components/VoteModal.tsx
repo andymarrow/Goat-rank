@@ -58,9 +58,9 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
     setError(null);
 
     try {
-      // Call our secure Server Action. The DB ids travel to Lemon Squeezy as
-      // checkout custom data and come back on the webhook, so they never
-      // round-trip through the browser.
+      // Call our secure Server Action. The DB ids travel to Stripe as checkout
+      // session metadata and come back on the webhook, so they never round-trip
+      // through the browser.
       const res = await createVoteCheckout({
         amount,
         roomId: battle.id,
@@ -71,7 +71,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
       });
 
       if (res.url) {
-        // Hand off to Lemon Squeezy's hosted checkout
+        // Hand off to Stripe's hosted checkout
         window.location.href = res.url;
         return; // Leave the button disabled while the browser navigates away
       }

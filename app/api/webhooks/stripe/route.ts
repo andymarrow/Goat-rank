@@ -1,5 +1,7 @@
-import crypto from "node:crypto";
 import { NextResponse } from "next/server";
+import type Stripe from "stripe";
+
+import { stripe, toDollars } from "@/lib/stripe";
 import { generatedAvatar } from "@/lib/avatar";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendVoteReceipt, sendRoomLive } from "@/lib/email/send";
@@ -13,112 +15,103 @@ const ROOMS_PER_PASS = 5;
 const CONTENDERS_PER_PASS = 5;
 
 /**
- * Lemon Squeezy signs the raw request body with HMAC-SHA256 and sends the hex
- * digest in `X-Signature`.
+ * Stripe webhook.
+ *
+ * Stripe signs the raw body, so this route must read `req.text()` and never a
+ * parsed object — Next does not parse a Route Handler's body for you, which is
+ * what makes that safe here.
+ *
+ * Everything the handler needs travels in the session's `metadata`, set when
+ * the checkout was created server-side, so no database id is ever taken from
+ * the browser.
  */
-function isValidSignature(rawBody: string, signature: string, secret: string) {
-  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest();
-
-  let received: Buffer;
-  try {
-    received = Buffer.from(signature, "hex");
-  } catch {
-    return false;
-  }
-
-  if (received.length !== expected.length) return false;
-
-  return crypto.timingSafeEqual(received, expected);
-}
-
-type LemonSqueezyOrderPayload = {
-  meta?: {
-    event_name?: string;
-    custom_data?: Record<string, string | undefined>;
-  };
-  data?: {
-    id?: string;
-    attributes?: {
-      status?: string;
-      subtotal_usd?: number;
-      total_usd?: number;
-      user_email?: string;
-      user_name?: string;
-    };
-  };
-};
-
 export async function POST(req: Request) {
-  const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.error("LEMONSQUEEZY_WEBHOOK_SECRET is not set.");
+    console.error("STRIPE_WEBHOOK_SECRET is not set.");
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
   }
 
   const rawBody = await req.text();
-  const signature = req.headers.get("x-signature");
+  const signature = req.headers.get("stripe-signature");
 
   if (!signature) {
     return NextResponse.json({ error: "No signature" }, { status: 401 });
   }
 
-  if (!isValidSignature(rawBody, signature, secret)) {
-    console.error("Webhook Verification Failed: signature mismatch");
+  let event: Stripe.Event;
+
+  try {
+    // Verifies the signature and the timestamp window in one call.
+    event = stripe().webhooks.constructEvent(rawBody, signature, secret);
+  } catch (error) {
+    console.error("Stripe signature verification failed:", error);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  let payload: LemonSqueezyOrderPayload;
-
-  try {
-    payload = JSON.parse(rawBody);
-  } catch {
-    return NextResponse.json({ error: "Malformed JSON" }, { status: 400 });
+  // Card payments complete synchronously; the async event covers the delayed
+  // methods (bank debits) where the session finishes before the money lands.
+  if (
+    event.type !== "checkout.session.completed" &&
+    event.type !== "checkout.session.async_payment_succeeded"
+  ) {
+    return NextResponse.json({ received: true, ignored: event.type }, { status: 200 });
   }
 
-  if (payload.meta?.event_name !== "order_created") {
-    return NextResponse.json({ received: true }, { status: 200 });
-  }
+  const session = event.data.object as Stripe.Checkout.Session;
 
-  const attributes = payload.data?.attributes;
-  const orderId = payload.data?.id;
-
-  if (attributes?.status !== "paid") {
+  // A completed session is not a paid one for delayed payment methods.
+  if (session.payment_status !== "paid") {
     return NextResponse.json({ received: true, ignored: "unpaid" }, { status: 200 });
   }
 
-  const custom = payload.meta?.custom_data;
+  const meta = session.metadata ?? {};
 
-  // If there is no custom data type, we ignore it.
-  if (!custom?.type || !orderId) {
-    return NextResponse.json({ received: true, ignored: "missing custom data" }, { status: 200 });
+  if (!meta.type) {
+    return NextResponse.json({ received: true, ignored: "no metadata type" }, { status: 200 });
   }
 
+  // The payment intent, not the session: a refund reconciliation reads the
+  // intent, and sessions expire out of the API after 30 days. Falls back to
+  // the session id so the unique key is never null.
+  const paymentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id ?? session.id;
+
+  const email = session.customer_details?.email ?? null;
   const supabase = createAdminClient();
 
   // ==========================================
   // SCENARIO 1: A USER BOUGHT A VOTE ($3+)
   // ==========================================
-  if (custom.type === "battle_vote") {
-    if (!custom.room_id || !custom.contender_id) {
+  if (meta.type === "battle_vote") {
+    if (!meta.room_id || !meta.contender_id) {
       return NextResponse.json({ received: true, ignored: "invalid vote payload" }, { status: 200 });
     }
 
-    const amountCents = attributes.subtotal_usd ?? 0;
+    // Subtotal, not total: with Stripe Tax on, the buyer's tax sits in
+    // amount_total and would inflate the pool. Falls back to the total for
+    // accounts with no tax configured, where the two are equal anyway.
+    const amountCents = session.amount_subtotal ?? session.amount_total ?? 0;
+
     if (amountCents <= 0) {
       return NextResponse.json({ received: true, ignored: "zero amount" }, { status: 200 });
     }
 
-    const voterName = custom.voter_name || "Anonymous";
+    const voterName = meta.voter_name || "Anonymous";
 
     const { error } = await supabase.from("votes").insert({
-      polar_transaction_id: orderId,
-      room_id: custom.room_id,
-      contender_id: custom.contender_id,
-      voter_id: custom.voter_id || null,
-      amount: amountCents / 100, 
+      // Legacy column name from an earlier provider; it holds the Stripe
+      // payment id now, and its unique constraint is the idempotency key.
+      polar_transaction_id: paymentId,
+      room_id: meta.room_id,
+      contender_id: meta.contender_id,
+      voter_id: meta.voter_id || null,
+      amount: toDollars(amountCents),
       voter_name: voterName,
-      message: custom.message || null,
+      message: meta.message || null,
       voter_avatar: generatedAvatar(voterName),
     });
 
@@ -126,9 +119,9 @@ export async function POST(req: Request) {
       if (error.code === UNIQUE_VIOLATION) {
         return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
       }
-      // The reason travels back in the body. Only Lemon Squeezy sees this,
-      // and its delivery log is the one place you can read it when a paid
-      // order fails to record — "DB Error" alone left nothing to act on.
+
+      // The reason travels back in the body. Stripe's event log is the one
+      // place you can read it when a paid order fails to record.
       console.error("Vote Insert Error:", error);
       return NextResponse.json(
         { error: "DB Error", reason: error.message, code: error.code },
@@ -138,26 +131,26 @@ export async function POST(req: Request) {
 
     // Receipt. Deliberately not awaited into the response contract: a Resend
     // outage must never turn a paid vote into a 500 and a webhook retry.
-    if (attributes.user_email) {
+    if (email) {
       const { data: room } = await supabase
         .from("rooms")
         .select("title, room_type")
-        .eq("id", custom.room_id)
+        .eq("id", meta.room_id)
         .single();
 
       const { data: contender } = await supabase
         .from("room_contenders")
         .select("entities ( name )")
-        .eq("id", custom.contender_id)
+        .eq("id", meta.contender_id)
         .single();
 
-      await sendVoteReceipt(attributes.user_email, {
+      await sendVoteReceipt(email, {
         voterName,
         contender:
           (contender?.entities as unknown as { name?: string } | null)?.name ?? "your contender",
-        amount: amountCents / 100,
+        amount: toDollars(amountCents),
         roomTitle: room?.title ?? "the arena",
-        roomId: custom.room_id,
+        roomId: meta.room_id,
         roomType: room?.room_type,
       });
     }
@@ -165,22 +158,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true, action: "vote_processed" }, { status: 200 });
   }
 
-
   // ==========================================
   // SCENARIO 2: A CREATOR DEPLOYED A ROOM ($10)
   // ==========================================
-  if (custom.type === "creator_pass") {
-    if (!custom.room_id) {
-      return NextResponse.json({ received: true, ignored: "missing room_id for creator pass" }, { status: 200 });
+  if (meta.type === "creator_pass") {
+    if (!meta.room_id) {
+      return NextResponse.json({ received: true, ignored: "missing room_id" }, { status: 200 });
     }
 
-    // Set the room status to 'active' so it shows up on the homepage!
     // The .eq on pending_payment doubles as replay protection: a redelivered
     // webhook matches no rows, so credits are granted exactly once below.
     const { data: activated, error } = await supabase
       .from("rooms")
       .update({ status: "active" })
-      .eq("id", custom.room_id)
+      .eq("id", meta.room_id)
       .eq("status", "pending_payment")
       .select("id, creator_id");
 
@@ -211,17 +202,17 @@ export async function POST(req: Request) {
       if (creditError) console.error("Credit grant failed:", creditError);
     }
 
-    if (attributes.user_email) {
+    if (email) {
       const { data: room } = await supabase
         .from("rooms")
         .select("title, expires_at, room_type")
-        .eq("id", custom.room_id)
+        .eq("id", meta.room_id)
         .single();
 
       if (room) {
-        await sendRoomLive(attributes.user_email, {
+        await sendRoomLive(email, {
           title: room.title,
-          roomId: custom.room_id,
+          roomId: meta.room_id,
           expiresAt: room.expires_at,
           roomType: room.room_type,
         });
@@ -234,8 +225,8 @@ export async function POST(req: Request) {
   // ==========================================
   // SCENARIO 3: A USER INJECTED A CONTENDER ($5)
   // ==========================================
-  if (custom.type === "contender_add") {
-    if (!custom.room_id || !custom.entity_id) {
+  if (meta.type === "contender_add") {
+    if (!meta.room_id || !meta.entity_id) {
       return NextResponse.json({ received: true, ignored: "invalid contender payload" }, { status: 200 });
     }
 
@@ -244,11 +235,11 @@ export async function POST(req: Request) {
     const { count } = await supabase
       .from("room_contenders")
       .select("id", { count: "exact", head: true })
-      .eq("room_id", custom.room_id);
+      .eq("room_id", meta.room_id);
 
     const { error } = await supabase.from("room_contenders").insert({
-      room_id: custom.room_id,
-      entity_id: custom.entity_id,
+      room_id: meta.room_id,
+      entity_id: meta.entity_id,
       seed_index: count ?? 0,
     });
 
@@ -264,11 +255,11 @@ export async function POST(req: Request) {
     }
 
     // $5 buys 5 injections; this one used the first, so bank the other 4.
-    if (custom.buyer_id) {
+    if (meta.buyer_id) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("contender_credits")
-        .eq("id", custom.buyer_id)
+        .eq("id", meta.buyer_id)
         .single();
 
       await supabase
@@ -276,12 +267,11 @@ export async function POST(req: Request) {
         .update({
           contender_credits: (profile?.contender_credits ?? 0) + CONTENDERS_PER_PASS - 1,
         })
-        .eq("id", custom.buyer_id);
+        .eq("id", meta.buyer_id);
     }
 
     return NextResponse.json({ received: true, action: "contender_added" }, { status: 200 });
   }
 
-  // Fallback for unknown types
   return NextResponse.json({ received: true, ignored: "unknown type" }, { status: 200 });
 }

@@ -4,33 +4,22 @@ import { revalidatePath } from "next/cache";
 
 import { createAdminClient } from "@/utils/supabase/admin";
 import { headers } from "next/headers";
-import { createCheckout, lemonSqueezySetup } from "@lemonsqueezy/lemonsqueezy.js";
+import { stripe, toCents, metadata } from "@/lib/stripe";
 import { createClient } from "@/utils/supabase/server";
 
 // Mirrors the minimum enforced by the VoteModal input. A Server Action is a
 // public HTTP endpoint, so the client-side `min` attribute proves nothing.
 const MIN_VOTE_USD = 3;
 
-// Keeps a pasted essay out of the checkout payload and the DB.
+// Keeps a pasted essay out of the checkout payload and the DB. Also Stripe's
+// own ceiling for a metadata value.
 const MAX_CUSTOM_VALUE = 500;
 
-/**
- * The SDK holds its API key in module-global state, so this only needs to run
- * once per server instance. It runs lazily inside the action rather than at
- * module scope on purpose: a module-scope client that throws on a missing key
- * breaks `next build` during page-data collection.
- */
-let isConfigured = false;
-function ensureConfigured() {
-  if (isConfigured) return;
-
-  lemonSqueezySetup({
-    apiKey: process.env.LEMONSQUEEZY_API_KEY,
-    onError: (error) => console.error("Lemon Squeezy SDK error:", error),
-  });
-
-  isConfigured = true;
-}
+// Lemon Squeezy held these in product variants. Stripe Checkout takes an
+// inline price, so the two passes are priced here — keep them in step with the
+// copy in CreateClient and AddContenderModal.
+const CREATOR_PASS_USD = 10;
+const CONTENDER_PASS_USD = 5;
 
 /**
  * Checkout runs on our own domain, so we can rebuild the absolute redirect URL
@@ -61,17 +50,12 @@ export async function createVoteCheckout(data: {
     return { error: `Minimum vote is $${MIN_VOTE_USD}.` };
   }
 
-  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
-  const variantId = process.env.LS_VARIANT_VOTE;
-
-  if (!storeId || !variantId || !process.env.LEMONSQUEEZY_API_KEY) {
-    console.error("Lemon Squeezy env vars missing (store, variant or API key).");
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error("STRIPE_SECRET_KEY is missing.");
     return { error: "Payment terminal is not configured." };
   }
 
   try {
-    ensureConfigured();
-
     // Resolve the room server-side. VoteModal is shared by 1v1 battles and
     // global arenas, and the two live on different routes — hardcoding
     // /battle sent every global voter to the wrong page after paying.
@@ -118,51 +102,52 @@ export async function createVoteCheckout(data: {
     const roomPath = room.room_type === "global" ? "global" : "battle";
     const origin = await resolveOrigin();
 
-    // Pay-what-you-want: the variant's price is overridden per checkout.
-    // Lemon Squeezy wants a positive integer in cents, so round rather than
-    // trusting float math on a custom dollar amount.
-    const customPrice = Math.round(data.amount * 100);
+    // Pay-what-you-want: an inline price rather than a catalogue one, so the
+    // backer's chosen amount is the amount charged.
+    const session = await stripe().checkout.sessions.create({
+      mode: "payment",
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: toCents(data.amount),
+            product_data: {
+              name: "Arena Vote",
+              description: "Backs your contender and grows the arena pool.",
+            },
+          },
+        },
+      ],
+      success_url: `${origin}/${roomPath}/${data.roomId}?success=true`,
+      cancel_url: `${origin}/${roomPath}/${data.roomId}?cancelled=true`,
 
-    const { data: checkout, error } = await createCheckout(storeId, variantId, {
-      customPrice,
-      productOptions: {
-        name: "GOAT Rank Battle Vote",
-        description: "Backs your contender and grows the battle pool.",
-        // Lemon Squeezy has no cancel URL — only a post-purchase redirect.
-        redirectUrl: `${origin}/${roomPath}/${data.roomId}?success=true`,
-        receiptButtonText: "Back to the arena",
-      },
-      checkoutData: {
-        // IMPORTANT: our database IDs ride along here so the webhook can
-        // attribute the vote without ever trusting the browser for them.
-        // Lemon Squeezy returns this under `meta.custom_data`, not on the
-        // order attributes. Values must be strings — numbers and nested
-        // objects come back inconsistently.
-        custom: {
+      // Our database ids ride along so the webhook can attribute the vote
+      // without ever trusting the browser for them. Copied onto the payment
+      // intent as well: a refund reconciliation reads the intent, not the
+      // session, and the session expires after 24 hours.
+      metadata: metadata({
+        type: "battle_vote",
+        room_id: data.roomId,
+        contender_id: data.contenderId,
+        message: data.message.slice(0, MAX_CUSTOM_VALUE),
+        voter_name: voterName.slice(0, MAX_CUSTOM_VALUE),
+        voter_id: voterId,
+      }),
+      payment_intent_data: {
+        metadata: metadata({
           type: "battle_vote",
           room_id: data.roomId,
           contender_id: data.contenderId,
-          message: data.message.slice(0, MAX_CUSTOM_VALUE),
-          voter_name: voterName.slice(0, MAX_CUSTOM_VALUE),
-          voter_id: voterId,
-        },
+        }),
       },
     });
 
-    if (error) {
-      console.error("Lemon Squeezy Checkout Error:", error);
-      return { error: "Failed to initialize payment terminal." };
-    }
+    if (!session.url) return { error: "Stripe did not return a checkout URL." };
 
-    const url = checkout?.data.attributes.url;
-
-    if (!url) {
-      return { error: "Lemon Squeezy did not return a checkout URL." };
-    }
-
-    return { url };
+    return { url: session.url };
   } catch (error) {
-    console.error("Lemon Squeezy Checkout Error:", error);
+    console.error("Stripe Checkout Error:", error);
     return { error: "Failed to initialize payment terminal." };
   }
 }
@@ -182,15 +167,11 @@ export async function createRoomCheckout(data: {
     return { error: "You must be logged in to deploy an arena." };
   }
 
-  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
-  const variantId = process.env.LS_VARIANT_CREATOR;
-
-  if (!storeId || !variantId) {
+  if (!process.env.STRIPE_SECRET_KEY) {
     return { error: "Payment terminal is not configured." };
   }
 
   try {
-    ensureConfigured();
     const supabase = createAdminClient();
 
     // A $10 pass grants 5 deployments. Spend one before falling back to
@@ -292,31 +273,40 @@ export async function createRoomCheckout(data: {
       };
     }
 
-    // 3. Request LemonSqueezy Checkout
+    // 3. Request a Stripe Checkout session
     const origin = await resolveOrigin();
+    const roomPath = data.roomType === "global" ? "global" : "battle";
 
-    const { data: checkout, error } = await createCheckout(storeId, variantId, {
-      productOptions: {
-        name: `Deploy Arena: ${data.title}`,
-        description: `Unlocks 1 of your 3 Creator passes. 10% commission enabled.`,
-        // Land the creator in the arena they just paid for, not on the
-        // dashboard. 1v1 and global rooms live on different routes.
-        redirectUrl: `${origin}${data.roomType === "global" ? "/global" : "/battle"}/${room.id}?success=true`,
-        receiptButtonText: "Enter your arena",
-      },
-      checkoutData: {
-        custom: {
-          type: "creator_pass",
-          room_id: room.id, // We only need to pass the ID!
+    const session = await stripe().checkout.sessions.create({
+      mode: "payment",
+      customer_email: user.email ?? undefined,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: toCents(CREATOR_PASS_USD),
+            product_data: {
+              name: "Creator Pass",
+              description: `Deploys "${data.title}" and 4 more arenas. 10% of every pledge is yours.`,
+            },
+          },
         },
+      ],
+      // Land the creator in the arena they just paid for, not on the
+      // dashboard. 1v1 and global rooms live on different routes.
+      success_url: `${origin}/${roomPath}/${room.id}?success=true`,
+      cancel_url: `${origin}/create?cancelled=true`,
+      metadata: metadata({ type: "creator_pass", room_id: room.id }),
+      payment_intent_data: {
+        metadata: metadata({ type: "creator_pass", room_id: room.id }),
       },
     });
 
-    if (error) return { error: "Failed to initialize payment terminal." };
-    return { url: checkout?.data.attributes.url };
-    
+    if (!session.url) return { error: "Stripe did not return a checkout URL." };
+    return { url: session.url };
   } catch (error) {
-    console.error("Lemon Squeezy Checkout Error:", error);
+    console.error("Stripe Checkout Error:", error);
     return { error: "System failure." };
   }
 }
@@ -345,13 +335,11 @@ export async function createContenderCheckout(data: {
   const name = data.name?.trim();
   if (!name) return { error: "Contender name is required." };
 
-  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
-  const variantId = process.env.LS_VARIANT_CONTENDER;
-
-  if (!storeId || !variantId) return { error: "Payment terminal is not configured." };
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { error: "Payment terminal is not configured." };
+  }
 
   try {
-    ensureConfigured();
     const supabase = createAdminClient();
 
     const { data: room, error: roomError } = await supabase
@@ -411,31 +399,43 @@ export async function createContenderCheckout(data: {
 
     const origin = await resolveOrigin();
 
-    const { data: checkout, error } = await createCheckout(storeId, variantId, {
-      productOptions: {
-        name: `Inject ${name}`,
-        description: `Adds ${name} to "${room.title}".`,
-        redirectUrl: `${origin}/global/${data.roomId}?success=true`,
-        receiptButtonText: "Back to the arena",
-      },
-      checkoutData: {
-        custom: {
+    const session = await stripe().checkout.sessions.create({
+      mode: "payment",
+      customer_email: user.email ?? undefined,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: toCents(CONTENDER_PASS_USD),
+            product_data: {
+              name: "Add Contender",
+              description: `Adds ${name} to "${room.title}", plus 4 more injections.`,
+            },
+          },
+        },
+      ],
+      success_url: `${origin}/global/${data.roomId}?success=true`,
+      cancel_url: `${origin}/global/${data.roomId}?cancelled=true`,
+      metadata: metadata({
+        type: "contender_add",
+        room_id: data.roomId,
+        entity_id: entity.id,
+        buyer_id: user.id,
+      }),
+      payment_intent_data: {
+        metadata: metadata({
           type: "contender_add",
           room_id: data.roomId,
           entity_id: entity.id,
-          buyer_id: user.id,
-        },
+        }),
       },
     });
 
-    if (error) {
-      console.error("Lemon Squeezy Checkout Error:", error);
-      return { error: "Failed to initialize payment terminal." };
-    }
-
-    return { url: checkout?.data.attributes.url };
+    if (!session.url) return { error: "Stripe did not return a checkout URL." };
+    return { url: session.url };
   } catch (error) {
-    console.error("Lemon Squeezy Checkout Error:", error);
+    console.error("Stripe Checkout Error:", error);
     return { error: "System failure." };
   }
 }

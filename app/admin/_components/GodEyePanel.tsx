@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 import type { AdminOverview } from "@/actions/admin/analytics";
-import { syncLemonSqueezy, type SyncReport } from "@/actions/admin/sync";
+import { syncStripe, type SyncReport } from "@/actions/admin/sync";
 import { Panel, StatTile, ActionButton, money, compact, Badge } from "./AdminPrimitives";
 
 export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
@@ -34,7 +34,7 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
             label="House cut · 60%"
             value={money(treasury.platformCut)}
             accent="text-primary"
-            hint="Before Lemon Squeezy fees"
+            hint="Before Stripe fees"
             icon={<Landmark className="w-4 h-4" />}
           />
           <StatTile
@@ -70,8 +70,8 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
           <TriangleAlert className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500" />
           <span>
             These are <strong className="text-foreground/70">derived</strong> from vote volume, not a
-            reconciled bank ledger. Only the creator 10% actually moves in the database. Lemon
-            Squeezy&apos;s fee comes off what they remit, so the house figure is gross.
+            reconciled bank ledger. Only the creator 10% actually moves in the database. Stripe&apos;s
+            fee comes out of the payout, so the house figure is gross.
           </span>
         </p>
       </Panel>
@@ -145,13 +145,13 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
 
       {/* ----------------------------------------------------------- SYNC */}
       <Panel
-        title="Lemon Squeezy sync"
-        subtitle="Cross-reference orders to catch refunds and chargebacks."
+        title="Stripe sync"
+        subtitle="Cross-reference payments to catch refunds and chargebacks."
         action={
           <ActionButton
             variant="primary"
             onRun={async () => {
-              const res = await syncLemonSqueezy();
+              const res = await syncStripe();
               if (res.ok) setReport(res.data);
               return res;
             }}
@@ -162,16 +162,16 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
       >
         {!report ? (
           <p className="text-xs text-muted-foreground font-sans leading-relaxed">
-            Scans the most recent 100 orders. A refunded order flips its vote to{" "}
+            Scans the most recent 100 charges. A refunded payment flips its vote to{" "}
             <code className="text-foreground/70">refunded</code>, which fires the reversal trigger
             and backs the money out of the pool, the entity total and the creator&apos;s wallet.
-            Orders with no matching vote are reported for you to inspect — those mean a webhook
-            delivery was lost.
+            Payments with no matching vote are reported for you to inspect — those mean a webhook
+            delivery was lost, and Stripe can resend the event to repair it.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <StatTile label="Orders scanned" value={String(report.ordersScanned)} />
+              <StatTile label="Charges scanned" value={String(report.ordersScanned)} />
               <StatTile label="Refunds found" value={String(report.refundsFound)} />
               <StatTile
                 label="Reversals applied"
