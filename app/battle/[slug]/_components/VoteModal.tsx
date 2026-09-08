@@ -36,6 +36,18 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
   const contender = battle.contenders[contenderIndex];
   const charityCut = (amount * 0.30).toFixed(2); // 30% goes to charity
 
+  // The placeholder used to name Messi in every arena on the platform, which
+  // reads as a bug in a room about anything else. In a head-to-head it taunts
+  // the other side by name; on a leaderboard there is no single other side,
+  // so it asks the question instead.
+  const rival = battle.contenders?.length === 2
+    ? battle.contenders[contenderIndex === 0 ? 1 : 0]
+    : null;
+
+  const cryPlaceholder = rival
+    ? `"${rival.name} could never."`
+    : `"Why ${contender?.name ?? "them"}? Make the case."`;
+
   // The custom amount input can be emptied (NaN) or typed below the floor.
   const isValidAmount = Number.isFinite(amount) && amount >= MIN_VOTE;
 
@@ -44,9 +56,6 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
 
     setIsSubmitting(true);
     setError(null);
-
-    // Generate a random guest name for now (Phase 10 will link real auth)
-    const randomGuest = ["Ridge", "Willow", "Thorn", "Fell"][Math.floor(Math.random() * 4)];
 
     try {
       // Call our secure Server Action. The DB ids travel to Lemon Squeezy as
@@ -57,7 +66,8 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
         roomId: battle.id,
         contenderId: contender.id,
         message: message || "Settle the debate!",
-        voterName: randomGuest,
+        // Signed in, the action replaces this with the profile's username.
+        voterName: "",
       });
 
       if (res.url) {
@@ -167,7 +177,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
             <textarea 
               rows={2}
               maxLength={150}
-              placeholder={`"Messi could never!"`}
+              placeholder={cryPlaceholder}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="w-full bg-background/60 border border-border/60 rounded-2xl p-3 text-foreground font-sans text-xs sm:text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all resize-none placeholder:text-muted-foreground/50"

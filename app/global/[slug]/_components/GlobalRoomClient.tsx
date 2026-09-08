@@ -406,9 +406,11 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                       </h3>
 
                       <div className="flex items-center justify-between text-xs font-medium">
+                        {/* Dollars, not a vote count — the figure was already
+                            money, just printed without its unit. */}
                         <span className="font-semibold text-yellow-500 font-sans">
-                          {totalVotes.toLocaleString()}{" "}
-                          <span className="font-normal text-muted-foreground text-[11px]">pool</span>
+                          ${totalVotes.toLocaleString()}{" "}
+                          <span className="font-normal text-muted-foreground text-[11px]">backed</span>
                         </span>
                         <span className="text-[11px] text-muted-foreground">
                           {percentage}%

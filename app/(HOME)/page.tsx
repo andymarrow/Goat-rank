@@ -36,8 +36,6 @@ export default async function HomePage({
         </section>
       )}
 
-      <GlobalLeaderboardsRow rooms={globalRooms} />
-
       <section className="w-full pt-2">
         {/* useSearchParams needs a Suspense boundary during streaming. */}
         <Suspense fallback={<div className="h-9" />}>
@@ -45,7 +43,11 @@ export default async function HomePage({
         </Suspense>
       </section>
 
+      {/* Head-to-heads lead: two things to compare creates more urgency than a
+          field of many, so the 1v1 rail sits above the global leaderboards. */}
       <FaceOffsRow liveBattles={live1v1Battles} />
+
+      <GlobalLeaderboardsRow rooms={globalRooms} />
     </div>
   );
 }

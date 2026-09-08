@@ -255,8 +255,10 @@ export default function BattleArena({
             }`}>
               {Math.round(leftPercentage)}%
             </span>
+            {/* The pool behind this side. It read "78 votes" for $78 — the
+                number was the money all along, just mislabelled. */}
             <span className="text-xs text-muted-foreground tabular-nums">
-              {leftAmount.toLocaleString()} votes
+              <span className="font-bold text-foreground">${leftAmount.toLocaleString()}</span> backed
             </span>
           </div>
 
@@ -300,7 +302,7 @@ export default function BattleArena({
               {Math.round(rightPercentage)}%
             </span>
             <span className="text-xs text-muted-foreground tabular-nums">
-              {rightAmount.toLocaleString()} votes
+              <span className="font-bold text-foreground">${rightAmount.toLocaleString()}</span> backed
             </span>
           </div>
         </div>
