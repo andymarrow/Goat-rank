@@ -1,7 +1,36 @@
+import type { Metadata } from "next";
 import GlobalRoomClient from "./_components/GlobalRoomClient";
 import { getGlobalRoomData } from "@/actions/getGlobalRoom";
+import { getOgArena, money } from "@/lib/og";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+
+/** Unfurl copy: the title is the question, the description is who leads. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const arena = await getOgArena(slug);
+
+  if (!arena) return { title: "Arena not found" };
+
+  const ranked = [...arena.contenders].sort((a, b) => b.amount - a.amount);
+  const leader = ranked[0];
+
+  const title = arena.title;
+  const description = leader
+    ? `${leader.name} leads with ${money(leader.amount)} of a ${money(arena.totalPool)} pool, across ${ranked.length} contenders. Back yours — 30% goes to charity.`
+    : `${money(arena.totalPool)} in the pool. Back your pick — 30% goes to charity.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function GlobalRoomPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;

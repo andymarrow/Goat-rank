@@ -1,7 +1,44 @@
+import type { Metadata } from "next";
 import BattleClient from "./_components/BattleClient";
 import { getBattleData } from "@/actions/getBattle";
+import { getOgArena, money } from "@/lib/og";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+
+/**
+ * Unfurl copy for the card.
+ *
+ * A shared arena used to preview as the site name and tagline, identical for
+ * every link — which on X reads as spam. The title is the matchup and the
+ * description is the current standing, so the preview carries the argument.
+ * The image comes from opengraph-image.tsx alongside this file.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const arena = await getOgArena(slug);
+
+  if (!arena) return { title: "Arena not found" };
+
+  const [left, right] = arena.contenders;
+  const total = (left?.amount ?? 0) + (right?.amount ?? 0);
+  const leftPct = total > 0 ? Math.round(((left?.amount ?? 0) / total) * 100) : 50;
+
+  const title = arena.title;
+  const description = left && right
+    ? `${left.name} ${leftPct}% vs ${right.name} ${100 - leftPct}% · ${money(arena.totalPool)} in the pool. Back your pick — 30% goes to charity.`
+    : `${money(arena.totalPool)} in the pool. Back your pick — 30% goes to charity.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function BattlePage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;

@@ -14,9 +14,32 @@ const inter = Inter({
   display: "swap",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://goatrank.lol";
+const DESCRIPTION =
+  "Back your pick with real money. 60% to the pot, 30% to charity, 10% to the host — the leaderboard everyone argues about, settled in public.";
+
 export const metadata: Metadata = {
-  title: "GOAT Rank | Settle the Debate",
-  description: "Crowdfunded leaderboards and 1v1 battles. Settle the debate for charity.",
+  // Required for the social card URLs below to resolve to absolute links;
+  // without it every unfurl points at localhost.
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "GOAT Rank | Settle the Debate",
+    template: "%s | GOAT Rank",
+  },
+  description: DESCRIPTION,
+  applicationName: "GOAT Rank",
+  openGraph: {
+    type: "website",
+    siteName: "GOAT Rank",
+    title: "GOAT Rank | Settle the Debate",
+    description: DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GOAT Rank | Settle the Debate",
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
