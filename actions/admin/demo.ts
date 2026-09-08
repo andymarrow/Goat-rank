@@ -6,6 +6,7 @@ import { requireAdmin, adminError, type AdminResult } from "@/utils/supabase/adm
 import { generatedAvatar } from "@/lib/avatar";
 import { colorForIndex } from "@/lib/palette";
 import { STARTER_ARENAS } from "@/lib/starterArenas";
+import { VIRAL_ARENAS } from "@/lib/viralArenas";
 
 /**
  * Demo arenas and bot accounts.
@@ -127,27 +128,55 @@ export async function createDemoRoom(
     if (roomError || !room) throw roomError ?? new Error("Demo room insert returned nothing");
 
     // Contenders, also flagged demo so they can be told apart in the roster.
-    const { data: entities, error: entityError } = await supabase
-      .from("entities")
-      .insert(
-        contenders.map((c, i) => ({
-          name: c.name.trim().slice(0, 80),
-          category: category.slice(0, 60),
-          brand_color: c.color ?? colorForIndex(i),
-          image_url: c.image ?? null,
-          moderation_status: "approved" as const,
-          is_demo: true,
-        }))
-      )
-      .select("id");
+    //
+    // Reused by name where one already exists: entities are global, so a name
+    // that appears in two arenas — "Claude Code" in both the head-to-head and
+    // the agent leaderboard — has to be one profile with one lifetime total,
+    // not two rows splitting the same reputation.
+    const names = contenders.map((c) => c.name.trim().slice(0, 80));
 
-    if (entityError || !entities?.length) throw entityError ?? new Error("No demo entities");
+    const { data: existingEntities } = await supabase
+      .from("entities")
+      .select("id, name")
+      .in("name", names);
+
+    const byName = new Map(
+      (existingEntities ?? []).map((e) => [e.name.toLowerCase(), e.id as string])
+    );
+
+    const fresh = contenders
+      .map((c, i) => ({ c, i }))
+      .filter(({ c }) => !byName.has(c.name.trim().toLowerCase()));
+
+    if (fresh.length > 0) {
+      const { data: created, error: entityError } = await supabase
+        .from("entities")
+        .insert(
+          fresh.map(({ c, i }) => ({
+            name: c.name.trim().slice(0, 80),
+            category: category.slice(0, 60),
+            brand_color: c.color ?? colorForIndex(i),
+            image_url: c.image ?? null,
+            moderation_status: "approved" as const,
+            is_demo: true,
+          }))
+        )
+        .select("id, name");
+
+      if (entityError || !created?.length) throw entityError ?? new Error("No demo entities");
+
+      for (const e of created) byName.set(e.name.toLowerCase(), e.id);
+    }
+
+    const entityIds = names
+      .map((n) => byName.get(n.toLowerCase()))
+      .filter((id): id is string => Boolean(id));
+
+    if (entityIds.length === 0) throw new Error("No demo entities");
 
     const { data: links, error: linkError } = await supabase
       .from("room_contenders")
-      .insert(
-        entities.map((e, i) => ({ room_id: room.id, entity_id: e.id, seed_index: i }))
-      )
+      .insert(entityIds.map((id, i) => ({ room_id: room.id, entity_id: id, seed_index: i })))
       .select("id");
 
     if (linkError) throw linkError;
@@ -487,16 +516,54 @@ export async function purgeDemoContent(): Promise<
   }
 }
 
+/** Add any catalogue category the registry is missing, in catalogue order. */
+async function registerCategories(arenas: { category: string }[]): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { data: known } = await supabase.from("categories").select("slug, sort_order");
+  const bySlug = new Set((known ?? []).map((c) => c.slug));
+  let order = Math.max(0, ...(known ?? []).map((c) => Number(c.sort_order) || 0));
+
+  const slugify = (label: string) =>
+    label.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+
+  const rows = [];
+  for (const label of new Set(arenas.map((a) => a.category))) {
+    const slug = slugify(label);
+    if (!slug || bySlug.has(slug)) continue;
+
+    bySlug.add(slug);
+    order += 10;
+    rows.push({ slug, label, sort_order: order, is_active: true });
+  }
+
+  if (rows.length === 0) return;
+
+  const { error } = await supabase.from("categories").insert(rows);
+  // A missing category is cosmetic — never fail the seed over it.
+  if (error) console.error("registerCategories failed:", error);
+}
+
+/** Which catalogue to seed — evergreen, the X launch set, or both. */
+export type CatalogueKey = "classic" | "viral" | "all";
+
+const CATALOGUES = {
+  classic: STARTER_ARENAS,
+  viral: VIRAL_ARENAS,
+  all: [...STARTER_ARENAS, ...VIRAL_ARENAS],
+};
+
 /**
- * Seed the starter catalogue in one action.
+ * Seed a catalogue of arenas in one action.
  *
  * The original fixtures rendered straight from a constants file, so deleting
  * that file left the feed empty. This creates each of them as a real demo
- * room instead. Skips any title already seeded, so it is safe to re-run.
+ * room instead. Skips any title already seeded, so it is safe to re-run and
+ * safe to run one catalogue after the other.
  */
-export async function seedStarterArenas(): Promise<
-  AdminResult<{ created: number; skipped: number }>
-> {
+export async function seedStarterArenas(
+  catalogue: CatalogueKey = "classic"
+): Promise<AdminResult<{ created: number; skipped: number }>> {
   try {
     await requireAdmin();
     const supabase = createAdminClient();
@@ -508,10 +575,17 @@ export async function seedStarterArenas(): Promise<
 
     const seen = new Set((existing ?? []).map((r) => r.title.toLowerCase()));
 
+    // rooms.category is free text, so a new catalogue can introduce one the
+    // registry has never heard of — Politics, Culture. The homepage builds its
+    // filter from live rooms and would show them either way, but the admin
+    // dropdowns read this table, so register them here rather than leaving the
+    // console unable to name a category it just seeded.
+    await registerCategories(CATALOGUES[catalogue] ?? STARTER_ARENAS);
+
     let created = 0;
     let skipped = 0;
 
-    for (const arena of STARTER_ARENAS) {
+    for (const arena of CATALOGUES[catalogue] ?? STARTER_ARENAS) {
       if (seen.has(arena.title.toLowerCase())) {
         skipped++;
         continue;

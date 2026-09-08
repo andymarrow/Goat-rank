@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bot, Plus, Trash2, MessageSquarePlus, ExternalLink, Pin, Info, Save, Eraser, Sparkles } from "lucide-react";
+import {
+  Bot, Plus, Trash2, MessageSquarePlus, ExternalLink, Pin, Info, Save, Eraser, Sparkles, Flame,
+} from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 
 import type { DemoRoomRow, BotRow } from "@/actions/admin/demo";
@@ -49,6 +51,9 @@ export default function DemoPanel({
 
   const countOk = roomType === "1v1" ? lineup.length === 2 : lineup.length >= 2;
 
+  const note = (d: { created: number; skipped: number }) =>
+    `${d.created} arena(s) created` + (d.skipped ? `, ${d.skipped} already existed` : "");
+
   return (
     <div className="flex flex-col gap-6">
       <p className="flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground font-sans">
@@ -69,34 +74,59 @@ export default function DemoPanel({
         </span>
       </p>
 
-      {/* One-click catalogue. The original fixtures rendered from a constants
+      {/* One-click catalogues. The original fixtures rendered from a constants
           file; deleting it left the feed empty until these exist as rows. */}
       <Panel
-        title="Starter arenas"
-        subtitle="Seed the full catalogue at once — Ronaldo vs Messi, GOAT footballer, sci-fi franchises and the rest."
-        action={
-          <ActionButton
-            variant="primary"
-            onRun={async () => {
-              const res = await seedStarterArenas();
-              if (res.ok) {
-                setSeedNote(
-                  `${res.data.created} arena(s) created` +
-                    (res.data.skipped ? `, ${res.data.skipped} already existed` : "")
-                );
-              }
-              return res.ok ? { ok: true } : res;
-            }}
-          >
-            <Sparkles className="w-3 h-3" /> Seed starter arenas
-          </ActionButton>
-        }
+        title="Seed arenas"
+        subtitle="Two catalogues: evergreen contests, and the set built to start arguments on X."
       >
-        <p className="text-[11px] leading-relaxed text-muted-foreground font-sans">
-          Creates eleven demo arenas with contenders, artwork and bot battle cries. Safe to run
-          twice — anything already seeded is skipped. Pools fill from the bot cries at believable
-          amounts rather than the invented five-figure sums the old fixtures displayed.
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="flex flex-col gap-2 p-3 rounded-xl border border-border/60 bg-muted/20">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              Evergreen
+            </span>
+            <p className="text-[11px] leading-relaxed text-muted-foreground font-sans flex-1">
+              Ronaldo vs Messi, GOAT footballer, sci-fi franchises and the rest — eleven arenas
+              with contenders, artwork and bot cries.
+            </p>
+            <ActionButton
+              onRun={async () => {
+                const res = await seedStarterArenas("classic");
+                if (res.ok) setSeedNote(note(res.data));
+                return res.ok ? { ok: true } : res;
+              }}
+            >
+              <Sparkles className="w-3 h-3" /> Seed evergreen
+            </ActionButton>
+          </div>
+
+          <div className="flex flex-col gap-2 p-3 rounded-xl border border-primary/40 bg-primary/5">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-primary">
+              X launch set
+            </span>
+            <p className="text-[11px] leading-relaxed text-muted-foreground font-sans flex-1">
+              Nineteen arenas people already argue about: Claude Code vs Codex, best coding agent,
+              Trump vs Obama, left vs right, Rust vs Go, tabs vs spaces. No artwork — add portraits
+              from Roster before you post them.
+            </p>
+            <ActionButton
+              variant="primary"
+              onRun={async () => {
+                const res = await seedStarterArenas("viral");
+                if (res.ok) setSeedNote(note(res.data));
+                return res.ok ? { ok: true } : res;
+              }}
+            >
+              <Flame className="w-3 h-3" /> Seed X launch set
+            </ActionButton>
+          </div>
+        </div>
+
+        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground font-sans">
+          Safe to run twice — anything already seeded is skipped. Pools fill from the bot cries at
+          believable amounts rather than the invented five-figure sums the old fixtures displayed.
         </p>
+
         {seedNote && (
           <p role="status" className="mt-2 text-[11px] text-emerald-500 font-sans">
             {seedNote}
