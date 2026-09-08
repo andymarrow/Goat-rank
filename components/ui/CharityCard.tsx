@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ExternalLink, HeartHandshake } from "lucide-react";
+import { externalUrl } from "@/lib/url";
 
 export type Beneficiary = {
   id: string | null;
@@ -29,6 +30,10 @@ export default function CharityCard({
 }) {
   const [failed, setFailed] = useState(false);
   const showLogo = charity.logo_url && !failed;
+
+  // Registered addresses are often typed bare, which an href reads as a
+  // relative path.
+  const site = externalUrl(charity.website_url);
 
   return (
     <div
@@ -69,9 +74,9 @@ export default function CharityCard({
         )}
       </div>
 
-      {charity.website_url && (
+      {site && (
         <a
-          href={charity.website_url}
+          href={site}
           target="_blank"
           rel="noopener noreferrer"
           className="shrink-0 inline-flex items-center gap-1.5 rounded-xl border border-border/60

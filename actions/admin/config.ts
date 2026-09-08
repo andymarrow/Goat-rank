@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { requireAdmin, adminError, type AdminResult } from "@/utils/supabase/admin-auth";
+import { externalUrl } from "@/lib/url";
 
 export type Category = {
   id: string;
@@ -143,7 +144,8 @@ export async function upsertCharity(input: {
     const row = {
       name: name.slice(0, 120),
       logo_url: input.logoUrl?.trim() || null,
-      website_url: input.websiteUrl?.trim() || null,
+      // Stored with a scheme: a bare host in an href is a relative path.
+      website_url: externalUrl(input.websiteUrl),
       payout_reference: input.payoutReference?.trim().slice(0, 200) || null,
       description: input.description?.trim().slice(0, 500) || null,
       is_active: input.isActive ?? true,

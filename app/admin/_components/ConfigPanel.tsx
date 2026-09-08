@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2, Megaphone, XCircle, Save, ExternalLink, Pencil, HeartHandshake } from "lucide-react";
 import Image from "next/image";
 import ImageUpload from "./ImageUpload";
+import { externalUrl } from "@/lib/url";
 
 import type { Category, Charity, SiteBanner } from "@/actions/admin/config";
 import {
@@ -325,9 +326,9 @@ export default function ConfigPanel({
 
                     {!c.is_active && <Badge tone="bad">Inactive</Badge>}
 
-                    {c.website_url && (
+                    {externalUrl(c.website_url) && (
                       <a
-                        href={c.website_url}
+                        href={externalUrl(c.website_url)!}
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Open ${c.name}`}
