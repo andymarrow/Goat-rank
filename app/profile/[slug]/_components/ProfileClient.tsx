@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Flame, Trophy, HeartHandshake, Swords, MessageSquare, Zap } from "lucide-react";
 import UpvoteButton from "@/components/ui/UpvoteButton";
+import Avatar from "@/components/ui/Avatar";
+import { DemoDot } from "@/components/ui/DemoBadge";
 
 export default function ProfileClient({ initialProfileData }: { initialProfileData: any }) {
   const profileData = initialProfileData;
@@ -135,11 +137,28 @@ export default function ProfileClient({ initialProfileData }: { initialProfileDa
 
                 <div className="flex justify-between items-start z-10">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-muted border border-border/80 overflow-hidden flex items-center justify-center">
-                      <Image src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${t.user}`} alt={t.user} width={36} height={36} />
-                    </div>
+                    {/* Avatar, not a regenerated DiceBear SVG: next/image
+                        refuses to optimise SVG, so every face on this wall
+                        rendered as alt text. Avatar rewrites DiceBear to PNG
+                        and falls back to an initial when a URL is dead. */}
+                    <Avatar src={t.avatar} name={t.user} size={36} className="!rounded-full" />
+
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-foreground">{t.user}</span>
+                      <span className="flex items-center gap-1.5">
+                        {/* Seeded bot backing carries the same disclosure as
+                            the arena feed. */}
+                        {t.isDemo && <DemoDot />}
+                        {t.voterId ? (
+                          <Link
+                            href={`/u/${t.voterId}`}
+                            className="text-sm font-bold text-foreground hover:text-primary transition-colors"
+                          >
+                            {t.user}
+                          </Link>
+                        ) : (
+                          <span className="text-sm font-bold text-foreground">{t.user}</span>
+                        )}
+                      </span>
                       <span className="text-[11px] text-muted-foreground font-semibold">{t.date}</span>
                     </div>
                   </div>

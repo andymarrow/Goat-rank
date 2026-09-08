@@ -34,6 +34,8 @@ export async function getEntityProfileData(entityId: string) {
       id,
       voter_name,
       voter_avatar,
+      voter_id,
+      is_demo,
       amount,
       message,
       upvote_count,
@@ -66,6 +68,11 @@ export async function getEntityProfileData(entityId: string) {
     testimonials: (votes || []).map((v: any) => ({
       id: v.id,
       user: v.voter_name,
+      // The backer's stored avatar. The wall used to regenerate one from the
+      // name, which meant it showed a different face than the arena feed.
+      avatar: v.voter_avatar ?? null,
+      voterId: v.voter_id ?? null,
+      isDemo: Boolean(v.is_demo),
       amount: v.amount,
       text: v.message,
       upvotes: v.upvote_count,
