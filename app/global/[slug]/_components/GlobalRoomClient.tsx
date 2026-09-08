@@ -377,8 +377,14 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                     key={contender.id}
                     className="relative rounded-2xl bg-card border border-border/80 p-3.5 sm:p-4 shadow-sm flex flex-col justify-between gap-3 hover:border-border hover:bg-white/[0.02] transition-all duration-200 ease-out group"
                   >
-                    {/* Top Contender Poster Box */}
-                    <div className="relative w-full h-[150px] sm:h-[160px] rounded-xl overflow-hidden bg-muted/60 border border-border/50 shrink-0">
+                    {/* Top Contender Poster Box. A link, as the 1v1 stage
+                        already is — a contender's profile was unreachable
+                        from the arena that names them. */}
+                    <Link
+                      href={`/profile/${contender.id}`}
+                      aria-label={`View ${contender.name}'s profile`}
+                      className="relative w-full h-[150px] sm:h-[160px] rounded-xl overflow-hidden bg-muted/60 border border-border/50 shrink-0 block cursor-pointer"
+                    >
                       {contender.img ? (
                         <Image
                           src={contender.img}
@@ -397,13 +403,16 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                       )}
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80" />
-                    </div>
+                    </Link>
 
                     {/* Contender Details & Progress */}
                     <div className="flex flex-col gap-2">
-                      <h3 className="font-semibold text-foreground text-sm line-clamp-1 tracking-tight group-hover:text-primary transition-colors">
+                      <Link
+                        href={`/profile/${contender.id}`}
+                        className="font-semibold text-foreground text-sm line-clamp-1 tracking-tight hover:text-primary transition-colors cursor-pointer"
+                      >
                         {contender.name}
-                      </h3>
+                      </Link>
 
                       <div className="flex items-center justify-between text-xs font-medium">
                         {/* Dollars, not a vote count — the figure was already

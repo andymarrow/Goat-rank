@@ -126,8 +126,14 @@ export async function POST(req: Request) {
       if (error.code === UNIQUE_VIOLATION) {
         return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
       }
+      // The reason travels back in the body. Only Lemon Squeezy sees this,
+      // and its delivery log is the one place you can read it when a paid
+      // order fails to record — "DB Error" alone left nothing to act on.
       console.error("Vote Insert Error:", error);
-      return NextResponse.json({ error: "DB Error" }, { status: 500 });
+      return NextResponse.json(
+        { error: "DB Error", reason: error.message, code: error.code },
+        { status: 500 }
+      );
     }
 
     // Receipt. Deliberately not awaited into the response contract: a Resend
@@ -180,7 +186,10 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error("Room Activation Error:", error);
-      return NextResponse.json({ error: "DB Error" }, { status: 500 });
+      return NextResponse.json(
+        { error: "DB Error", reason: error.message, code: error.code },
+        { status: 500 }
+      );
     }
 
     // A $10 pass buys 5 deployments. This one consumed the first, so grant
@@ -248,7 +257,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
       }
       console.error("Contender Link Error:", error);
-      return NextResponse.json({ error: "DB Error" }, { status: 500 });
+      return NextResponse.json(
+        { error: "DB Error", reason: error.message, code: error.code },
+        { status: 500 }
+      );
     }
 
     // $5 buys 5 injections; this one used the first, so bank the other 4.

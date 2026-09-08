@@ -77,9 +77,10 @@ export default function BattleArena({
         </div>
 
         {/* Split Contenders Matchup Stage */}
-        {/* Each half is washed in its contender's brand colour, so the stage
-            reads as a matchup rather than the flat grey slab it was. */}
-        <div className="relative w-full h-[300px] xs:h-[360px] sm:h-[420px] md:h-[480px] rounded-2xl overflow-hidden border border-border/50 flex flex-row items-stretch justify-between gap-1 p-1.5 sm:p-2 bg-neutral-950">
+        {/* Each half is washed in its contender's own colour. No black slab
+            behind it: the artwork is the point, and a dark ground plus dark
+            scrims was reading as a filter over someone's upload. */}
+        <div className="relative w-full h-[260px] xs:h-[300px] sm:h-[360px] md:h-[420px] rounded-2xl overflow-hidden border border-border/50 flex flex-row items-stretch justify-between gap-1 p-1.5 sm:p-2 bg-muted/30">
           
           {/* Glowing Center Vertical Line */}
           <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gradient-to-b from-transparent via-amber-500/40 to-transparent z-10 pointer-events-none" />
@@ -100,8 +101,8 @@ export default function BattleArena({
           >
             {isLeftWinning && (
               <span
-                className="absolute inset-0 pointer-events-none"
-                style={{ boxShadow: `inset 0 0 60px ${leftContender.color ?? "#FF7A00"}55` }}
+                className="absolute inset-0 rounded-xl pointer-events-none"
+                style={{ boxShadow: `inset 0 0 0 2px ${leftContender.color ?? "#FF7A00"}` }}
               />
             )}
             {leftContender.image && !leftFailed ? (
@@ -112,7 +113,7 @@ export default function BattleArena({
                 priority
                 sizes="(max-width: 1024px) 50vw, 25vw"
                 onError={() => setLeftFailed(true)}
-                className="object-cover object-center group-hover/left:scale-105 transition-transform duration-500"
+                className="object-contain object-center group-hover/left:scale-[1.03] transition-transform duration-500"
               />
             ) : (
               <div
@@ -122,11 +123,10 @@ export default function BattleArena({
                 {leftContender.name.charAt(0)}
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
-            {/* The names sit at the top, where the bottom-up gradient has
-                faded out. Without this they were dark-on-dark in light mode,
-                since text-foreground follows the theme and a photo does not. */}
-            <div className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-black/75 to-transparent pointer-events-none" />
+            {/* A short scrim behind the name only. The full-height gradients
+                that used to sit here dimmed the whole picture, which read as
+                the upload having lost quality. */}
+            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
             {/* Left Contender Name & Subtitle Overlay */}
             <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-10 flex flex-col min-w-0">
@@ -171,8 +171,8 @@ export default function BattleArena({
           >
             {isRightWinning && (
               <span
-                className="absolute inset-0 pointer-events-none"
-                style={{ boxShadow: `inset 0 0 60px ${rightContender.color ?? "#3B82F6"}55` }}
+                className="absolute inset-0 rounded-xl pointer-events-none"
+                style={{ boxShadow: `inset 0 0 0 2px ${rightContender.color ?? "#3B82F6"}` }}
               />
             )}
             {rightContender.image && !rightFailed ? (
@@ -183,7 +183,7 @@ export default function BattleArena({
                 priority
                 sizes="(max-width: 1024px) 50vw, 25vw"
                 onError={() => setRightFailed(true)}
-                className="object-cover object-center group-hover/right:scale-105 transition-transform duration-500"
+                className="object-contain object-center group-hover/right:scale-[1.03] transition-transform duration-500"
               />
             ) : (
               <div
@@ -193,11 +193,10 @@ export default function BattleArena({
                 {rightContender.name.charAt(0)}
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
-            {/* The names sit at the top, where the bottom-up gradient has
-                faded out. Without this they were dark-on-dark in light mode,
-                since text-foreground follows the theme and a photo does not. */}
-            <div className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-black/75 to-transparent pointer-events-none" />
+            {/* A short scrim behind the name only. The full-height gradients
+                that used to sit here dimmed the whole picture, which read as
+                the upload having lost quality. */}
+            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
             {/* Right Contender Name & Subtitle Overlay */}
             <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-10 flex flex-col items-end text-right min-w-0">
