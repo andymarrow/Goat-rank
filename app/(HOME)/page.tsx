@@ -3,6 +3,8 @@ import HeroCarousel from "./_components/HeroCarousel";
 import GlobalLeaderboardsRow from "./_components/GlobalLeaderboardsRow";
 import FaceOffsRow from "./_components/FaceOffsRow";
 import ArenaFilters from "./_components/ArenaFilters";
+import SearchLauncher from "@/components/ui/SearchLauncher";
+import LivePresence from "@/components/ui/LivePresence";
 import { getActive1v1Rooms, getLiveCategories } from "@/actions/getRooms";
 import { getFeaturedRooms, getGlobalRooms } from "@/actions/getLanding";
 import { isRoomSort } from "@/lib/constants";
@@ -35,6 +37,15 @@ export default async function HomePage({
           <HeroCarousel rooms={featured} />
         </section>
       )}
+
+      {/* One box for the whole site. Someone arriving from a post knows a
+          name, not which table it lives in. */}
+      <section className="w-full pt-2 flex flex-col gap-2">
+        <SearchLauncher categories={categories} />
+        <div className="flex justify-end px-1">
+          <LivePresence scope="site" showVisitors />
+        </div>
+      </section>
 
       <section className="w-full pt-2">
         {/* useSearchParams needs a Suspense boundary during streaming. */}

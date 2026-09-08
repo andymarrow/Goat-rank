@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Countdown from "@/components/ui/Countdown";
+import LivePresence from "@/components/ui/LivePresence";
 
 export default function BattleArena({
   battle,
@@ -54,6 +55,10 @@ export default function BattleArena({
             BATTLE STARTS IN
           </span>
           <Countdown target={battle.expiresAt} size="auto" />
+
+          {/* How many people are in this arena right now. A room with an
+              audience is a room where the standing is about to move. */}
+          <LivePresence scope={battle.id} label="watching" className="mt-1" />
         </div>
       </div>
 

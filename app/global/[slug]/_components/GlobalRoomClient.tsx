@@ -28,6 +28,7 @@ import FeedList from "@/components/ui/FeedList";
 import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 import CharityVote from "@/components/ui/CharityVote";
 import CharityCard from "@/components/ui/CharityCard";
+import LivePresence from "@/components/ui/LivePresence";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import Countdown from "@/components/ui/Countdown";
 
@@ -216,6 +217,10 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
               <UserPlus className="w-4 h-4" />
               <span>Add Contender</span>
             </button>
+
+            <div className="flex justify-center pt-1">
+              <LivePresence scope={roomData.id} label="watching" />
+            </div>
           </div>
 
           {/* Who the 30% reaches, with their logo and a link out. */}
