@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+import { absolute } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Host an arena",
+  description:
+    "Start a debate people pay to settle. A $10 creator pass covers five arenas, and you earn 10% of every pledge made in them while 30% goes to charity.",
+  alternates: { canonical: absolute("/create") },
+};
+
 import CreateClient from "./_components/CreateClient";
 import { getCategoryLabels } from "@/actions/getCategories";
 

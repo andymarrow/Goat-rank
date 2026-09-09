@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Swords, TrendingUp, Trophy, ArrowUpRight, Ban, Zap, MessageSquare } from "lucide-react";
@@ -6,6 +7,47 @@ import { getUserProfile } from "@/actions/getUserProfile";
 import { formatSince } from "@/lib/time";
 import { DemoDot } from "@/components/ui/DemoBadge";
 import Avatar from "@/components/ui/Avatar";
+import { absolute, breadcrumbSchema, jsonLd } from "@/lib/seo";
+
+/**
+ * A person's page ranks for their display name, and states in its description
+ * what they have actually done here, since "user profile" ranks for nothing.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const profile = await getUserProfile(id);
+
+  if (!profile) return { title: "Profile not found", robots: { index: false } };
+
+  const hosted = profile.arenasCreated > 0;
+
+  const description = hosted
+    ? `${profile.username} has hosted ${profile.arenasCreated} arena${
+        profile.arenasCreated === 1 ? "" : "s"
+      } on GOAT Rank, raising ${money(profile.poolRaised)} in pledges.`
+    : `${profile.username} has backed ${profile.arenasBacked} arena${
+        profile.arenasBacked === 1 ? "" : "s"
+      } on GOAT Rank with ${money(profile.totalPledged)} in pledges.`;
+
+  return {
+    title: profile.username,
+    description,
+    alternates: { canonical: absolute(`/u/${id}`) },
+    openGraph: {
+      title: `${profile.username} on GOAT Rank`,
+      description,
+      type: "profile",
+      url: absolute(`/u/${id}`),
+    },
+    // A seeded account is real content but not a page worth ranking, and
+    // indexing personas would put invented people into search results.
+    ...(profile.isBot ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 export const dynamic = "force-dynamic";
 

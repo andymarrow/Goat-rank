@@ -6,6 +6,9 @@ import LayoutChrome from "@/components/LayoutChrome";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import {
+  SITE_URL, SITE_NAME, TAGLINE, DESCRIPTION, jsonLd, organizationSchema, websiteSchema,
+} from "@/lib/seo";
 
 
 const inter = Inter({
@@ -14,31 +17,54 @@ const inter = Inter({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://goatrank.lol";
-const DESCRIPTION =
-  "Back your pick with real money. 60% to the pot, 30% to charity, 10% to the host. The leaderboard everyone argues about, settled in public.";
-
 export const metadata: Metadata = {
-  // Required for the social card URLs below to resolve to absolute links;
-  // without it every unfurl points at localhost.
+  // Required for canonical and social URLs to resolve absolutely; without it
+  // every unfurl points at localhost. SITE_URL is the www host, because the
+  // apex 308-redirects to it and a canonical must not point at a redirect.
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "GOAT Rank | Settle the Debate",
-    template: "%s | GOAT Rank",
+    default: `${SITE_NAME}: ${TAGLINE}`,
+    template: `%s | ${SITE_NAME}`,
   },
   description: DESCRIPTION,
-  applicationName: "GOAT Rank",
+  applicationName: SITE_NAME,
+  // Terms people actually type. Not a ranking factor at Google any more, but
+  // still read by several smaller engines and by scrapers that feed answer
+  // engines.
+  keywords: [
+    "settle the debate",
+    "greatest of all time",
+    "GOAT debate",
+    "crowdfunded leaderboard",
+    "charity leaderboard",
+    "vote with money",
+    "1v1 debate",
+    "who is the GOAT",
+  ],
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    siteName: "GOAT Rank",
-    title: "GOAT Rank | Settle the Debate",
+    siteName: SITE_NAME,
+    title: `${SITE_NAME}: ${TAGLINE}`,
     description: DESCRIPTION,
     url: SITE_URL,
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "GOAT Rank | Settle the Debate",
+    title: `${SITE_NAME}: ${TAGLINE}`,
     description: DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 
@@ -60,6 +86,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} font-sans`}>
       <body suppressHydrationWarning className={`${inter.variable} antialiased relative min-h-screen flex flex-col transition-colors duration-500 font-sans`}>
+        {/* One connected graph for the whole site. Page-level nodes reference
+            these by @id rather than restating the publisher on every route. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd(organizationSchema(), websiteSchema())),
+          }}
+        />
+
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

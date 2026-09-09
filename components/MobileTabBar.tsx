@@ -104,6 +104,12 @@ export default function MobileTabBar() {
             {/* The footer is desktop-only, so its links live here. */}
             <div className="pt-2 mt-1 border-t border-border flex flex-col gap-2">
               <SheetLink
+                href="/faq"
+                icon={<HeartHandshake className="w-4 h-4" />}
+                label="How it works"
+              />
+
+              <SheetLink
                 href="/requests"
                 icon={<Inbox className="w-4 h-4" />}
                 label="Requests & charity ideas"

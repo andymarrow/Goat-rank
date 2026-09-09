@@ -107,9 +107,11 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
               </div>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-snug">
+            {/* h2, not h1: this text changes with the slide, so it cannot be
+                the page's heading. The homepage h1 names the site. */}
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-snug">
               {current.title}
-            </h1>
+            </h2>
           </div>
 
           <div className="flex flex-col gap-5">

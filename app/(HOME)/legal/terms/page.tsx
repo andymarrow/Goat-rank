@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
+import { absolute } from "@/lib/seo";
 import LegalLayout, { H2 } from "../_components/LegalLayout";
 
-export const metadata = { title: "Terms | GOAT Rank" };
+export const metadata: Metadata = {
+  title: "Terms of use",
+  description:
+    "The rules for backing a contender, hosting an arena and being paid out on GOAT Rank.",
+  alternates: { canonical: absolute("/legal/terms") },
+};
 
 export default function TermsPage() {
   return (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BattleClient from "./_components/BattleClient";
 import { getBattleData } from "@/actions/getBattle";
 import { getOgArena, money } from "@/lib/og";
+import { absolute, arenaSchema, breadcrumbSchema, jsonLd } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -35,7 +36,8 @@ export async function generateMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, type: "website" },
+    alternates: { canonical: absolute(`/battle/${slug}`) },
+    openGraph: { title, description, type: "website", url: absolute(`/battle/${slug}`) },
     twitter: { card: "summary_large_image", title, description },
   };
 }
@@ -58,8 +60,37 @@ export default async function BattlePage({ params }: { params: Promise<{ slug: s
     );
   }
 
+  // An arena is a contest with a deadline, which is the fact worth surfacing
+  // while it is still live. Event is the only schema.org type that carries it.
+  const schema = jsonLd(
+    arenaSchema({
+      id: battleData.id,
+      title: battleData.title,
+      description: `${battleData.contenders?.[0]?.name ?? "Contender"} against ${
+        battleData.contenders?.[1]?.name ?? "contender"
+      } on GOAT Rank. Back a side with a real pledge: 30% of every pledge goes to charity.`,
+      roomType: "1v1",
+      category: battleData.category,
+      expiresAt: battleData.expiresAt,
+      totalPool: Number(battleData.totalPool) || 0,
+      contenders: (battleData.contenders ?? []).map((c: { name: string; image: string | null }) => ({
+        name: c.name,
+        image: c.image,
+      })),
+    }),
+    breadcrumbSchema([
+      { name: "GOAT Rank", path: "/" },
+      { name: battleData.title, path: `/battle/${resolvedParams.slug}` },
+    ])
+  );
+
   return (
     <div className="w-full min-h-[calc(100dvh-64px)] bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+
       {/* Pass the real data into our client component */}
       <BattleClient initialBattleData={battleData} />
     </div>

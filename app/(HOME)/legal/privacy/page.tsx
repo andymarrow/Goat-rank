@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
+import { absolute } from "@/lib/seo";
 import LegalLayout, { H2 } from "../_components/LegalLayout";
 
-export const metadata = { title: "Privacy | GOAT Rank" };
+export const metadata: Metadata = {
+  title: "Privacy",
+  description:
+    "What GOAT Rank stores, what stays private, what is public on your profile, and the processors involved.",
+  alternates: { canonical: absolute("/legal/privacy") },
+};
 
 export default function PrivacyPage() {
   return (

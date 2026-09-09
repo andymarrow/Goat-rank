@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Trophy, ImageOff } from "lucide-react";
 import { getRoster } from "@/actions/getRoster";
+import { absolute, breadcrumbSchema, jsonLd, leaderboardSchema } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "The roster: every contender in a live contest",
+  description:
+    "Every contender currently in a GOAT Rank arena, ranked by how much has been pledged behind them all-time. Back one, and 30% of your pledge goes to charity.",
+  alternates: { canonical: absolute("/profile") },
+};
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +29,25 @@ const money = (n: number) =>
 export default async function RosterPage() {
   const roster = await getRoster();
 
+  const schema = jsonLd(
+    leaderboardSchema(
+      "/profile",
+      "GOAT Rank contender roster",
+      roster.map((e) => ({ name: e.name, url: `/profile/${e.id}`, image: e.image_url }))
+    ),
+    breadcrumbSchema([
+      { name: "GOAT Rank", path: "/" },
+      { name: "Roster", path: "/profile" },
+    ])
+  );
+
   return (
     <div className="w-full max-w-[1600px] mx-auto md:px-8 py-6 md:py-10 pb-28 font-sans">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+
       <div className="flex items-center gap-2 mb-6">
         <div className="p-2 rounded-xl bg-primary/10 text-primary">
           <Trophy className="w-5 h-5 shrink-0" />

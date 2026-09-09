@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
+import { absolute } from "@/lib/seo";
 import LegalLayout, { H2 } from "../_components/LegalLayout";
 
-export const metadata = { title: "Where the money goes | GOAT Rank" };
+export const metadata: Metadata = {
+  title: "Where the money goes",
+  description:
+    "Every GOAT Rank pledge splits 60% to the arena's pool, 30% to charity and 10% to the host. How fees, tax, payouts and settlement actually work.",
+  alternates: { canonical: absolute("/legal/money") },
+};
 
 /**
  * The split is defined in one place in code (SPLIT in actions/admin/analytics)

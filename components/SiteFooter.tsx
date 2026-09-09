@@ -34,6 +34,8 @@ export default function SiteFooter() {
             <HeartHandshake className="w-3 h-3" /> Where the money goes
           </Link>
           {[
+            { href: "/faq", label: "How it works" },
+            { href: "/requests", label: "Requests" },
             { href: "/legal/privacy", label: "Privacy" },
             { href: "/legal/terms", label: "Terms" },
             { href: "/profile", label: "Roster" },

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import GlobalRoomClient from "./_components/GlobalRoomClient";
 import { getGlobalRoomData } from "@/actions/getGlobalRoom";
 import { getOgArena, money } from "@/lib/og";
+import {
+  absolute, arenaSchema, breadcrumbSchema, jsonLd, leaderboardSchema,
+} from "@/lib/seo";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -27,7 +30,8 @@ export async function generateMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, type: "website" },
+    alternates: { canonical: absolute(`/global/${slug}`) },
+    openGraph: { title, description, type: "website", url: absolute(`/global/${slug}`) },
     twitter: { card: "summary_large_image", title, description },
   };
 }
@@ -48,8 +52,39 @@ export default async function GlobalRoomPage({ params }: { params: Promise<{ slu
     );
   }
 
+  // Both nodes: the contest with its deadline, and the standing itself as an
+  // ordered list, which is the part an answer engine can lift verbatim.
+  const rankings = (roomData.rankings ?? []) as { id: string; name: string; img: string | null }[];
+
+  const schema = jsonLd(
+    arenaSchema({
+      id: roomData.id,
+      title: roomData.title,
+      description: `${roomData.title} on GOAT Rank, ranked by the money behind each contender. Back one with a real pledge: 30% of every pledge goes to charity.`,
+      roomType: "global",
+      category: roomData.category,
+      expiresAt: roomData.expiresAt,
+      totalPool: Number(roomData.totalPool) || 0,
+      contenders: rankings.map((c) => ({ name: c.name, image: c.img })),
+    }),
+    leaderboardSchema(
+      `/global/${resolvedParams.slug}`,
+      roomData.title,
+      rankings.map((c) => ({ name: c.name, url: `/profile/${c.id}`, image: c.img }))
+    ),
+    breadcrumbSchema([
+      { name: "GOAT Rank", path: "/" },
+      { name: roomData.title, path: `/global/${resolvedParams.slug}` },
+    ])
+  );
+
   return (
     <div className="w-full min-h-[calc(100vh-64px)] flex flex-col bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+
       <GlobalRoomClient initialRoomData={roomData} />
     </div>
   );
