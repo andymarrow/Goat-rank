@@ -61,7 +61,7 @@ export default function DemoPanel({
         <span>
           Demo arenas exist so the platform doesn&apos;t look empty. Every bot supporter is marked
           with an orange dot in the feed, and demo pledges are excluded from the treasury, the
-          charity ledger and user counts — so they can never be mistaken for revenue. They are real
+          charity ledger and user counts, so they can never be mistaken for revenue. They are real
           rows, so they have working detail pages and are editable from{" "}
           <Link href="/admin/arenas" className="text-primary hover:underline">
             Arenas
@@ -86,7 +86,7 @@ export default function DemoPanel({
               Evergreen
             </span>
             <p className="text-[11px] leading-relaxed text-muted-foreground font-sans flex-1">
-              Ronaldo vs Messi, GOAT footballer, sci-fi franchises and the rest — eleven arenas
+              Ronaldo vs Messi, GOAT footballer, sci-fi franchises and the rest: eleven arenas
               with contenders, artwork and bot cries.
             </p>
             <ActionButton
@@ -106,7 +106,7 @@ export default function DemoPanel({
             </span>
             <p className="text-[11px] leading-relaxed text-muted-foreground font-sans flex-1">
               Nineteen arenas people already argue about: Claude Code vs Codex, best coding agent,
-              Trump vs Obama, left vs right, Rust vs Go, tabs vs spaces. No artwork — add portraits
+              Trump vs Obama, left vs right, Rust vs Go, tabs vs spaces. No artwork yet, so add portraits
               from Roster before you post them.
             </p>
             <ActionButton
@@ -123,7 +123,7 @@ export default function DemoPanel({
         </div>
 
         <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground font-sans">
-          Safe to run twice — anything already seeded is skipped. Pools fill from the bot cries at
+          Safe to run twice: anything already seeded is skipped. Pools fill from the bot cries at
           believable amounts rather than the invented five-figure sums the old fixtures displayed.
         </p>
 
@@ -200,7 +200,7 @@ export default function DemoPanel({
 
           <div>
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block mb-2">
-              {roomType === "1v1" ? "Contenders — exactly 2" : "Contenders — 2 or more"}
+              {roomType === "1v1" ? "Contenders: exactly 2" : "Contenders: 2 or more"}
             </span>
             <ContenderPicker
               roster={roster}
@@ -270,7 +270,7 @@ export default function DemoPanel({
         action={<Badge tone="hot">{rooms.length} seeded</Badge>}
       >
         {rooms.length === 0 ? (
-          <EmptyState message="No demo arenas — create one above" />
+          <EmptyState message="No demo arenas. Create one above" />
         ) : (
           <ul className="flex flex-col gap-2">
             {rooms.map((r) => (
@@ -347,7 +347,7 @@ export default function DemoPanel({
         }
       >
         {bots.length === 0 ? (
-          <EmptyState message="No bots yet — they are created with your first demo arena" />
+          <EmptyState message="No bots yet. They are created with your first demo arena" />
         ) : (
           <ul className="flex flex-col gap-2">
             {bots.map((b) => {

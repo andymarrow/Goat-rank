@@ -60,7 +60,7 @@ export default function ContenderEditor({
     <div className="flex flex-col gap-3">
       <p className="text-[11px] leading-relaxed text-muted-foreground font-sans">
         Contenders are shared across every arena they appear in, so an edit here updates them
-        platform-wide — including their profile page and lifetime totals.
+        platform-wide, including their profile page and lifetime totals.
       </p>
 
       {rows.map((c) => {
@@ -99,7 +99,7 @@ export default function ContenderEditor({
               <span className="ml-auto shrink-0">
                 {backed > 0 ? (
                   <span
-                    title="This contender has been backed — removing it would orphan those pledges."
+                    title="This contender has been backed, removing it would orphan those pledges."
                     className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground"
                   >
                     Locked

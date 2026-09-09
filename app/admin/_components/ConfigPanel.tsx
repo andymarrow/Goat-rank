@@ -92,7 +92,7 @@ export default function ConfigPanel({
             <input
               value={banner.message}
               onChange={(e) => setBanner({ ...banner, message: e.target.value })}
-              placeholder="🚨 MESSI VS RONALDO CLOSES IN 1 HOUR — VOTE NOW!"
+              placeholder="🚨 MESSI VS RONALDO CLOSES IN 1 HOUR. VOTE NOW!"
               maxLength={300}
               className={inputClass}
             />
@@ -182,7 +182,7 @@ export default function ConfigPanel({
           </div>
 
           {categories.length === 0 ? (
-            <EmptyState message="No categories — add one above" />
+            <EmptyState message="No categories. Add one above" />
           ) : (
             <ul className="flex flex-col gap-1.5">
               {categories.map((c) => (

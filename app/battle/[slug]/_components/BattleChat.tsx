@@ -4,13 +4,17 @@ import { motion } from "framer-motion";
 import { MessageSquare, Heart, Crown } from "lucide-react";
 import FeedList from "@/components/ui/FeedList";
 import CharityVote from "@/components/ui/CharityVote";
+import type { CharityTally } from "@/actions/charityVote";
 
 export default function BattleChat({
   battle,
-  onVoteClick
+  onVoteClick,
+  onLeaderChange,
 }: {
   battle: any;
   onVoteClick?: (index: number) => void;
+  /** Lifted to BattleClient, which owns the charity card above the feed. */
+  onLeaderChange?: (leader: CharityTally | null) => void;
 }) {
   const leftAmount = Number(battle.contenders?.[0]?.amount) || 0;
   const rightAmount = Number(battle.contenders?.[1]?.amount) || 0;
@@ -61,6 +65,7 @@ export default function BattleChat({
             </div>
 
             <CharityVote
+              onLeaderChange={onLeaderChange}
               roomId={battle.id}
               charities={battle.charities ?? []}
               tally={battle.charityTally ?? []}

@@ -16,7 +16,7 @@ const inter = Inter({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://goatrank.lol";
 const DESCRIPTION =
-  "Back your pick with real money. 60% to the pot, 30% to charity, 10% to the host — the leaderboard everyone argues about, settled in public.";
+  "Back your pick with real money. 60% to the pot, 30% to charity, 10% to the host. The leaderboard everyone argues about, settled in public.";
 
 export const metadata: Metadata = {
   // Required for the social card URLs below to resolve to absolute links;

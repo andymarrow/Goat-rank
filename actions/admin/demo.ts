@@ -245,7 +245,7 @@ export async function deleteDemoRoom(roomId: string): Promise<AdminResult> {
 
     if (!room) return { ok: false, error: "Arena not found." };
     if (!room.is_demo) {
-      return { ok: false, error: "That is a live arena — delete it from Arenas instead." };
+      return { ok: false, error: "That is a live arena. Delete it from Arenas instead." };
     }
 
     const { data: links } = await supabase
@@ -652,7 +652,7 @@ export async function assignBotsToArena(input: {
     if (!room.is_demo) {
       return {
         ok: false,
-        error: "Bots can only back demo arenas — a live arena must take real pledges.",
+        error: "Bots can only back demo arenas. A live arena must take real pledges.",
       };
     }
 

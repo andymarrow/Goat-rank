@@ -59,7 +59,7 @@ export default function MobileTabBar() {
 
   return (
     <>
-      {/* Overflow sheet — everything the five slots can't hold */}
+      {/* Overflow sheet, everything the five slots can't hold */}
       {sheetOpen && (
         <>
           <button

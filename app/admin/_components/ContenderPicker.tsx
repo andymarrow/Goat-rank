@@ -175,7 +175,7 @@ export default function ContenderPicker({
 
         {results.length === 0 ? (
           <p className="text-[11px] text-muted-foreground font-sans py-3 text-center">
-            {query ? `Nothing matches "${query}" — create it below.` : "No contenders in the roster yet."}
+            {query ? `Nothing matches "${query}". Create it below.` : "No contenders in the roster yet."}
           </p>
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 max-h-56 overflow-y-auto scrollbar-hide">

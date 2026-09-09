@@ -38,7 +38,7 @@ export default function TermsPage() {
       </p>
       <p>
         We may hide a message that breaks these rules. If we do, the payment stands and the pool is
-        unaffected — we remove words, never money.
+        unaffected, we remove words, never money.
       </p>
 
       <H2>Contenders</H2>

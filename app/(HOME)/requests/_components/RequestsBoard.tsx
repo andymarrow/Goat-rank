@@ -145,7 +145,7 @@ export default function RequestsBoard({
         </h1>
         <p className="text-sm text-muted-foreground font-sans max-w-2xl leading-relaxed">
           Two kinds of ask: a feature the platform should have, or a charity arenas should be able
-          to raise for. Everything here is public and ranked by how many people back it — no
+          to raise for. Everything here is public and ranked by how many people back it, no
           account needed to post or to back.
         </p>
       </header>
@@ -178,7 +178,7 @@ export default function RequestsBoard({
             <div className="rounded-2xl border border-dashed border-border/60 py-16 text-center flex flex-col items-center gap-2">
               <Sparkles className="w-6 h-6 text-muted-foreground/40" />
               <p className="text-sm font-semibold text-muted-foreground">
-                Nothing here yet — post the first one
+                Nothing here yet. Post the first one
               </p>
             </div>
           ) : (

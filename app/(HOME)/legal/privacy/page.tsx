@@ -13,20 +13,20 @@ export default function PrivacyPage() {
       <H2>What we store</H2>
       <ul className="list-disc pl-5 flex flex-col gap-2">
         <li>
-          <strong className="text-foreground">Account</strong> — your email address, a display name
+          <strong className="text-foreground">Account</strong>: your email address, a display name
           and an avatar. Your email is never shown publicly.
         </li>
         <li>
-          <strong className="text-foreground">Votes</strong> — the amount, which contender you
+          <strong className="text-foreground">Votes</strong>: the amount, which contender you
           backed, and the public message you wrote. Your display name and avatar appear alongside
           it.
         </li>
         <li>
-          <strong className="text-foreground">Creator activity</strong> — arenas you host, their
+          <strong className="text-foreground">Creator activity</strong>: arenas you host, their
           pools, and your commission balance.
         </li>
         <li>
-          <strong className="text-foreground">An upvote cookie</strong> — signed-out visitors get a
+          <strong className="text-foreground">An upvote cookie</strong>: signed-out visitors get a
           random identifier in a cookie so one person cannot upvote the same message repeatedly. It
           contains no personal information.
         </li>
@@ -48,9 +48,9 @@ export default function PrivacyPage() {
 
       <H2>Processors we use</H2>
       <ul className="list-disc pl-5 flex flex-col gap-2">
-        <li><strong className="text-foreground">Supabase</strong> — database, authentication and file storage.</li>
-        <li><strong className="text-foreground">Stripe</strong> — card processing.</li>
-        <li><strong className="text-foreground">Resend</strong> — transactional email such as vote receipts.</li>
+        <li><strong className="text-foreground">Supabase</strong>: database, authentication and file storage.</li>
+        <li><strong className="text-foreground">Stripe</strong>: card processing.</li>
+        <li><strong className="text-foreground">Resend</strong>: transactional email such as vote receipts.</li>
       </ul>
 
       <H2>Your choices</H2>

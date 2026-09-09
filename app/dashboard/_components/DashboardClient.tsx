@@ -124,7 +124,7 @@ export default function DashboardClient({
             )}
             {payoutState.ok && (
               <p role="status" className="relative z-10 mt-2 text-xs text-emerald-400 font-sans font-semibold text-center">
-                Payout queued — we&apos;ll email you when it&apos;s sent.
+                Payout queued. We&apos;ll email you when it&apos;s sent.
               </p>
             )}
           </div>
@@ -193,7 +193,7 @@ export default function DashboardClient({
                              hover:border-primary/50 transition-all shadow-sm group"
                 >
                   <div className="relative flex items-center gap-4 min-w-0">
-                    {/* Contender art — overlapped */}
+                    {/* Contender art, overlapped */}
                     <div className="flex shrink-0">
                       {battle.contenders.length === 0 ? (
                         <div className="w-12 h-12 rounded-full bg-muted border border-border/80 flex items-center justify-center text-muted-foreground">

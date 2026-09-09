@@ -87,7 +87,7 @@ export default function ContenderStep({
       const reason = /bucket/i.test(storageError.message)
         ? "The 'contenders' storage bucket does not exist yet."
         : /policy|denied|unauthorized/i.test(storageError.message)
-        ? "Storage rejected the upload — check the bucket's INSERT policy."
+        ? "Storage rejected the upload. Check the bucket's INSERT policy."
         : storageError.message;
 
       console.error("Supabase Storage upload failed:", storageError);

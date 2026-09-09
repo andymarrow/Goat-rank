@@ -56,7 +56,7 @@ export default function AddContenderModal({ isOpen, onClose, roomTitle, roomId }
       console.error("Supabase Storage upload failed:", storageError);
       setError(
         /policy|denied|unauthorized/i.test(storageError.message)
-          ? "Storage rejected the upload — you may need to sign in again."
+          ? "Storage rejected the upload. You may need to sign in again."
           : storageError.message
       );
       setUploading(false);

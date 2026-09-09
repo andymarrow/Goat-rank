@@ -8,10 +8,10 @@
 
 /** "2d 04h" / "04:12" / "ENDED" — compact enough for a HUD. */
 export function formatCountdown(target: string | Date | null | undefined): string {
-  if (!target) return "—";
+  if (!target) return "Not set";
 
   const ms = new Date(target).getTime() - Date.now();
-  if (Number.isNaN(ms)) return "—";
+  if (Number.isNaN(ms)) return "Not set";
   if (ms <= 0) return "ENDED";
 
   const totalMinutes = Math.floor(ms / 60_000);

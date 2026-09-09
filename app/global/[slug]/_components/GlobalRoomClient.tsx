@@ -27,7 +27,7 @@ import VoteModal from "@/app/battle/[slug]/_components/VoteModal";
 import FeedList from "@/components/ui/FeedList";
 import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 import CharityVote from "@/components/ui/CharityVote";
-import CharityCard from "@/components/ui/CharityCard";
+import CharityCard, { type Beneficiary } from "@/components/ui/CharityCard";
 import LivePresence from "@/components/ui/LivePresence";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import Countdown from "@/components/ui/Countdown";
@@ -41,6 +41,29 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
+
+  // The card names the leading nomination, so nominating has to rename it in
+  // the same click rather than on the next load.
+  const [beneficiary, setBeneficiary] = useState<Beneficiary | null>(
+    roomData.beneficiary ?? null
+  );
+
+  const handleLeaderChange = (
+    leader: { charity_id: string; charity_name: string; logo_url: string | null } | null
+  ) =>
+    setBeneficiary((current: Beneficiary | null) =>
+      leader
+        ? {
+            // Keep the link and blurb from the registry copy we already have;
+            // only the identity changes.
+            ...(roomData.charities ?? []).find((c: { id: string }) => c.id === leader.charity_id),
+            id: leader.charity_id,
+            name: leader.charity_name,
+            logo_url: leader.logo_url,
+            leading: true,
+          }
+        : roomData.beneficiary ?? current
+    );
   const [selectedContenderIndex, setSelectedContenderIndex] = useState(0);
 
   // Filter & sort rankings based solely on real DB fetched data
@@ -224,7 +247,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
           </div>
 
           {/* Who the 30% reaches, with their logo and a link out. */}
-          {roomData.beneficiary && <CharityCard charity={roomData.beneficiary} />}
+          {beneficiary && <CharityCard charity={beneficiary} />}
 
           {/* CHARITY ALLOCATION CARD WRAPPER */}
           <div className="relative w-full rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-sm flex flex-col gap-3">
@@ -235,6 +258,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
               </h3>
             </div>
             <CharityVote
+              onLeaderChange={handleLeaderChange}
               roomId={roomData.id}
               charities={roomData.charities ?? []}
               tally={roomData.charityTally ?? []}
@@ -504,6 +528,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
         charityTally={roomData.charityTally ?? []}
         charityChoice={roomData.charityChoice ?? null}
         charityTotal={roomData.charityTotal ?? 0}
+        onLeaderChange={handleLeaderChange}
         bottomOffset="bottom-24"
       />
 

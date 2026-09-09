@@ -6,12 +6,31 @@ import BattleChat from "./BattleChat";
 import VoteModal from "./VoteModal";
 import { createClient } from "@/utils/supabase/client"; // <-- Import the client!
 import { onBrand } from "@/lib/color";
-import CharityCard from "@/components/ui/CharityCard";
+import CharityCard, { type Beneficiary } from "@/components/ui/CharityCard";
 import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 
 export default function BattleClient({ initialBattleData }: { initialBattleData: any }) {
   const [battleData, setBattleData] = useState(initialBattleData);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // The card names the leading nomination, so nominating renames it here in
+  // the same click rather than on the next load.
+  const [beneficiary, setBeneficiary] = useState<Beneficiary | null>(
+    battleData.beneficiary ?? null
+  );
+
+  const handleLeaderChange = (leader: { charity_id: string; charity_name: string; logo_url: string | null } | null) =>
+    setBeneficiary((current) =>
+      leader
+        ? {
+            ...(battleData.charities ?? []).find((c: { id: string }) => c.id === leader.charity_id),
+            id: leader.charity_id,
+            name: leader.charity_name,
+            logo_url: leader.logo_url,
+            leading: true,
+          }
+        : battleData.beneficiary ?? current
+    );
   const [selectedContender, setSelectedContender] = useState(0);
 
   const supabase = createClient();
@@ -85,12 +104,16 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
 
           {/* Who the 30% actually reaches. A name on its own asked people to
               pledge to something they may not recognise. */}
-          {battleData.beneficiary && <CharityCard charity={battleData.beneficiary} />}
+          {beneficiary && <CharityCard charity={beneficiary} />}
         </div>
 
         {/* Right Sidebar Column */}
         <div className="hidden lg:flex w-full lg:w-[380px] xl:w-[420px] flex-col shrink-0 sticky top-20 h-[calc(100vh-100px)]">
-          <BattleChat battle={battleData} onVoteClick={handleVoteClick} />
+          <BattleChat
+            battle={battleData}
+            onVoteClick={handleVoteClick}
+            onLeaderChange={handleLeaderChange}
+          />
         </div>
       </div>
 
@@ -105,6 +128,7 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
         charityTally={battleData.charityTally ?? []}
         charityChoice={battleData.charityChoice ?? null}
         charityTotal={battleData.charityTotal ?? 0}
+        onLeaderChange={handleLeaderChange}
       />
 
       {/* Mobile vote bar. Sits directly above the 64px tab bar and respects the

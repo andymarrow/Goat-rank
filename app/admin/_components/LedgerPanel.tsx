@@ -91,7 +91,7 @@ export default function LedgerPanel({
                     <td className="py-3">
                       {p.status === "paid" || p.status === "rejected" ? (
                         <span className="text-[10px] text-muted-foreground font-sans">
-                          {p.payout_reference || "—"}
+                          {p.payout_reference || "Not set"}
                         </span>
                       ) : (
                         <div className="flex flex-wrap items-start gap-2">
@@ -143,7 +143,7 @@ export default function LedgerPanel({
         }
       >
         {charityLedger.length === 0 ? (
-          <EmptyState message="Nothing owed — no arenas have settled yet" />
+          <EmptyState message="Nothing owed. No arenas have settled yet" />
         ) : (
           <>
             <Scroller>

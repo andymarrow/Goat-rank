@@ -55,7 +55,7 @@ export default function MoneyPage() {
 
       <H2>Refunds and chargebacks</H2>
       <p>
-        Votes are generally final — the pool moves the moment a vote lands, and other people make
+        Votes are generally final. The pool moves the moment a vote lands, and other people make
         decisions based on it. If a payment is refunded or charged back, we reverse it fully: the
         amount comes back out of the arena pool, the contender&apos;s total and the creator&apos;s
         commission. A refunded vote never counts toward any share.

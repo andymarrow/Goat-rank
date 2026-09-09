@@ -21,8 +21,8 @@ export async function generateMetadata({
 
   const title = arena.title;
   const description = leader
-    ? `${leader.name} leads with ${money(leader.amount)} of a ${money(arena.totalPool)} pool, across ${ranked.length} contenders. Back yours — 30% goes to charity.`
-    : `${money(arena.totalPool)} in the pool. Back your pick — 30% goes to charity.`;
+    ? `${leader.name} leads with ${money(leader.amount)} of a ${money(arena.totalPool)} pool, across ${ranked.length} contenders. Back yours: 30% goes to charity.`
+    : `${money(arena.totalPool)} in the pool. Back your pick: 30% goes to charity.`;
 
   return {
     title,

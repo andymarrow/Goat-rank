@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { OG_SIZE, OG_CONTENT_TYPE, ogFonts } from "@/lib/og";
 
-export const alt = "GOAT Rank — settle the debate";
+export const alt = "GOAT Rank: settle the debate";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 

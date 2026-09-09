@@ -106,7 +106,7 @@ export default function BotAssignPanel({
       }
     >
       {rooms.length === 0 ? (
-        <EmptyState message="No demo arenas yet — create one above" />
+        <EmptyState message="No demo arenas yet. Create one above" />
       ) : (
         <div className="flex flex-col gap-4">
           <Field label="Arena">
@@ -140,7 +140,7 @@ export default function BotAssignPanel({
               That arena has no contenders yet. Add some from its detail page first.
             </p>
           ) : bots.length === 0 ? (
-            <EmptyState message="No bots yet — they are created with your first demo arena" />
+            <EmptyState message="No bots yet. They are created with your first demo arena" />
           ) : (
             <>
               <div className="flex items-center justify-between gap-3">
@@ -277,7 +277,7 @@ export default function BotAssignPanel({
                 <span>
                   Pledges land as ordinary votes flagged demo, so the arena&apos;s pool, the
                   contender&apos;s standing and the bot&apos;s profile all move exactly as a real
-                  pledge would — while staying out of the treasury and charity ledger. Only demo
+                  pledge would, while staying out of the treasury and charity ledger. Only demo
                   arenas accept them.
                 </span>
               </p>

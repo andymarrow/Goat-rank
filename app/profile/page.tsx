@@ -12,7 +12,10 @@ const money = (n: number) =>
  * Contender directory.
  *
  * The mobile tab bar needs a fifth destination, and /profile previously only
- * existed as /profile/[slug] — linking to it bare would have 404'd.
+ * existed as /profile/[slug], so linking to it bare would have 404'd.
+ *
+ * Lists only contenders that are in a contest; getRoster does that filtering,
+ * because a name with no arena anywhere is not a rank.
  */
 export default async function RosterPage() {
   const roster = await getRoster();
@@ -34,7 +37,10 @@ export default async function RosterPage() {
       {roster.length === 0 ? (
         <div className="relative border border-dashed border-border/80 rounded-2xl py-16 text-center overflow-hidden">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            No contenders yet
+            No contenders in a contest yet
+          </p>
+          <p className="mt-2 text-[11px] text-muted-foreground font-sans">
+            Contenders appear here once they are in an arena.
           </p>
         </div>
       ) : (
@@ -66,6 +72,13 @@ export default async function RosterPage() {
                 {i < 3 && (
                   <span className="absolute top-2 left-2 text-[10px] font-black bg-primary text-primary-foreground px-2 py-0.5 rounded-md shadow-xs">
                     #{i + 1}
+                  </span>
+                )}
+
+                {entity.liveArenas > 0 && (
+                  <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/70 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    {entity.liveArenas} live
                   </span>
                 )}
               </div>

@@ -29,8 +29,8 @@ export async function generateMetadata({
 
   const title = arena.title;
   const description = left && right
-    ? `${left.name} ${leftPct}% vs ${right.name} ${100 - leftPct}% · ${money(arena.totalPool)} in the pool. Back your pick — 30% goes to charity.`
-    : `${money(arena.totalPool)} in the pool. Back your pick — 30% goes to charity.`;
+    ? `${left.name} ${leftPct}% vs ${right.name} ${100 - leftPct}% · ${money(arena.totalPool)} in the pool. Back your pick: 30% goes to charity.`
+    : `${money(arena.totalPool)} in the pool. Back your pick: 30% goes to charity.`;
 
   return {
     title,

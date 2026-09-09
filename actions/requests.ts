@@ -135,7 +135,7 @@ export async function submitRequest(input: {
         .gte("created_at", since);
 
       if ((count ?? 0) > 0) {
-        return { ok: false, error: "One request a minute — give the last one a moment." };
+        return { ok: false, error: "One request a minute. Give the last one a moment." };
       }
     }
 

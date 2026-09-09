@@ -377,7 +377,7 @@ export async function removeContenderFromRoom(
     if (Number(link.current_votes) > 0) {
       return {
         ok: false,
-        error: "This contender has taken votes — removing them would orphan those pledges.",
+        error: "This contender has taken votes. Removing them would orphan those pledges.",
       };
     }
 

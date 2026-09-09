@@ -141,7 +141,7 @@ export async function promoteCharityRequest(
       .from("requests")
       .update({
         status: "shipped",
-        admin_note: `Registered as a charity — arenas can raise for ${request.title} now.`,
+        admin_note: `Registered as a charity. Arenas can raise for ${request.title} now.`,
       })
       .eq("id", requestId);
 

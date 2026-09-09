@@ -97,7 +97,7 @@ export default function RequestsPanel({ requests }: { requests: AdminRequest[] }
         <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground font-sans">
           <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>
-            Status and note are both public — the note appears on the request itself at{" "}
+            Status and note are both public, the note appears on the request itself at{" "}
             <Link href="/requests" target="_blank" className="text-primary hover:underline">
               /requests
             </Link>
@@ -165,7 +165,7 @@ export default function RequestsPanel({ requests }: { requests: AdminRequest[] }
                   <input
                     value={draft}
                     onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })}
-                    placeholder="Public note — shown on the request"
+                    placeholder="Public note, shown on the request"
                     aria-label={`Note for ${r.title}`}
                     className={inputClass}
                   />

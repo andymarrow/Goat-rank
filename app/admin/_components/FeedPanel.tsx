@@ -135,7 +135,7 @@ export default function FeedPanel({
       {openRoom && activeRoom && (
         <Panel
           title={activeRoom.title}
-          subtitle="Nuking hides the words and keeps the money — the pool is never touched."
+          subtitle="Nuking hides the words and keeps the money. The pool is never touched."
           action={
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex items-center gap-2 cursor-pointer">

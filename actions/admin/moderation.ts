@@ -170,7 +170,7 @@ export async function setUserAdmin(profileId: string, makeAdmin: boolean): Promi
         .eq("is_admin", true);
 
       if ((count ?? 0) <= 1) {
-        return { ok: false, error: "You are the last admin — promote someone else first." };
+        return { ok: false, error: "You are the last admin. Promote someone else first." };
       }
 
       if (profileId === admin.id) {

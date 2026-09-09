@@ -21,6 +21,7 @@ export default function CharityVote({
   myChoice,
   total,
   closed = false,
+  onLeaderChange,
 }: {
   roomId: string;
   charities: Charity[];
@@ -28,6 +29,11 @@ export default function CharityVote({
   myChoice: string | null;
   total: number;
   closed?: boolean;
+  /**
+   * Told the new front-runner as nominations move, so the arena's charity
+   * card can rename itself on the spot rather than at the next page load.
+   */
+  onLeaderChange?: (leader: CharityTally | null) => void;
 }) {
   const [choice, setChoice] = useState(myChoice);
   const [counts, setCounts] = useState(tally);
@@ -66,7 +72,13 @@ export default function CharityVote({
           if (drop) drop.votes = Math.max(Number(drop.votes) - 1, 0);
         }
 
-        return next.sort((a, b) => Number(b.votes) - Number(a.votes));
+        const ranked = next.sort((a, b) => Number(b.votes) - Number(a.votes));
+
+        // The card above shows the front-runner, so it has to hear about a
+        // change in the same tick the bars move.
+        onLeaderChange?.(ranked.find((t) => Number(t.votes) > 0) ?? null);
+
+        return ranked;
       });
 
       const res = await setCharityPreference(roomId, charityId);
@@ -74,6 +86,10 @@ export default function CharityVote({
       if (!res.ok) {
         setChoice(previous);
         setCounts(tally);
+        onLeaderChange?.(
+          [...tally].sort((a, b) => Number(b.votes) - Number(a.votes))
+            .find((t) => Number(t.votes) > 0) ?? null
+        );
         setError(res.error ?? "Could not save that.");
       }
     });
@@ -179,7 +195,7 @@ export default function CharityVote({
 
       {closed && (
         <p className="text-[11px] text-muted-foreground font-sans text-center">
-          This arena is closed — preferences are locked.
+          This arena is closed. Preferences are locked.
         </p>
       )}
     </div>

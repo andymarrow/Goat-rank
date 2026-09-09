@@ -55,7 +55,7 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
 
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <StatTile
-            label="Creator wallets — owed now"
+            label="Creator wallets: owed now"
             value={money(treasury.creatorWalletOutstanding)}
             hint="Withdrawable balance across all creators"
           />
@@ -165,7 +165,7 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
             Scans the most recent 100 charges. A refunded payment flips its vote to{" "}
             <code className="text-foreground/70">refunded</code>, which fires the reversal trigger
             and backs the money out of the pool, the entity total and the creator&apos;s wallet.
-            Payments with no matching vote are reported for you to inspect — those mean a webhook
+            Payments with no matching vote are reported for you to inspect, those mean a webhook
             delivery was lost, and Stripe can resend the event to repair it.
           </p>
         ) : (

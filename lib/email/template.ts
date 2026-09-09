@@ -146,7 +146,7 @@ export function welcomeEmail(name: string, ctaUrl: string) {
       preheader: "Your GOAT Rank account is live. Pick a side.",
       eyebrow: "Account activated",
       heading: `Welcome, ${name}`,
-      body: `<p style="margin:0 0 14px;">You're in. GOAT Rank is where debates get settled with real money on the line — back a contender, and the pool decides who's right.</p>
+      body: `<p style="margin:0 0 14px;">You're in. GOAT Rank is where debates get settled with real money on the line, back a contender, and the pool decides who's right.</p>
              <p style="margin:0;">Every vote you place carries a public battle cry. Make it count.</p>`,
       button: { label: "Enter the arena", url: ctaUrl },
     }),
@@ -171,7 +171,7 @@ export function voteReceiptEmail(args: {
         args.roomTitle
       )}</strong> and the pool has already moved.</p>
              ${stat("Amount pledged", money(args.amount), T.green)}
-             <p style="margin:0;">Watch the bar swing live — and bring reinforcements.</p>`,
+             <p style="margin:0;">Watch the bar swing live, and bring reinforcements.</p>`,
       button: { label: "View the battle", url: args.roomUrl },
     }),
   };
@@ -187,7 +187,7 @@ export function roomLiveEmail(args: { title: string; roomUrl: string; expiresAt:
       body: `<p style="margin:0 0 14px;">Your arena is open and taking votes. You earn <strong style="color:${T.green};">10% of every vote</strong> placed in it, credited to your wallet the moment it lands.</p>
              <p style="margin:0;">Closes ${escapeHtml(
                new Date(args.expiresAt).toUTCString()
-             )}. Share it — a quiet arena pays nothing.</p>`,
+             )}. Share it, a quiet arena pays nothing.</p>`,
       button: { label: "Open your arena", url: args.roomUrl },
     }),
   };
@@ -228,7 +228,7 @@ export function adminGrantedEmail(args: { name: string; grantedBy: string; conso
       )} gave your account administrator access on GOAT Rank.</p>
              <p style="margin:0 0 14px;">You can now settle arenas, moderate battle cries, approve
              contender submissions and release creator payouts. These actions affect real money and
-             other people's contests — take the care that implies.</p>
+             other people's contests, take the care that implies.</p>
              <p style="margin:0;font-size:13px;color:${T.muted};">If you weren't expecting this,
              reply to this email and we'll revoke it.</p>`,
       button: { label: "Open the console", url: args.consoleUrl },
@@ -254,9 +254,9 @@ export function roomSettledEmail(args: {
         args.title
       )}</strong> has closed.</p>
              ${stat("Total pool", money(args.pool), T.yellow)}
-             <p style="margin:0;">30% — <strong style="color:${T.pink};">${money(
+             <p style="margin:0;">30% (<strong style="color:${T.pink};">${money(
                args.pool * 0.3
-             )}</strong> — goes to ${escapeHtml(args.charity)}.</p>`,
+             )}</strong>) goes to ${escapeHtml(args.charity)}.</p>`,
       button: { label: "See the final board", url: args.roomUrl },
     }),
   };

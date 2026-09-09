@@ -46,7 +46,7 @@ export default function StudioPanel({
       {/* ------------------------------------------------- GOD-MODE DEPLOY */}
       <Panel
         title="God-mode deployer"
-        subtitle="Create an arena instantly — no checkout, no creator commission."
+        subtitle="Create an arena instantly. No checkout, no creator commission."
       >
         <div className="flex flex-col gap-4">
           <Field label="Arena title">
@@ -127,7 +127,7 @@ export default function StudioPanel({
 
           <div>
             <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">
-              {roomType === "1v1" ? "Contenders — exactly 2" : "Contenders — 2 to 100"}
+              {roomType === "1v1" ? "Contenders: exactly 2" : "Contenders: 2 to 100"}
             </span>
             <ContenderPicker
               roster={roster}
@@ -194,7 +194,7 @@ export default function StudioPanel({
         subtitle="Drop up to 100 contenders into an existing global arena at once."
       >
         {globalRooms.length === 0 ? (
-          <EmptyState message="No global arenas yet — deploy one first" />
+          <EmptyState message="No global arenas yet. Deploy one first" />
         ) : (
           <div className="flex flex-col gap-4">
             <Field label="Target arena">

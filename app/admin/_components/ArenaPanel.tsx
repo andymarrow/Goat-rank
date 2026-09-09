@@ -55,7 +55,7 @@ export default function ArenaPanel({ rooms }: { rooms: AdminRoom[] }) {
         <span>
           <strong className="text-foreground/70">Force settle</strong> ends an arena immediately:
           it stops accepting votes, unpins it from the homepage and stamps who closed it. It moves
-          no money — the creator&apos;s 10% was already paid per-vote as each vote landed, so
+          no money, the creator&apos;s 10% was already paid per-vote as each vote landed, so
           paying again here would double-pay them. Use it when a timer is wrong or an arena has to
           stop now. <strong className="text-foreground/70">Delete</strong> only works on arenas
           that never took a payment.
@@ -134,7 +134,7 @@ export default function ArenaPanel({ rooms }: { rooms: AdminRoom[] }) {
                       <div className="flex items-center gap-2">
                         <ContenderStack contenders={room.room_contenders ?? []} />
                         <span className="text-[11px] text-muted-foreground font-sans max-w-[130px] truncate">
-                          {names?.length ? names.join(" vs ") : "—"}
+                          {names?.length ? names.join(" vs ") : "None"}
                         </span>
                       </div>
                     </td>
@@ -235,7 +235,7 @@ export default function ArenaPanel({ rooms }: { rooms: AdminRoom[] }) {
           <p>
             It holds{" "}
             <strong className="text-foreground">{money(pendingDelete?.total_pool ?? 0)}</strong>.
-            Deleting destroys the pledge records — the only account of who paid what — while the
+            Deleting destroys the pledge records, the only account of who paid what, while the
             money they moved stays moved: the creator&apos;s 10% was credited per pledge as it
             landed, and each contender&apos;s lifetime total still counts it. Nothing here reverses
             that.

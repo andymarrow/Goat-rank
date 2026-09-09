@@ -95,7 +95,7 @@ export default function EntitySearch({
               {loading
                 ? "Searching…"
                 : query
-                ? `No contender called "${query}" yet — add them below.`
+                ? `No contender called "${query}" yet. Add them below.`
                 : "Start typing a name."}
             </p>
           ) : (

@@ -52,7 +52,7 @@ export async function deployHouseArena(input: {
         title: title.slice(0, 120),
         category: category.slice(0, 60),
         room_type: input.roomType,
-        status: "active", // no checkout — this is the house deploying
+        status: "active", // no checkout, this is the house deploying
         creator_id: null,
         charity_id: input.charityId ?? null,
         charity_name: input.charityName?.trim().slice(0, 120) ?? "House Arena",

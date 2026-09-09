@@ -79,7 +79,7 @@ export default function PeoplePanel({ profiles }: { profiles: AdminProfile[] }) 
         <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground font-sans">
           <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>
-            The person must already have a GOAT Rank account — this grants access to an existing
+            The person must already have a GOAT Rank account. This grants access to an existing
             user, it cannot create one. Admins can settle arenas, release payouts, delete arenas
             and moderate messages, so grant it sparingly.
           </span>
@@ -95,7 +95,7 @@ export default function PeoplePanel({ profiles }: { profiles: AdminProfile[] }) 
       {/* ----------------------------------------------------- ADMIN LIST */}
       <Panel title="Administrators" subtitle="Everyone who can reach this console.">
         {admins.length === 0 ? (
-          <EmptyState message="No admins — which should be impossible from in here" />
+          <EmptyState message="No admins, which should be impossible from in here" />
         ) : (
           <ul className="flex flex-col gap-2">
             {admins.map((a) => (

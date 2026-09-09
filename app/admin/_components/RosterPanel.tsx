@@ -72,7 +72,7 @@ export default function RosterPanel({
           <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-muted-foreground" />
           <span>
             A <strong className="text-foreground/70">contender</strong> is a person, team, film or
-            product that arenas compete over — Ronaldo, Messi, a movie. They exist once and are
+            product that arenas compete over. Ronaldo, Messi, a movie. They exist once and are
             reused across every arena, which is why they have their own profile pages and lifetime
             totals. Anything in the <strong className="text-foreground/70">Queue</strong> was paid
             for by a user and is hidden from the public site until you approve it.
@@ -81,7 +81,7 @@ export default function RosterPanel({
 
         {visible.length === 0 ? (
           <EmptyState
-            message={tab === "pending" ? "Queue is clear — nothing awaiting review" : "No contenders yet"}
+            message={tab === "pending" ? "Queue is clear. Nothing awaiting review" : "No contenders yet"}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -101,7 +101,7 @@ export default function RosterPanel({
                 >
 
                   <div className="relative flex gap-3 p-3">
-                    {/* Image preview — the whole point of the review queue */}
+                    {/* Image preview, the whole point of the review queue */}
                     <div className="relative w-20 h-20 shrink-0 bg-black rounded-xl border border-border/60 overflow-hidden">
                       {renderable ? (
                         <Image
@@ -216,7 +216,7 @@ export default function RosterPanel({
                           >
                             {!categories.some((c) => c.label === draft.category) && (
                               <option value={draft.category}>
-                                {draft.category || "Uncategorised"} — not in the list
+                                {draft.category || "Uncategorised"} (not in the list)
                               </option>
                             )}
                             {categories.map((c) => (

@@ -143,7 +143,7 @@ export default function AvatarPanel({ avatars }: { avatars: AdminAvatar[] }) {
         )}
 
         {avatars.length === 0 ? (
-          <EmptyState message="Library is empty — upload the first avatar above" />
+          <EmptyState message="Library is empty. Upload the first avatar above" />
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-8 gap-3">
             {avatars.map((a) => (

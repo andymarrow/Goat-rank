@@ -126,12 +126,12 @@ export default function ArenaEditor({
                     that was since retired. Keep it selectable so saving the
                     title doesn't silently recategorise the arena. */}
                 {!categories.some((c) => c.label === category) && (
-                  <option value={category}>{category} — not in the list</option>
+                  <option value={category}>{category} (not in the list)</option>
                 )}
                 {categories.map((c) => (
                   <option key={c.id} value={c.label}>
                     {c.label}
-                    {c.is_active ? "" : " — hidden"}
+                    {c.is_active ? "" : " (hidden)"}
                   </option>
                 ))}
               </select>
@@ -145,13 +145,13 @@ export default function ArenaEditor({
               >
                 <option value="">
                   {room.charity_name && room.charity_name !== "Pending Charity" && !room.charity_id
-                    ? `${room.charity_name} — not in the list`
-                    : "Pending Charity — none chosen"}
+                    ? `${room.charity_name} (not in the list)`
+                    : "Pending Charity (none chosen)"}
                 </option>
                 {charities.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
-                    {c.is_active ? "" : " — inactive"}
+                    {c.is_active ? "" : " (inactive)"}
                   </option>
                 ))}
               </select>
@@ -329,7 +329,7 @@ export default function ArenaEditor({
             <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
               <strong className="text-foreground">Force settle</strong> stops votes and closes the
-              arena. It moves no money — the creator&apos;s 10% was already paid per vote as each
+              arena. It moves no money, the creator&apos;s 10% was already paid per vote as each
               one landed. <strong className="text-foreground">Delete</strong> only works on an arena
               that never took a payment.
             </span>
@@ -356,8 +356,8 @@ export default function ArenaEditor({
         {funded && (
           <p>
             It holds <strong className="text-foreground">{money(room.total_pool)}</strong> across{" "}
-            {room.room_contenders?.length ?? 0} contenders. Deleting destroys the pledge records —
-            the only account of who paid what — while the money they moved stays moved: the
+            {room.room_contenders?.length ?? 0} contenders. Deleting destroys the pledge records,
+            the only account of who paid what, while the money they moved stays moved: the
             creator&apos;s 10% was credited per pledge as it landed, and each contender&apos;s
             lifetime total still counts it. Nothing here reverses that.
           </p>

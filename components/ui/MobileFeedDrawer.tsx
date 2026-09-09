@@ -26,6 +26,7 @@ export default function MobileFeedDrawer({
   charityTally,
   charityChoice,
   charityTotal,
+  onLeaderChange,
   bottomOffset = "bottom-36",
 }: {
   roomId: string;
@@ -36,6 +37,8 @@ export default function MobileFeedDrawer({
   charityTally: CharityTally[];
   charityChoice: string | null;
   charityTotal: number;
+  /** Passed through so the arena's charity card can rename itself instantly. */
+  onLeaderChange?: (leader: CharityTally | null) => void;
   /** Lifts the trigger clear of whatever the page pins to the bottom. */
   bottomOffset?: string;
 }) {
@@ -136,6 +139,7 @@ export default function MobileFeedDrawer({
                   </span>
                   <div className="rounded-xl border border-border/60 bg-muted/20 p-3 shadow-xs">
                     <CharityVote
+                      onLeaderChange={onLeaderChange}
                       roomId={roomId}
                       charities={charities}
                       tally={charityTally}

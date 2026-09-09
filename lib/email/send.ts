@@ -40,7 +40,7 @@ async function send(to: string, subject: string, html: string): Promise<SendResu
   const api = resend();
 
   if (!api) {
-    console.warn(`[email] RESEND_API_KEY not set — skipped "${subject}" to ${to}`);
+    console.warn(`[email] RESEND_API_KEY not set, skipped "${subject}" to ${to}`);
     return { ok: false, error: "Email is not configured." };
   }
 

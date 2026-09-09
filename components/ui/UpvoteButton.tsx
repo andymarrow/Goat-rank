@@ -93,7 +93,7 @@ export default function UpvoteButton({
         disabled={isUpdating}
         aria-pressed={upvoted}
         aria-label={upvoted ? "Remove your upvote" : "Upvote this battle cry"}
-        title={upvoted ? "You upvoted this — click to undo" : "Upvote"}
+        title={upvoted ? "You upvoted this. Click to undo" : "Upvote"}
         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all group
           select-none cursor-pointer disabled:opacity-60 ${
             upvoted

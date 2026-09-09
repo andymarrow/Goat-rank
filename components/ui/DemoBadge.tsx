@@ -8,7 +8,7 @@
 export function DemoDot({ className = "" }: { className?: string }) {
   return (
     <span
-      title="Demo account — seeded content, not a real supporter"
+      title="Demo account: seeded content, not a real supporter"
       aria-label="Demo account"
       className={`inline-block w-1.5 h-1.5 rounded-full bg-primary shrink-0 ring-2 ring-primary/25 ${className}`}
     />
