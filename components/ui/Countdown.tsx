@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { formatAbsolute } from "@/lib/time";
 
 type Parts = { days: number; hours: number; minutes: number; seconds: number; done: boolean };
@@ -23,10 +24,20 @@ function split(target: string | Date | null | undefined): Parts {
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
- * Segmented Countdown Timer
+ * Segmented countdown.
  *
- * Displays days, hours, minutes, and seconds in modern, sleek glass containers
- * with tabular monospace typography and color-coded urgency states.
+ * Each cell is its own animated digit pair: a changing value rolls up and the
+ * one leaving rolls out, so the timer reads as running rather than as text
+ * that happens to differ each second. Only the cell that changed animates —
+ * animating all four every tick is the thing that makes a countdown feel
+ * cheap and busy.
+ *
+ * The seconds cell also carries a progress ring that empties over the minute,
+ * which gives the eye something continuous between ticks, and the whole strip
+ * shifts through calm, amber and red as the deadline closes.
+ *
+ * prefers-reduced-motion is respected: the numbers still change, they just
+ * stop moving.
  */
 export default function Countdown({
   target,
@@ -37,10 +48,22 @@ export default function Countdown({
   size?: "sm" | "md" | "lg" | "auto";
 }) {
   const [parts, setParts] = useState<Parts>(() => split(target));
+  const [still, setStill] = useState(false);
 
   useEffect(() => {
-    setParts(split(target));
-    if (!target || split(target).done) return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setStill(query.matches);
+
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    // The initial value comes from useState; this only resyncs when the target
+    // itself changes, and does so from a callback rather than the effect body.
+    const sync = setTimeout(() => setParts(split(target)), 0);
+    if (!target || split(target).done) return () => clearTimeout(sync);
 
     const id = setInterval(() => {
       const next = split(target);
@@ -48,7 +71,10 @@ export default function Countdown({
       if (next.done) clearInterval(id);
     }, 1000);
 
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(sync);
+      clearInterval(id);
+    };
   }, [target]);
 
   const scale = {
@@ -109,24 +135,69 @@ export default function Countdown({
     [parts.seconds, "SEC"],
   ];
 
+  // How much of the current minute is left, for the ring under the seconds.
+  const minuteLeft = parts.seconds / 60;
+
   return (
     <span
-      className={`inline-flex items-center gap-1 sm:gap-1.5 ${urgent ? "animate-pulse" : ""}`}
+      className="inline-flex items-center gap-1 sm:gap-1.5"
       title={`Closes ${formatAbsolute(target)}`}
       aria-label={`Closes in ${parts.days}d ${parts.hours}h ${parts.minutes}m`}
     >
       {cells.map(([value, label], i) => (
         <span key={label} className="inline-flex items-center gap-1 sm:gap-1.5">
           <span
-            className={`border flex flex-col items-center justify-center leading-none transition-colors ${scale.box} ${tone}`}
+            className={`relative border flex flex-col items-center justify-center leading-none
+                        overflow-hidden transition-colors duration-500 ${scale.box} ${tone}`}
           >
-            <span className={`tabular-nums ${scale.num}`}>{pad(value)}</span>
-            <span className={`uppercase opacity-75 ${scale.lab} ${labelTone}`}>
+            {/* The seconds cell drains over the minute. A continuous cue
+                between ticks reads as time passing; four static boxes do not. */}
+            {label === "SEC" && !still && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-0 bottom-0 pointer-events-none transition-[height] duration-1000 ease-linear
+                           bg-current opacity-[0.12]"
+                style={{ height: `${minuteLeft * 100}%` }}
+              />
+            )}
+
+            <span className={`relative tabular-nums overflow-hidden ${scale.num}`}>
+              {still ? (
+                pad(value)
+              ) : (
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {/* Keyed by value: only the cell whose number actually
+                      changed re-renders and rolls. */}
+                  <motion.span
+                    key={value}
+                    initial={{ y: "-90%", opacity: 0 }}
+                    animate={{ y: "0%", opacity: 1 }}
+                    exit={{ y: "90%", opacity: 0, position: "absolute" }}
+                    transition={{ type: "spring", stiffness: 380, damping: 30, mass: 0.6 }}
+                    className="block tabular-nums"
+                  >
+                    {pad(value)}
+                  </motion.span>
+                </AnimatePresence>
+              )}
+            </span>
+
+            <span className={`relative uppercase opacity-75 ${scale.lab} ${labelTone}`}>
               {label}
             </span>
           </span>
+
           {i < cells.length - 1 && (
-            <span className={`text-muted-foreground/40 select-none font-bold ${scale.colon}`}>:</span>
+            <motion.span
+              aria-hidden="true"
+              className={`select-none font-bold ${scale.colon} ${
+                urgent ? "text-red-400/70" : "text-muted-foreground/40"
+              }`}
+              animate={still ? {} : { opacity: [1, 0.25, 1] }}
+              transition={{ duration: 1, repeat: Infinity, ease: "easeInOut", times: [0, 0.5, 1] }}
+            >
+              :
+            </motion.span>
           )}
         </span>
       ))}

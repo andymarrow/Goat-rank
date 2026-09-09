@@ -10,12 +10,18 @@ interface UpvoteButtonProps {
   voteId: string;
   /** Whether the current viewer has already upvoted this testimonial. */
   initialUpvoted?: boolean;
+  /**
+   * Told the new count as it changes, so a list ranked by upvotes can reorder
+   * on the spot instead of waiting for a refresh.
+   */
+  onChange?: (voteId: string, count: number, upvoted: boolean) => void;
 }
 
 export default function UpvoteButton({
   initialCount,
   voteId,
   initialUpvoted = false,
+  onChange,
 }: UpvoteButtonProps) {
   const [count, setCount] = useState(initialCount);
   const [upvoted, setUpvoted] = useState(initialUpvoted);
@@ -31,8 +37,10 @@ export default function UpvoteButton({
     const next = !upvoted;
 
     // Optimistic toggle.
+    const optimistic = Math.max(count + (next ? 1 : -1), 0);
     setUpvoted(next);
-    setCount((prev) => Math.max(prev + (next ? 1 : -1), 0));
+    setCount(optimistic);
+    onChange?.(voteId, optimistic, next);
 
     if (next) {
       const newClick = { id: Date.now() + Math.random() };
@@ -44,16 +52,20 @@ export default function UpvoteButton({
 
     if (!result.success) {
       // Roll back.
+      const reverted = Math.max(optimistic + (next ? -1 : 1), 0);
       setUpvoted(!next);
-      setCount((prev) => Math.max(prev + (next ? -1 : 1), 0));
+      setCount(reverted);
+      onChange?.(voteId, reverted, !next);
     } else if (typeof result.upvoted === "boolean" && result.upvoted !== next) {
       // Server disagreed (e.g. a raced duplicate) — trust the server.
+      const corrected = Math.max(optimistic + (result.upvoted ? 1 : -1) - (next ? 1 : -1), 0);
       setUpvoted(result.upvoted);
-      setCount((prev) => Math.max(prev + (result.upvoted ? 1 : -1) - (next ? 1 : -1), 0));
+      setCount(corrected);
+      onChange?.(voteId, corrected, result.upvoted);
     }
 
     setIsUpdating(false);
-  }, [voteId, isUpdating, upvoted]);
+  }, [voteId, isUpdating, upvoted, count, onChange]);
 
   return (
     <div className="relative flex items-center">

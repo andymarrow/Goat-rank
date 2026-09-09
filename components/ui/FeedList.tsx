@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import Avatar from "@/components/ui/Avatar";
 import Link from "next/link";
 import { Zap, Loader2, ChevronDown, MessageSquare } from "lucide-react";
@@ -41,6 +41,28 @@ export default function FeedList({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [pending, startTransition] = useTransition();
 
+  /**
+   * Reorder on upvote rather than on refresh.
+   *
+   * The server ranks the feed by upvotes, so a cry that just overtook its
+   * neighbour has to move now — leaving it in place until the next load makes
+   * the button look like it did nothing.
+   */
+  const handleUpvoteChange = useCallback(
+    (voteId: string, count: number, upvoted: boolean) => {
+      setItems((prev) =>
+        [...prev]
+          .map((i) => (i.id === voteId ? { ...i, upvote_count: count, upvoted } : i))
+          .sort(
+            (a, b) =>
+              b.upvote_count - a.upvote_count ||
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )
+      );
+    },
+    []
+  );
+
   const loadMore = () =>
     startTransition(async () => {
       const page = await getRoomFeed(roomId, cursor);
@@ -68,17 +90,26 @@ export default function FeedList({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="rounded-2xl border border-border/60 bg-card/40 p-2 sm:p-3 divide-y divide-border/30">
+      <div
+        className={`rounded-2xl border border-border/60 bg-card/40 p-2 sm:p-3 divide-y divide-border/30
+                    overflow-y-auto overscroll-contain scrollbar-hide ${
+                      compact ? "" : "max-h-[70vh]"
+                    }`}
+      >
         {items.map((entry) => (
           <div
             key={entry.id}
             className="relative flex items-start gap-2.5 py-2.5 px-1 sm:px-1.5 transition-colors hover:bg-white/[0.02] first:pt-1 last:pb-1"
           >
-            <Avatar
-              src={entry.voter_avatar}
-              name={entry.voter_name}
-              size={24}
-            />
+            {/* The avatar links too: half the people who want a backer's
+                profile click the picture, not the name. */}
+            {entry.voter_id ? (
+              <Link href={`/u/${entry.voter_id}`} aria-label={`View ${entry.voter_name}`}>
+                <Avatar src={entry.voter_avatar} name={entry.voter_name} size={24} />
+              </Link>
+            ) : (
+              <Avatar src={entry.voter_avatar} name={entry.voter_name} size={24} />
+            )}
 
             <div className="min-w-0 flex-1 flex flex-col gap-1">
               {/* Header: Author, Badge, Backed entity & Time */}
@@ -129,6 +160,7 @@ export default function FeedList({
                     initialCount={entry.upvote_count}
                     voteId={entry.id}
                     initialUpvoted={entry.upvoted}
+                    onChange={handleUpvoteChange}
                   />
                 </div>
               </div>

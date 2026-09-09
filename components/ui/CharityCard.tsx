@@ -11,6 +11,8 @@ export type Beneficiary = {
   logo_url: string | null;
   website_url: string | null;
   description: string | null;
+  /** Came from the room's nomination vote rather than the host's pick. */
+  leading?: boolean;
 };
 
 /**
@@ -60,7 +62,7 @@ export default function CharityCard({
 
       <div className="min-w-0 flex-1">
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
-          30% of every pledge goes to
+          {charity.leading ? "Leading nomination · 30% goes to" : "30% of every pledge goes to"}
         </span>
 
         <span className="font-bold text-sm sm:text-base text-foreground truncate block">

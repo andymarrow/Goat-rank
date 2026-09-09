@@ -371,7 +371,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
 
           {/* CONTENDERS GRID (3 Columns - Home Screen Card Aesthetics) */}
           {processedRankings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-5">
               {processedRankings.map((contender: any) => {
                 const totalVotes = Number(contender.amount) || 0;
                 const percentage = poolTotalSum > 0 ? Math.round((totalVotes / poolTotalSum) * 100) : 0;
@@ -388,15 +388,15 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                     <Link
                       href={`/profile/${contender.id}`}
                       aria-label={`View ${contender.name}'s profile`}
-                      className="relative w-full h-[150px] sm:h-[160px] rounded-xl overflow-hidden bg-muted/60 border border-border/50 shrink-0 block cursor-pointer"
+                      className="relative w-full h-[230px] sm:h-[250px] rounded-xl overflow-hidden bg-muted/60 border border-border/50 shrink-0 block cursor-pointer"
                     >
                       {contender.img ? (
                         <Image
                           src={contender.img}
                           alt={contender.name}
                           fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 300px"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 360px"
+                          className="object-cover object-top group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
                         <div

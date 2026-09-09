@@ -88,7 +88,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
         {/* Backdrop */}
         <motion.div 
           initial={{ opacity: 0 }}
@@ -103,7 +103,8 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
           initial={{ opacity: 0, scale: 0.95, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
-          className="relative w-full max-w-lg bg-card border-2 rounded-3xl p-6 shadow-2xl flex flex-col gap-5 overflow-hidden z-10"
+          className="relative w-full max-w-lg max-h-[92dvh] bg-card border-2 rounded-3xl shadow-2xl
+                     flex flex-col overflow-hidden z-10"
           style={{ borderColor: contender.color }}
         >
 
@@ -118,7 +119,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
           </button>
 
           {/* Header */}
-          <div className="flex items-center gap-4 border-b border-border/80 pb-4">
+          <div className="flex items-center gap-4 border-b border-border/80 p-5 pb-4 pr-14 shrink-0">
             <div className="relative w-14 h-14 bg-muted rounded-2xl border border-border/60 overflow-hidden shrink-0">
               <Image src={contender.image} alt={contender.name} fill className="object-cover object-top" />
             </div>
@@ -129,6 +130,10 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
               </h2>
             </div>
           </div>
+
+          {/* Body. Scrolls on a short screen so the checkout button below is
+              always reachable — it used to be clipped off the bottom. */}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 flex flex-col gap-5">
 
           {/* Voting Power (Amount) */}
           <div className="flex flex-col gap-2">
@@ -195,26 +200,33 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
             </p>
           </div>
 
-          {/* Checkout Error */}
-          {error && (
-            <p
-              role="alert"
-              className="rounded-2xl border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-xs font-sans text-red-500 font-medium"
-            >
-              {error}
-            </p>
-          )}
+          </div>
 
-          {/* Checkout Button */}
-          <button 
-            type="button"
-            onClick={handleCheckout}
-            disabled={isSubmitting || !isValidAmount}
-            className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2.5 bg-primary text-primary-foreground font-arcade font-extrabold text-sm sm:text-base uppercase tracking-wider transition-all cursor-pointer shadow-lg hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          {/* Checkout. Outside the scroll area and above the home indicator,
+              so the one control that takes the money is always on screen. */}
+          <div
+            className="shrink-0 border-t border-border/80 bg-card p-4 flex flex-col gap-2.5"
+            style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
           >
-            <ShieldAlert className="w-4 h-4 shrink-0" />
-            <span>{isSubmitting ? "INITIATING..." : `AUTHORIZE $${amount || 0} STRIKE`}</span>
-          </button>
+            {error && (
+              <p
+                role="alert"
+                className="rounded-2xl border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-xs font-sans text-red-500 font-medium"
+              >
+                {error}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleCheckout}
+              disabled={isSubmitting || !isValidAmount}
+              className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2.5 bg-primary text-primary-foreground font-arcade font-extrabold text-sm sm:text-base uppercase tracking-wider transition-all cursor-pointer shadow-lg hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span>{isSubmitting ? "INITIATING..." : `AUTHORIZE $${amount || 0} STRIKE`}</span>
+            </button>
+          </div>
 
         </motion.div>
       </div>

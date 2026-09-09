@@ -1,49 +1,9 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { getFingerprint } from "@/lib/fingerprint";
 
-const COOKIE = "gr_uid";
 const UNIQUE_VIOLATION = "23505";
-
-/**
- * A stable identity for upvote deduplication.
- *
- * Signed in: the account id, so the limit follows them across devices.
- * Anonymous: a random id pinned in an httpOnly cookie. Not unforgeable —
- * clearing cookies earns another vote — but it stops the actual problem,
- * which was that every click counted as a new person.
- */
-async function getFingerprint(allowCreate: boolean): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) return `u:${user.id}`;
-
-  const jar = await cookies();
-  const existing = jar.get(COOKIE)?.value;
-  if (existing) return `a:${existing}`;
-
-  // Only a Server Action may write cookies. During render (getMyUpvotes) we
-  // must not mint one — an anonymous visitor with no cookie simply has no
-  // upvotes yet, which is the correct answer.
-  if (!allowCreate) return null;
-
-  const id = crypto.randomUUID();
-
-  jar.set(COOKIE, id, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 365,
-    path: "/",
-  });
-
-  return `a:${id}`;
-}
 
 export type UpvoteResult = {
   success: boolean;

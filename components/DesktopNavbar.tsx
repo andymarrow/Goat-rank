@@ -22,6 +22,7 @@ const LINKS = [
   { href: "/profile", label: "Ranks" },
   { href: "/create", label: "Host" },
   { href: "/dashboard", label: "Command" },
+  { href: "/requests", label: "Requests" },
 ];
 
 export default function DesktopNavbar() {
