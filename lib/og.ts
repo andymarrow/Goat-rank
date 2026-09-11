@@ -2,7 +2,6 @@ import "server-only";
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
 
 /**
@@ -174,6 +173,7 @@ export async function ogImage(url: string | null, size: number): Promise<string 
       input = Buffer.from(await res.arrayBuffer());
     }
 
+    const sharp = (await import("sharp")).default;
     const png = await sharp(input)
       .resize(size, size, { fit: "cover", position: "attention" })
       .png()
