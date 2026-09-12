@@ -1,2 +1,9 @@
 allowBuilds:
-  unrs-resolver: set this to true or false
+  unrs-resolver: true
+  sharp: true
+  "@tailwindcss/oxide": true
+  "@tailwindcss/oxide-darwin-arm64": true
+  "@tailwindcss/oxide-linux-x64-gnu": true
+  "@tailwindcss/oxide-linux-x64-musl": true
+  "@tailwindcss/oxide-linux-arm64-gnu": true
+  "@tailwindcss/oxide-linux-arm64-musl": true
