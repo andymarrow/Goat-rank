@@ -20,19 +20,19 @@ export default function SiteFooter() {
               GOAT<span className="text-primary">RANK</span>
             </span>
           </span>
-          <p className="text-[11px] text-foreground/40 font-sans mt-1 max-w-xs leading-relaxed">
+          {/* <p className="text-[11px] text-foreground/40 font-sans mt-1 max-w-xs leading-relaxed">
             Settle the debate. 30% of every arena goes to charity.
-          </p>
+          </p> */}
         </div>
 
         <nav aria-label="Legal" className="flex flex-wrap gap-x-5 gap-y-2">
-          <Link
+          {/* <Link
             href="/legal/money"
             className="font-arcade text-[10px] uppercase tracking-widest text-foreground/50
                        hover:text-primary transition-colors inline-flex items-center gap-1.5"
           >
             <HeartHandshake className="w-3 h-3" /> Where the money goes
-          </Link>
+          </Link> */}
           {[
             { href: "/faq", label: "How it works" },
             { href: "/requests", label: "Requests" },

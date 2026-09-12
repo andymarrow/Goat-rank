@@ -7,18 +7,18 @@ import { ArrowLeft, ShieldAlert, CheckCircle2, Zap, Users, ImageOff } from "luci
 import { readableBrand, onBrand } from "@/lib/color";
 import { useIsDark } from "@/lib/useIsDark";
 
-export default function ReviewStep({ 
-  formData, 
-  onPrev, 
+export default function ReviewStep({
+  formData,
+  onPrev,
   onCheckout,
-  isSubmitting 
-}: { 
-  formData: any; 
+  isSubmitting
+}: {
+  formData: any;
   onPrev: () => void;
   onCheckout: () => void;
   isSubmitting: boolean;
 }) {
-  
+
   const isDark = useIsDark();
   const [accepted, setAccepted] = useState(false);
   const is1v1 = formData.roomType === "1v1";
@@ -26,23 +26,23 @@ export default function ReviewStep({
 
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500 font-sans">
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        
+
         {/* --- LEFT: BATTLE PREVIEW --- */}
         <div>
           <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-4">DEPLOYMENT PREVIEW</h3>
-          
+
           <div className="bg-card border border-border/80 rounded-2xl p-6 relative shadow-lg">
             <div className="absolute top-4 right-4 bg-primary/10 border border-primary/30 text-primary text-[10px] px-2.5 py-1 font-bold rounded-lg flex items-center gap-1">
               {is1v1 ? <Zap className="w-3 h-3" /> : <Users className="w-3 h-3" />}
               <span>{is1v1 ? "1V1 FACE-OFF" : "GLOBAL ARENA"}</span>
             </div>
-            
+
             <h2 className="text-xl font-extrabold text-foreground mb-6 uppercase tracking-tight pr-28">
               {formData.title}
             </h2>
-            
+
             {is1v1 ? (
               /* 1V1 Preview */
               <div className="flex items-stretch justify-between gap-3 relative">
@@ -131,33 +131,33 @@ export default function ReviewStep({
 
         {/* --- RIGHT: TERMINAL RECEIPT --- */}
         <div>
-           <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-4">AUTHORIZATION RECEIPT</h3>
-           <div className="bg-muted/40 border border-border/80 p-6 rounded-2xl text-sm flex flex-col gap-4 shadow-sm">
-              <div className="flex justify-between items-center text-foreground font-semibold border-b border-border/60 pb-4">
-                <span>CREATOR PASS (3 ROOMS)</span>
-                <span className="font-extrabold tabular-nums">$10.00</span>
+          <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-4">AUTHORIZATION RECEIPT</h3>
+          <div className="bg-muted/40 border border-border/80 p-6 rounded-2xl text-sm flex flex-col gap-4 shadow-sm">
+            <div className="flex justify-between items-center text-foreground font-semibold border-b border-border/60 pb-4">
+              <span>CREATOR PASS (3 ROOMS)</span>
+              <span className="font-extrabold tabular-nums">$10.00</span>
+            </div>
+            <div className="flex flex-col gap-2.5 text-xs text-muted-foreground border-b border-border/60 pb-4">
+              <div className="flex items-center gap-2 text-emerald-400 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>10% CREATOR COMMISSION ENABLED</span>
               </div>
-              <div className="flex flex-col gap-2.5 text-xs text-muted-foreground border-b border-border/60 pb-4">
-                <div className="flex items-center gap-2 text-emerald-400 font-medium">
+              <div className="flex items-center gap-2 text-rose-400 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>30% CHARITY SPLIT VERIFIED</span>
+              </div>
+              {!is1v1 && (
+                <div className="flex items-center gap-2 text-primary font-medium">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>10% CREATOR COMMISSION ENABLED</span>
+                  <span>FREE "ADD CONTENDER" ADMIN ACCESS</span>
                 </div>
-                <div className="flex items-center gap-2 text-rose-400 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>30% CHARITY SPLIT VERIFIED</span>
-                </div>
-                {!is1v1 && (
-                  <div className="flex items-center gap-2 text-primary font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>FREE "ADD CONTENDER" ADMIN ACCESS</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-between items-end pt-1">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">TOTAL DUE</span>
-                <span className="text-3xl font-black text-primary tabular-nums">$10.00</span>
-              </div>
-           </div>
+              )}
+            </div>
+            <div className="flex justify-between items-end pt-1">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">TOTAL DUE</span>
+              <span className="text-3xl font-black text-primary tabular-nums">$10.00</span>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -188,13 +188,13 @@ export default function ReviewStep({
             Privacy policy
           </Link>{" "}
           and{" "}
-          <Link
+          {/* <Link
             href="/legal/money"
             target="_blank"
             className="text-primary font-semibold underline underline-offset-2 hover:brightness-125"
           >
             where the money goes
-          </Link>
+          </Link> */}
           . I understand votes placed in my arena are non-refundable and that 30% of the pool goes
           to charity.
         </span>

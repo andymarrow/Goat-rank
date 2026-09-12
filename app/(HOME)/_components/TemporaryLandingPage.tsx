@@ -153,7 +153,7 @@ export default function TemporaryLandingPage() {
       {/* 1. HERO SECTION */}
       <section className="w-full pt-4 flex flex-col items-center text-center gap-8 relative">
         <div className="absolute inset-0 -z-10 pointer-events-none tex-grid" />
-        
+
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
@@ -176,7 +176,7 @@ export default function TemporaryLandingPage() {
             Discover & Collect <br className="hidden sm:inline" />
             What People <span className="text-primary italic">Really</span> Think
           </h1>
-          
+
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             <strong className="text-foreground font-semibold">GoatRank</strong> is a social platform for discovering and collecting people&apos;s opinions on a wide range of topics—from everyday choices to grand debates.
           </p>
@@ -232,11 +232,10 @@ export default function TemporaryLandingPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveCategory(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-                    activeCategory === tab.id
-                      ? "bg-primary text-white shadow-md shadow-primary/20"
-                      : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${activeCategory === tab.id
+                    ? "bg-primary text-white shadow-md shadow-primary/20"
+                    : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -266,11 +265,10 @@ export default function TemporaryLandingPage() {
               <button
                 onClick={() => handleVote(activeCategory, "A")}
                 disabled={Boolean(userVotes[activeCategory])}
-                className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden group ${
-                  userVotes[activeCategory] === "A"
-                    ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/30"
-                    : "border-border bg-background hover:border-primary/50 hover:bg-muted/20"
-                }`}
+                className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden group ${userVotes[activeCategory] === "A"
+                  ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/30"
+                  : "border-border bg-background hover:border-primary/50 hover:bg-muted/20"
+                  }`}
               >
                 <div className="flex justify-between items-start mb-2 relative z-10">
                   <span className="font-bold text-base sm:text-lg group-hover:text-primary transition-colors">
@@ -297,11 +295,10 @@ export default function TemporaryLandingPage() {
               <button
                 onClick={() => handleVote(activeCategory, "B")}
                 disabled={Boolean(userVotes[activeCategory])}
-                className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden group ${
-                  userVotes[activeCategory] === "B"
-                    ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/30"
-                    : "border-border bg-background hover:border-primary/50 hover:bg-muted/20"
-                }`}
+                className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden group ${userVotes[activeCategory] === "B"
+                  ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/30"
+                  : "border-border bg-background hover:border-primary/50 hover:bg-muted/20"
+                  }`}
               >
                 <div className="flex justify-between items-start mb-2 relative z-10">
                   <span className="font-bold text-base sm:text-lg group-hover:text-primary transition-colors">
@@ -472,11 +469,10 @@ export default function TemporaryLandingPage() {
                 <button
                   key={item.group}
                   onClick={() => setActiveGroupIndex(idx)}
-                  className={`py-1.5 px-2 rounded-lg font-semibold truncate transition-all ${
-                    activeGroupIndex === idx
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`py-1.5 px-2 rounded-lg font-semibold truncate transition-all ${activeGroupIndex === idx
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                    }`}
                 >
                   {item.group.split(" ")[0]}
                 </button>
@@ -619,11 +615,11 @@ export default function TemporaryLandingPage() {
           <span className="font-bold text-foreground">GOAT Rank</span>
           <span>© {new Date().getFullYear()} All rights reserved.</span>
         </div>
-        <div className="flex items-center gap-4">
+        {/* <div className="flex items-center gap-4">
           <Link href="/arena" className="hover:text-primary transition-colors underline font-medium">
             Switch to Battle Arena Page
           </Link>
-        </div>
+        </div> */}
       </footer>
     </div>
   );
