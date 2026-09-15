@@ -49,7 +49,7 @@ export default function FaceOffsRow({ liveBattles }: { liveBattles: any[] }) {
             {/* Left Image Frame */}
             <div className="relative w-1/2 h-full rounded-lg overflow-hidden bg-black/40">
               {c1.image_url ? (
-                <Image src={c1.image_url} alt={c1.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                <Image src={c1.image_url} alt={c1.name} fill sizes="(max-width: 640px) 150px, 180px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center font-bold text-xs" style={{ color: c1.brand_color }}>
                   {c1.name.charAt(0)}
@@ -65,7 +65,7 @@ export default function FaceOffsRow({ liveBattles }: { liveBattles: any[] }) {
             {/* Right Image Frame */}
             <div className="relative w-1/2 h-full rounded-lg overflow-hidden bg-black/40">
               {c2.image_url ? (
-                <Image src={c2.image_url} alt={c2.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                <Image src={c2.image_url} alt={c2.name} fill sizes="(max-width: 640px) 150px, 180px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center font-bold text-xs" style={{ color: c2.brand_color }}>
                   {c2.name.charAt(0)}

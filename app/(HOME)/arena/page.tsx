@@ -1,12 +1,5 @@
-import OriginalHomePage, { metadata as originalMetadata } from "../page.original";
+import { redirect } from "next/navigation";
 
-export const metadata = originalMetadata;
-export const dynamic = "force-dynamic";
-
-export default async function ArenaPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ sort?: string; category?: string; mock?: string }>;
-}) {
-  return <OriginalHomePage searchParams={searchParams} />;
+export default function ArenaPage() {
+  redirect("/");
 }

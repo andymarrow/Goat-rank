@@ -153,7 +153,7 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                 {/* Left Contender Image */}
                 <div className="relative w-1/2 h-full rounded-xl overflow-hidden bg-black/40">
                   {leftContender.image_url ? (
-                    <Image src={leftContender.image_url} alt={leftContender.name} fill className="object-cover" />
+                    <Image src={leftContender.image_url} alt={leftContender.name} fill sizes="(max-width: 640px) 150px, 300px" className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center font-bold text-lg text-primary">
                       {leftContender.name.charAt(0)}
@@ -169,7 +169,7 @@ export default function HeroCarousel({ rooms }: { rooms: LandingRoom[] }) {
                 {/* Right Contender Image */}
                 <div className="relative w-1/2 h-full rounded-xl overflow-hidden bg-black/40">
                   {rightContender.image_url ? (
-                    <Image src={rightContender.image_url} alt={rightContender.name} fill className="object-cover" />
+                    <Image src={rightContender.image_url} alt={rightContender.name} fill sizes="(max-width: 640px) 150px, 300px" className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center font-bold text-lg text-primary">
                       {rightContender.name.charAt(0)}
