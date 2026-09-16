@@ -109,9 +109,19 @@ async function getVoteCounts(
   }
 }
 
-/** Convert raw 1v1 mock object to LandingRoom format */
+/**
+ * A room stays `active` past its deadline until something settles it, so
+ * status alone is not enough to know an arena is still open. Every listing
+ * that offers an arena to back filters on both.
+ */
+const openNow = () => new Date().toISOString();
+
 /**
  * Rooms for the hero carousel.
+ *
+ * Open arenas only. A finished contest on the hero is an invitation to back
+ * something that cannot be backed, which is the worst slot on the site to put
+ * a dead end in.
  */
 export async function getFeaturedRooms(limit = 4): Promise<LandingRoom[]> {
   let dbRooms: LandingRoom[] = [];
@@ -122,6 +132,7 @@ export async function getFeaturedRooms(limit = 4): Promise<LandingRoom[]> {
       .from("rooms")
       .select(SELECT)
       .eq("status", "active")
+      .gt("expires_at", openNow())
       .eq("is_featured", true)
       .order("featured_rank", { ascending: true })
       .limit(limit);
@@ -133,6 +144,7 @@ export async function getFeaturedRooms(limit = 4): Promise<LandingRoom[]> {
         .from("rooms")
         .select(SELECT)
         .eq("status", "active")
+        .gt("expires_at", openNow())
         .order("total_pool", { ascending: false })
         .limit(limit);
 
@@ -157,7 +169,7 @@ export async function getFeaturedRooms(limit = 4): Promise<LandingRoom[]> {
     return combined.slice(0, limit);
 }
 
-/** Active global (1-vs-many) arenas, biggest pool first. */
+/** Open global (1-vs-many) arenas, biggest pool first. */
 export async function getGlobalRooms(limit = 12): Promise<LandingRoom[]> {
   let dbRooms: LandingRoom[] = [];
   try {
@@ -167,6 +179,7 @@ export async function getGlobalRooms(limit = 12): Promise<LandingRoom[]> {
       .from("rooms")
       .select(SELECT)
       .eq("status", "active")
+      .gt("expires_at", openNow())
       .eq("room_type", "global")
       .order("total_pool", { ascending: false })
       .limit(limit);
@@ -182,4 +195,37 @@ export async function getGlobalRooms(limit = 12): Promise<LandingRoom[]> {
   const combined = [...dbRooms];
 
     return combined.slice(0, limit);
+}
+
+/**
+ * Arenas that are over, most recently ended first.
+ *
+ * Kept off the hero and out of the two live rails, and given their own section
+ * at the bottom of the page: a settled contest is a result to read, not an
+ * offer to back, and mixing the two is how a homepage ends up full of buttons
+ * that do nothing. Settled rooms and rooms simply past their deadline are the
+ * same thing to a visitor, so both are here.
+ */
+export async function getFinishedRooms(limit = 8): Promise<LandingRoom[]> {
+  try {
+    const supabase = await createClient();
+    const now = new Date().toISOString();
+
+    const { data } = await supabase
+      .from("rooms")
+      .select(SELECT)
+      .or(`status.eq.settled,and(status.eq.active,expires_at.lte.${now})`)
+      .order("expires_at", { ascending: false })
+      .limit(limit);
+
+    const rooms = (data ?? []) as unknown as RawRoom[];
+    const counts = await getVoteCounts(supabase, rooms.map((r) => r.id));
+
+    return rooms
+      .map((r) => shape(r, counts))
+      .filter((r) => r.room_type === "global" || r.contenders.length >= 2);
+  } catch (error) {
+    console.error("Error fetching finished rooms from Supabase:", error);
+    return [];
+  }
 }

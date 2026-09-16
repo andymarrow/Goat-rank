@@ -4,10 +4,11 @@ import HeroCarousel from "./_components/HeroCarousel";
 import GlobalLeaderboardsRow from "./_components/GlobalLeaderboardsRow";
 import FaceOffsRow from "./_components/FaceOffsRow";
 import ArenaFilters from "./_components/ArenaFilters";
+import FinishedArenasRow from "./_components/FinishedArenasRow";
 import SearchLauncher from "@/components/ui/SearchLauncher";
 import LivePresence from "@/components/ui/LivePresence";
 import { getActive1v1Rooms, getLiveCategories } from "@/actions/getRooms";
-import { getFeaturedRooms, getGlobalRooms } from "@/actions/getLanding";
+import { getFeaturedRooms, getGlobalRooms, getFinishedRooms } from "@/actions/getLanding";
 import { isRoomSort } from "@/lib/constants";
 import {
   absolute, breadcrumbSchema, jsonLd, leaderboardSchema, DESCRIPTION,
@@ -37,11 +38,12 @@ export default async function HomePage({
   const sort = isRoomSort(params.sort) ? params.sort : "hot";
   const category = params.category ?? "all";
 
-  const [live1v1Battles, categories, featured, globalRooms] = await Promise.all([
+  const [live1v1Battles, categories, featured, globalRooms, finishedRooms] = await Promise.all([
     getActive1v1Rooms(sort, category),
     getLiveCategories(),
     getFeaturedRooms(4),
     getGlobalRooms(12),
+    getFinishedRooms(8),
   ]);
 
   const schema = jsonLd(
@@ -110,6 +112,9 @@ export default async function HomePage({
       <FaceOffsRow liveBattles={live1v1Battles} />
 
       <GlobalLeaderboardsRow rooms={globalRooms} />
+
+      {/* Results live at the foot of the page, below everything backable. */}
+      <FinishedArenasRow rooms={finishedRooms} />
     </div>
   );
 }

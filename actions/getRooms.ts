@@ -35,14 +35,13 @@ export async function getActive1v1Rooms(
       .from("rooms")
       .select(SELECT)
       .eq("status", "active")
+      // Past its deadline counts as closed even though nothing has settled the
+      // row yet, and a finished face-off does not belong in the live rail.
+      .gt("expires_at", new Date().toISOString())
       .eq("room_type", "1v1");
 
     if (category && category !== "all") {
       query = query.ilike("category", category);
-    }
-
-    if (sort === "closing") {
-      query = query.gte("expires_at", new Date().toISOString());
     }
 
     const { data, error } = await query.order(column, { ascending }).limit(40);
@@ -83,7 +82,8 @@ export async function getLiveCategories(): Promise<string[]> {
     const { data, error } = await supabase
       .from("rooms")
       .select("category")
-      .eq("status", "active");
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString());
 
     if (!error && data) {
       dbCategories = data.map((r) => r.category).filter(Boolean);
