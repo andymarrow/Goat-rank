@@ -6,6 +6,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { headers } from "next/headers";
 import { stripe, toCents, metadata } from "@/lib/stripe";
 import { createClient } from "@/utils/supabase/server";
+import { isArenaClosed } from "@/lib/arena";
 
 // Mirrors the minimum enforced by the VoteModal input. A Server Action is a
 // public HTTP endpoint, so the client-side `min` attribute proves nothing.
@@ -63,7 +64,7 @@ export async function createVoteCheckout(data: {
     const supabase = await createClient();
     const { data: room, error: roomError } = await supabase
       .from("rooms")
-      .select("id, room_type, status")
+      .select("id, room_type, status, expires_at")
       .eq("id", data.roomId)
       .single();
 
@@ -72,9 +73,11 @@ export async function createVoteCheckout(data: {
       return { error: "Arena not found." };
     }
 
-    // Never take money for a contest that has already closed.
-    if (room.status !== "active") {
-      return { error: "This arena is no longer accepting votes." };
+    // Never take money for a contest that has already closed. The deadline
+    // counts as well as the status: nothing settles a room on a schedule, so
+    // an expired arena sits at status "active" while its page says CLOSED.
+    if (room.status !== "active" || isArenaClosed(room.expires_at, room.status)) {
+      return { error: "This arena has closed. No more pledges are being accepted." };
     }
 
     // Attribute the vote to the signed-in account. The browser previously
@@ -344,12 +347,14 @@ export async function createContenderCheckout(data: {
 
     const { data: room, error: roomError } = await supabase
       .from("rooms")
-      .select("id, title, category, status, room_type")
+      .select("id, title, category, status, room_type, expires_at")
       .eq("id", data.roomId)
       .single();
 
     if (roomError || !room) return { error: "Arena not found." };
-    if (room.status !== "active") return { error: "This arena is not accepting contenders." };
+    if (room.status !== "active" || isArenaClosed(room.expires_at, room.status)) {
+      return { error: "This arena has closed. No more contenders can be added." };
+    }
     if (room.room_type !== "global") return { error: "Contenders can only be added to global arenas." };
 
     const { data: creditSpent } = await supabase.rpc("consume_contender_credit", {

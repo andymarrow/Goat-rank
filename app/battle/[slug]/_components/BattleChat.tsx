@@ -5,6 +5,7 @@ import { MessageSquare, Heart, Crown } from "lucide-react";
 import FeedList from "@/components/ui/FeedList";
 import CharityVote from "@/components/ui/CharityVote";
 import type { CharityTally } from "@/actions/charityVote";
+import { isArenaClosed } from "@/lib/arena";
 
 export default function BattleChat({
   battle,
@@ -65,6 +66,7 @@ export default function BattleChat({
             </div>
 
             <CharityVote
+              closed={isArenaClosed(battle.expiresAt, battle.status)}
               onLeaderChange={onLeaderChange}
               roomId={battle.id}
               charities={battle.charities ?? []}

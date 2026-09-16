@@ -29,6 +29,8 @@ import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 import CharityVote from "@/components/ui/CharityVote";
 import CharityCard, { type Beneficiary } from "@/components/ui/CharityCard";
 import LivePresence from "@/components/ui/LivePresence";
+import ArenaResult from "@/components/ui/ArenaResult";
+import { isArenaClosed } from "@/lib/arena";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import Countdown from "@/components/ui/Countdown";
 
@@ -47,6 +49,9 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
   const [beneficiary, setBeneficiary] = useState<Beneficiary | null>(
     roomData.beneficiary ?? null
   );
+
+  // Same helper the checkout action uses, so the page and the server agree.
+  const closed = isArenaClosed(roomData.expiresAt, roomData.status);
 
   const handleLeaderChange = (
     leader: { charity_id: string; charity_name: string; logo_url: string | null } | null
@@ -234,11 +239,12 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
 
             {/* Primary Action Button */}
             <button
+              disabled={closed}
               onClick={() => setIsAddModalOpen(true)}
-              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs uppercase tracking-wider hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2 mt-1"
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs uppercase tracking-wider hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2 mt-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
             >
               <UserPlus className="w-4 h-4" />
-              <span>Add Contender</span>
+              <span>{closed ? "Arena closed" : "Add Contender"}</span>
             </button>
 
             <div className="flex justify-center pt-1">
@@ -258,6 +264,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
               </h3>
             </div>
             <CharityVote
+              closed={closed}
               onLeaderChange={handleLeaderChange}
               roomId={roomData.id}
               charities={roomData.charities ?? []}
@@ -271,6 +278,26 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
 
         {/* RIGHT COLUMN: SEARCH & SORT TOOLBAR + CONTENDER CARDS GRID */}
         <div className="w-full flex-1 min-w-0 flex flex-col gap-6">
+          {/* Closed: the standing is the content now, so it leads the column
+              and the grid below becomes the archive of who took part. */}
+          {closed && (
+            <ArenaResult
+              roomId={roomData.id}
+              roomType="global"
+              title={roomData.title}
+              status={roomData.status ?? "active"}
+              expiresAt={roomData.expiresAt}
+              totalPool={Number(roomData.totalPool) || 0}
+              charity={beneficiary}
+              contenders={(roomData.rankings ?? []).map((c: any) => ({
+                name: c.name,
+                amount: Number(c.amount) || 0,
+                image: c.img,
+                color: c.color,
+                entityId: c.id,
+              }))}
+            />
+          )}
 
           {/* TOOLBAR: Search Input, Counter Badge & Professional Sort Dropdown */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border/80 p-3 rounded-2xl shadow-sm">
@@ -467,14 +494,15 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
 
                     {/* Vote Action Button */}
                     <button
+                      disabled={closed}
                       onClick={() => handleVoteClick(contender.id)}
-                      className={`w-full py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 mt-1 active:scale-[0.98] ${isLeader
+                      className={`w-full py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 mt-1 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${isLeader
                         ? "bg-primary text-primary-foreground hover:opacity-95"
                         : "bg-muted border border-border/60 text-foreground hover:bg-muted"
                         }`}
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Back {contender.name}</span>
+                      <span>{closed ? "Closed" : `Back ${contender.name}`}</span>
                     </button>
                   </div>
                 );

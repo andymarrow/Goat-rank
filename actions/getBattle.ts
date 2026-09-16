@@ -16,6 +16,7 @@ export async function getBattleData(roomId: string) {
       category,
       charity_name,
       charity_id,
+      status,
       total_pool,
       expires_at,
       room_contenders (
@@ -78,6 +79,7 @@ export async function getBattleData(roomId: string) {
     id: room.id,
     title: room.title,
     category: room.category,
+    status: room.status,
     charity: room.charity_name,
     // The cause, with its logo and link, for the arena's charity card.
     //

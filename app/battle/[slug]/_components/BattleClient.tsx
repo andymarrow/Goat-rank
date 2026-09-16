@@ -7,6 +7,8 @@ import VoteModal from "./VoteModal";
 import { createClient } from "@/utils/supabase/client"; // <-- Import the client!
 import { onBrand } from "@/lib/color";
 import CharityCard, { type Beneficiary } from "@/components/ui/CharityCard";
+import ArenaResult from "@/components/ui/ArenaResult";
+import { isArenaClosed } from "@/lib/arena";
 import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 
 export default function BattleClient({ initialBattleData }: { initialBattleData: any }) {
@@ -18,6 +20,10 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
   const [beneficiary, setBeneficiary] = useState<Beneficiary | null>(
     battleData.beneficiary ?? null
   );
+
+  // Decided once per render from the same helper the server uses, so the page
+  // and the checkout action can never disagree about whether this is over.
+  const closed = isArenaClosed(battleData.expiresAt, battleData.status);
 
   const handleLeaderChange = (leader: { charity_id: string; charity_name: string; logo_url: string | null } | null) =>
     setBeneficiary((current) =>
@@ -100,7 +106,36 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
       <div className="w-full max-w-[1600px] mx-auto py-3 sm:py-5 md:p-6 pb-28 lg:pb-6 flex flex-col lg:flex-row gap-6 items-stretch lg:items-start">
         {/* Center Main Arena Column */}
         <div className="flex-1 w-full min-w-0 flex flex-col gap-6">
-          <BattleArena battle={battleData} onVoteClick={handleVoteClick} />
+          {/* A closed contest is not a broken live one: the result replaces
+              the stage rather than greying out its buttons. */}
+          {closed ? (
+            <ArenaResult
+              roomId={battleData.id}
+              roomType="1v1"
+              title={battleData.title}
+              status={battleData.status ?? "active"}
+              expiresAt={battleData.expiresAt}
+              totalPool={Number(battleData.totalPool) || 0}
+              charity={beneficiary}
+              contenders={(battleData.contenders ?? []).map(
+                (c: {
+                  name: string;
+                  amount: number;
+                  image: string | null;
+                  color: string | null;
+                  entityId?: string;
+                }) => ({
+                  name: c.name,
+                  amount: Number(c.amount) || 0,
+                  image: c.image,
+                  color: c.color,
+                  entityId: c.entityId ?? null,
+                })
+              )}
+            />
+          ) : (
+            <BattleArena battle={battleData} onVoteClick={handleVoteClick} />
+          )}
 
           {/* Who the 30% actually reaches. A name on its own asked people to
               pledge to something they may not recognise. */}
@@ -135,6 +170,7 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
           home-indicator inset; long contender names truncate instead of
           forcing the two buttons to different heights. */}
       {/* Mobile vote bar */}
+      {!closed && (
       <div
         className="lg:hidden fixed bottom-16 inset-x-0 bg-card/95 backdrop-blur-xl border-t border-border/80 px-3 py-2.5 z-[52] flex gap-2.5 shadow-2xl"
         style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}
@@ -159,6 +195,7 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
           );
         })}
       </div>
+      )}
 
       <VoteModal
         isOpen={isModalOpen}
