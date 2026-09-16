@@ -1,18 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import {
   DollarSign, HeartHandshake, Users, Swords, Zap, Vote,
-  RefreshCw, Landmark, TriangleAlert,
+  RefreshCw, Landmark, TriangleAlert, ExternalLink,
 } from "lucide-react";
 
-import type { AdminOverview } from "@/actions/admin/analytics";
-import { syncStripe, type SyncReport } from "@/actions/admin/sync";
-import { Panel, StatTile, ActionButton, money, compact, Badge } from "./AdminPrimitives";
+import type { AdminOverview, ArenaPerformance } from "@/actions/admin/analytics";
+import type { SyncReport } from "@/actions/admin/sync";
+import { Panel, StatTile, money, compact, Badge, EmptyState } from "./AdminPrimitives";
+import { formatSince } from "@/lib/time";
 
-export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
-  const { treasury, pulse, volumeSeries } = overview;
-  const [report, setReport] = useState<SyncReport | null>(null);
+export default function GodEyePanel({
+  overview,
+  sync,
+  syncError,
+}: {
+  overview: AdminOverview;
+  sync: SyncReport | null;
+  syncError: string | null;
+}) {
+  const {
+    treasury, pulse, volumeSeries, topArenas, newestArenas, topContenders, closedWithRevenue,
+  } = overview;
 
   const peak = Math.max(...volumeSeries.map((p) => p.amount), 1);
 
@@ -143,57 +153,129 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
         </div>
       </Panel>
 
-      {/* ----------------------------------------------------------- SYNC */}
+      {/* ------------------------------------------------ ARENA PERFORMANCE */}
       <Panel
-        title="Stripe sync"
-        subtitle="Cross-reference payments to catch refunds and chargebacks."
+        title="Arena performance"
+        subtitle="Ranked by real money taken, not by the pool shown on the page."
         action={
-          <ActionButton
-            variant="primary"
-            onRun={async () => {
-              const res = await syncStripe();
-              if (res.ok) setReport(res.data);
-              return res;
-            }}
-          >
-            <RefreshCw className="w-3 h-3" /> Run sync
-          </ActionButton>
+          closedWithRevenue > 0 ? (
+            <Badge tone="warn">{closedWithRevenue} closed with revenue</Badge>
+          ) : undefined
         }
       >
-        {!report ? (
-          <p className="text-xs text-muted-foreground font-sans leading-relaxed">
-            Scans the most recent 100 charges. A refunded payment flips its vote to{" "}
-            <code className="text-foreground/70">refunded</code>, which fires the reversal trigger
-            and backs the money out of the pool, the entity total and the creator&apos;s wallet.
-            Payments with no matching vote are reported for you to inspect, those mean a webhook
-            delivery was lost, and Stripe can resend the event to repair it.
+        {topArenas.length === 0 ? (
+          <EmptyState message="No arena has taken a real pledge yet" />
+        ) : (
+          <ArenaTable arenas={topArenas} />
+        )}
+      </Panel>
+
+      {/* --------------------------------------------------- TOP CONTENDERS */}
+      <Panel
+        title="Most backed contenders"
+        subtitle="Real pledges only, summed across every arena a contender appears in."
+      >
+        {topContenders.length === 0 ? (
+          <EmptyState message="No contender has been backed with real money yet" />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {topContenders.map((c, i) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-3 p-2.5 bg-background border border-border/60 rounded-xl"
+              >
+                <span className="w-6 shrink-0 font-mono text-[11px] font-bold text-muted-foreground tabular-nums">
+                  {i + 1}
+                </span>
+
+                <Link
+                  href={`/profile/${c.id}`}
+                  target="_blank"
+                  className="font-mono text-[11px] font-bold text-foreground hover:text-primary
+                             transition-colors truncate flex-1 min-w-0"
+                >
+                  {c.name}
+                </Link>
+
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">
+                  {c.arenas} arena{c.arenas === 1 ? "" : "s"} · {c.realVotes} pledge
+                  {c.realVotes === 1 ? "" : "s"}
+                </span>
+
+                <span className="text-sm font-extrabold text-emerald-500 tabular-nums shrink-0">
+                  {money(c.realRevenue)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
+      {/* -------------------------------------------------------- NEW ARENAS */}
+      <Panel
+        title="Newest arenas"
+        subtitle="What has been deployed lately, and whether anyone has paid into it."
+      >
+        {newestArenas.length === 0 ? (
+          <EmptyState message="No arenas yet" />
+        ) : (
+          <ArenaTable arenas={newestArenas} showAge />
+        )}
+      </Panel>
+
+      {/* ----------------------------------------------------------- SYNC */}
+      <Panel
+        title="Stripe reconciliation"
+        subtitle="Run automatically on every load of this page."
+        action={
+          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            <RefreshCw className="w-3 h-3" /> Synced just now
+          </span>
+        }
+      >
+        {syncError ? (
+          <p role="alert" className="text-[11px] text-red-500 font-sans">
+            {syncError}
           </p>
+        ) : !sync ? (
+          <p className="text-xs text-muted-foreground font-sans">Nothing to reconcile yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <StatTile label="Charges scanned" value={String(report.ordersScanned)} />
-              <StatTile label="Refunds found" value={String(report.refundsFound)} />
+              <StatTile label="Charges scanned" value={String(sync.ordersScanned)} />
+              <StatTile label="Refunds found" value={String(sync.refundsFound)} />
               <StatTile
                 label="Reversals applied"
-                value={String(report.refundsApplied)}
-                accent={report.refundsApplied > 0 ? "text-amber-500" : "text-foreground"}
+                value={String(sync.refundsApplied)}
+                accent={sync.refundsApplied > 0 ? "text-amber-500" : "text-foreground"}
               />
               <StatTile
                 label="Value reversed"
-                value={money(report.reversedTotal)}
-                accent={report.reversedTotal > 0 ? "text-red-500" : "text-foreground"}
+                value={money(sync.reversedTotal)}
+                accent={sync.reversedTotal > 0 ? "text-red-500" : "text-foreground"}
               />
             </div>
 
-            {report.missingInDb.length > 0 && (
+            <p className="text-[11px] text-muted-foreground font-sans leading-relaxed">
+              Reads the most recent 100 Stripe charges. A refunded payment flips its vote to{" "}
+              <code className="text-foreground/70">refunded</code>, which fires the reversal trigger
+              and backs the money out of the pool, the contender total and the creator&apos;s
+              wallet. Every figure above this panel is computed after that has run.
+            </p>
+
+            {sync.missingInDb.length > 0 && (
               <div className="border border-red-500/40 bg-red-500/10 rounded-xl p-3">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-red-500 mb-2">
-                  {report.missingInDb.length} paid order(s) with no vote row
+                  {sync.missingInDb.length} paid charge(s) with no vote row
+                </p>
+                <p className="text-[11px] text-foreground/70 font-sans mb-2">
+                  Someone paid and the arena never recorded it. Resend the event from the Stripe
+                  dashboard to repair each one.
                 </p>
                 <ul className="flex flex-col gap-1 font-sans text-[11px] text-foreground/70">
-                  {report.missingInDb.slice(0, 10).map((m) => (
+                  {sync.missingInDb.slice(0, 10).map((m) => (
                     <li key={m.orderId} className="flex justify-between gap-3">
-                      <code className="truncate">order {m.orderId}</code>
+                      <code className="truncate">{m.orderId}</code>
                       <span className="tabular-nums shrink-0">{money(m.total)}</span>
                     </li>
                   ))}
@@ -203,6 +285,86 @@ export default function GodEyePanel({ overview }: { overview: AdminOverview }) {
           </div>
         )}
       </Panel>
+
     </div>
+  );
+}
+
+/**
+ * Arenas with the two numbers side by side.
+ *
+ * `displayedPool` is what a visitor sees; `realRevenue` is what was actually
+ * paid. On a seeded arena those differ, and showing only the first is how a
+ * dashboard ends up reporting money that was never taken.
+ */
+function ArenaTable({ arenas, showAge = false }: { arenas: ArenaPerformance[]; showAge?: boolean }) {
+  return (
+    <ul className="flex flex-col gap-2">
+      {arenas.map((a) => {
+        const seeded = Math.max(0, a.displayedPool - a.realRevenue);
+
+        return (
+          <li
+            key={a.id}
+            className="flex flex-wrap items-center gap-3 p-3 bg-background border border-border/60 rounded-xl"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/admin/arenas/${a.id}`}
+                  className="font-mono text-[11px] font-bold text-foreground hover:text-primary transition-colors truncate"
+                >
+                  {a.title}
+                </Link>
+                <Badge>{a.roomType}</Badge>
+                {a.isDemo && <Badge tone="hot">seeded</Badge>}
+                {a.closed && <Badge tone="neutral">closed</Badge>}
+              </div>
+
+              <span className="text-[10px] text-muted-foreground font-sans">
+                {a.realVotes} real pledge{a.realVotes === 1 ? "" : "s"} from {a.backers} backer
+                {a.backers === 1 ? "" : "s"}
+                {seeded > 0 ? ` · ${money(seeded)} seeded` : ""}
+                {showAge ? ` · ${formatSince(a.createdAt)}` : ""}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 shrink-0">
+              <span className="flex flex-col items-end">
+                <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                  Real
+                </span>
+                <span
+                  className={`text-sm font-extrabold tabular-nums ${
+                    a.realRevenue > 0 ? "text-emerald-500" : "text-muted-foreground"
+                  }`}
+                >
+                  {money(a.realRevenue)}
+                </span>
+              </span>
+
+              <span className="flex flex-col items-end">
+                <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                  Shown
+                </span>
+                <span className="text-sm font-bold text-foreground/70 tabular-nums">
+                  {money(a.displayedPool)}
+                </span>
+              </span>
+
+              <Link
+                href={`/${a.roomType === "global" ? "global" : "battle"}/${a.id}`}
+                target="_blank"
+                aria-label={`Open ${a.title}`}
+                className="rounded-lg border border-border/60 bg-muted/40 p-1.5 text-muted-foreground
+                           hover:text-primary transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

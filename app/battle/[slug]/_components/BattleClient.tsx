@@ -165,6 +165,7 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
         onClose={() => setIsModalOpen(false)}
         battle={battleData}
         contenderIndex={selectedContender}
+        charityName={beneficiary?.name ?? null}
       />
     </>
   );

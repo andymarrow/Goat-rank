@@ -544,6 +544,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
         isOpen={isVoteModalOpen}
         onClose={() => setIsVoteModalOpen(false)}
         battle={syntheticBattleForModal}
+        charityName={beneficiary?.name ?? null}
         contenderIndex={selectedContenderIndex}
       />
 

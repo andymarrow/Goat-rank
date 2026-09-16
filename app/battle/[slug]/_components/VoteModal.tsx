@@ -13,6 +13,8 @@ interface VoteModalProps {
   onClose: () => void;
   battle: any;
   contenderIndex: number;
+  /** The cause the page is showing, so the two cannot disagree. */
+  charityName?: string | null;
 }
 
 const VOTE_TIERS = [
@@ -24,7 +26,13 @@ const VOTE_TIERS = [
 // Keep in sync with MIN_VOTE_USD in actions/checkout.ts
 const MIN_VOTE = 3;
 
-export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: VoteModalProps) {
+export default function VoteModal({
+  isOpen,
+  onClose,
+  battle,
+  contenderIndex,
+  charityName,
+}: VoteModalProps) {
   const [amount, setAmount] = useState<number>(5);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +43,16 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
 
   const contender = battle.contenders[contenderIndex];
   const charityCut = (amount * 0.30).toFixed(2); // 30% goes to charity
+
+  // The room's own charity_name is a placeholder on a seeded arena
+  // ("Demo Arena") and before a host picks one ("Pending Charity"). The card
+  // on the page shows the leading nomination, so this has to name the same
+  // cause or the modal contradicts the page it opened from.
+  const cause =
+    charityName ??
+    (battle.charity && battle.charity !== "Pending Charity" && battle.charity !== "Demo Arena"
+      ? battle.charity
+      : "the leading charity");
 
   // The placeholder used to name Messi in every arena on the platform, which
   // reads as a bug in a room about anything else. In a head-to-head it taunts
@@ -196,7 +214,7 @@ export default function VoteModal({ isOpen, onClose, battle, contenderIndex }: V
           <div className="bg-muted/30 border border-border/60 p-3 rounded-2xl flex items-start gap-2.5">
             <HeartHandshake className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground leading-relaxed font-sans">
-              <strong className="text-foreground font-semibold">Impact:</strong> ${charityCut} of this vote goes directly to <strong className="text-foreground font-semibold">{battle.charity}</strong>. No refunds on battle votes.
+              <strong className="text-foreground font-semibold">Impact:</strong> ${charityCut} of this vote goes directly to <strong className="text-foreground font-semibold">{cause}</strong>. No refunds on battle votes.
             </p>
           </div>
 

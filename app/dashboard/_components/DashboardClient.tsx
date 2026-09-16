@@ -250,6 +250,14 @@ export default function DashboardClient({
                     <div className="flex flex-col justify-center rounded-xl border border-border/60 bg-muted/30 px-3 py-2 min-w-[92px]">
                       <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Pool</span>
                       <span className="text-sm font-extrabold text-foreground tabular-nums">{money(battle.total_pool)}</span>
+                      {/* A seeded arena's pool is partly staged, and a creator
+                          earns nothing on that half. Say so rather than let
+                          the two numbers look inconsistent. */}
+                      {battle.real_pool < battle.total_pool && (
+                        <span className="text-[9px] text-muted-foreground tabular-nums">
+                          {money(battle.real_pool)} paid
+                        </span>
+                      )}
                     </div>
                     <div className="flex flex-col justify-center rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 min-w-[92px]">
                       <span className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">You earned</span>

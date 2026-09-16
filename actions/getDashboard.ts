@@ -14,7 +14,10 @@ export type DashboardBattle = {
   title: string;
   status: string;
   room_type: string;
+  /** What the arena page displays, seeded pledges included. */
   total_pool: number;
+  /** What was actually paid into it. The two differ on a seeded arena. */
+  real_pool: number;
   my_cut: number;
   expires_at: string;
   /** Contender art, so the listing reads as arenas rather than table rows. */
@@ -78,11 +81,15 @@ export async function getDashboard(): Promise<DashboardData | null> {
       )
       .eq("creator_id", user.id)
       .order("created_at", { ascending: false }),
+    // Real pledges only. A seeded pledge fills a demo arena's pool but nobody
+    // paid it, so counting one here would show a creator commission they will
+    // never be able to withdraw.
     admin
       .from("votes")
       .select("id, amount, created_at, room_id, rooms!inner ( title, creator_id, room_type )")
       .eq("rooms.creator_id", user.id)
       .eq("refunded", false)
+      .eq("is_demo", false)
       .order("created_at", { ascending: false })
       .limit(50),
     admin
@@ -96,15 +103,22 @@ export async function getDashboard(): Promise<DashboardData | null> {
   const profile = profileRes.data;
   const rooms = roomsRes.data ?? [];
 
-  // The creator's 10% is credited per-vote by handle_new_vote, so a room's
-  // commission is simply 10% of its pool.
+  // A pool can contain seeded money, so 10% of the pool is not what the
+  // creator earned. Earnings are computed from the real pledges instead, which
+  // is also what the wallet actually holds.
+  const realByRoom = new Map<string, number>();
+  for (const vote of votesRes.data ?? []) {
+    realByRoom.set(vote.room_id, (realByRoom.get(vote.room_id) ?? 0) + (Number(vote.amount) || 0));
+  }
+
   const battles: DashboardBattle[] = rooms.map((r) => ({
     id: r.id,
     title: r.title,
     status: r.status,
     room_type: r.room_type,
     total_pool: Number(r.total_pool) || 0,
-    my_cut: (Number(r.total_pool) || 0) * 0.1,
+    real_pool: realByRoom.get(r.id) ?? 0,
+    my_cut: (realByRoom.get(r.id) ?? 0) * 0.1,
     expires_at: r.expires_at,
     contenders: ((r as unknown as { room_contenders?: RawContender[] }).room_contenders ?? [])
       .filter((rc) => rc.entities)
