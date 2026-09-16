@@ -9,7 +9,7 @@ import { externalUrl } from "@/lib/url";
 import type { Category, Charity, SiteBanner } from "@/actions/admin/config";
 import {
   upsertCategory, deleteCategory, upsertCharity, deleteCharity,
-  publishBanner, clearBanners,
+  publishBanner, clearBanners, setFreePickAllowance,
 } from "@/actions/admin/config";
 import {
   Panel, ActionButton, Badge, EmptyState, Field, inputClass,
@@ -19,11 +19,14 @@ export default function ConfigPanel({
   categories,
   charities,
   banners,
+  freePickAllowance,
 }: {
   categories: Category[];
   charities: Charity[];
   banners: SiteBanner[];
+  freePickAllowance: number;
 }) {
+  const [freePicks, setFreePicks] = useState(String(freePickAllowance));
   const [newCategory, setNewCategory] = useState({ label: "", accent: "#FF7A00" });
   const [newCharity, setNewCharity] = useState({
     name: "",
@@ -64,6 +67,41 @@ export default function ConfigPanel({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* ------------------------------------------------------- FREE PICKS */}
+      <Panel
+        title="Free picks"
+        subtitle="How many arenas someone can weigh in on before they have to pay to have a say."
+        action={
+          <ActionButton
+            variant="primary"
+            onRun={() => setFreePickAllowance(Number(freePicks))}
+          >
+            <Save className="w-3 h-3" /> Save
+          </ActionButton>
+        }
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="w-32">
+            <Field label="Picks per visitor">
+              <input
+                type="number"
+                min={0}
+                max={500}
+                value={freePicks}
+                onChange={(e) => setFreePicks(e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+
+          <p className="flex-1 min-w-[240px] text-[11px] leading-relaxed text-muted-foreground font-sans">
+            A pick is opinion only: it never moves a pool, a standing or a payout, and the arena
+            says so. Set it to 0 to turn picks off entirely. Too low and a newcomer with nothing to
+            spend bounces; too high and nobody ever reaches for a card.
+          </p>
+        </div>
+      </Panel>
+
       {/* -------------------------------------------------------- MEGAPHONE */}
       <Panel
         title="Global megaphone"

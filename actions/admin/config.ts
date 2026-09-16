@@ -274,3 +274,48 @@ export async function clearBanners(): Promise<AdminResult> {
     return adminError(error, "Could not clear the banner.");
   }
 }
+
+/**
+ * Free-pick allowance.
+ *
+ * How many arenas a visitor can weigh in on before they have to pay to have a
+ * say. A number worth tuning by hand rather than redeploying: too low and a
+ * newcomer bounces, too high and nobody converts.
+ */
+export async function getFreePickAllowance(): Promise<number> {
+  await requireAdmin();
+
+  const { data } = await createAdminClient()
+    .from("app_settings")
+    .select("value")
+    .eq("key", "free_picks_per_user")
+    .maybeSingle();
+
+  const parsed = Number(data?.value);
+  return Number.isFinite(parsed) ? parsed : 10;
+}
+
+export async function setFreePickAllowance(value: number): Promise<AdminResult> {
+  try {
+    await requireAdmin();
+
+    if (!Number.isFinite(value) || value < 0 || value > 500) {
+      return { ok: false, error: "Pick a number between 0 and 500." };
+    }
+
+    const { error } = await createAdminClient()
+      .from("app_settings")
+      .upsert(
+        { key: "free_picks_per_user", value: String(Math.round(value)), updated_at: new Date().toISOString() },
+        { onConflict: "key" }
+      );
+
+    if (error) throw error;
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (error) {
+    return adminError(error, "Could not save that allowance.");
+  }
+}

@@ -30,12 +30,105 @@ import CharityVote from "@/components/ui/CharityVote";
 import CharityCard, { type Beneficiary } from "@/components/ui/CharityCard";
 import LivePresence from "@/components/ui/LivePresence";
 import ArenaResult from "@/components/ui/ArenaResult";
+import FreePick from "@/components/ui/FreePick";
+import HostTeaser from "@/components/ui/HostTeaser";
+import AnimatedNumber from "@/components/ui/AnimatedNumber";
+import { createClient } from "@/utils/supabase/client";
 import { isArenaClosed } from "@/lib/arena";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import Countdown from "@/components/ui/Countdown";
 
 export default function GlobalRoomClient({ initialRoomData }: { initialRoomData: any }) {
   const [roomData, setRoomData] = useState(initialRoomData);
+
+  // A global arena had no subscription at all, so a leaderboard that is
+  // supposed to be a live contest only moved on refresh.
+  useEffect(() => {
+    if (!initialRoomData?.id) return;
+
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel(`room:${initialRoomData.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "room_contenders",
+          filter: `room_id=eq.${initialRoomData.id}`,
+        },
+        (payload) => {
+          setRoomData((prev: any) => {
+            const rankings = (prev.rankings ?? []).map((c: any) =>
+              c.contender_id === payload.new.id
+                ? { ...c, amount: Number(payload.new.current_votes) || 0 }
+                : c
+            );
+
+            // Re-rank as the money moves: a leaderboard that updates its
+            // numbers but not its order is telling two different stories.
+            const ordered = [...rankings]
+              .sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))
+              .map((c, i) => ({ ...c, rank: i + 1 }));
+
+            return {
+              ...prev,
+              rankings: ordered,
+              totalPool: ordered.reduce((sum, c) => sum + (Number(c.amount) || 0), 0),
+            };
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "votes",
+          filter: `room_id=eq.${initialRoomData.id}`,
+        },
+        (payload) => {
+          const vote = payload.new as {
+            id: string;
+            amount: number;
+            voter_name: string;
+            voter_avatar: string | null;
+            voter_id: string | null;
+            message: string | null;
+            created_at: string;
+            contender_id: string;
+            is_demo: boolean;
+          };
+
+          setRoomData((prev: any) => {
+            const entry = {
+              id: vote.id,
+              amount: Number(vote.amount) || 0,
+              voter_name: vote.voter_name,
+              voter_avatar: vote.voter_avatar,
+              voter_id: vote.voter_id,
+              message: vote.message,
+              upvote_count: 0,
+              created_at: vote.created_at,
+              backing:
+                (prev.rankings ?? []).find((c: any) => c.contender_id === vote.contender_id)?.name ??
+                null,
+              upvoted: false,
+              is_demo: Boolean(vote.is_demo),
+            };
+
+            const already = (prev.feed ?? []).some((f: any) => f.id === entry.id);
+            return already ? prev : { ...prev, feed: [entry, ...(prev.feed ?? [])] };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [initialRoomData?.id]);
   const [sortBy, setSortBy] = useState<"rank" | "votes" | "name">("rank");
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -200,7 +293,7 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
                   <span>Prize Pool</span>
                 </span>
                 <span className="font-semibold text-yellow-500 text-sm font-sans">
-                  {(roomData.totalPool || 0).toLocaleString()}
+                  <AnimatedNumber value={Number(roomData.totalPool) || 0} format={(n) => `$${Math.round(n).toLocaleString("en-US")}`} />
                 </span>
               </div>
 
@@ -252,8 +345,28 @@ export default function GlobalRoomClient({ initialRoomData }: { initialRoomData:
             </div>
           </div>
 
+          {/* Free sentiment, next to the money and never mixed with it. The
+              leaderboard can be long, so this shows the top few. */}
+          {roomData.freePicks && (roomData.rankings?.length ?? 0) >= 2 && (
+            <FreePick
+              roomId={roomData.id}
+              closed={closed}
+              initial={roomData.freePicks}
+              contenders={(roomData.rankings ?? [])
+                .slice(0, 5)
+                .map((c: any) => ({
+                  id: c.contender_id,
+                  name: c.name,
+                  color: c.color,
+                  amount: Number(c.amount) || 0,
+                }))}
+            />
+          )}
+
           {/* Who the 30% reaches, with their logo and a link out. */}
           {beneficiary && <CharityCard charity={beneficiary} />}
+
+          <HostTeaser pool={Number(roomData.totalPool) || 0} arenaTitle={roomData.title} />
 
           {/* CHARITY ALLOCATION CARD WRAPPER */}
           <div className="relative w-full rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-sm flex flex-col gap-3">

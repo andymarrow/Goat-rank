@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { getRoomFeed } from "./getFeed";
 import { getCharityPreference } from "./charityVote";
+import { getFreePicks } from "./freePick";
 
 export async function getBattleData(roomId: string) {
   const supabase = await createClient();
@@ -60,9 +61,10 @@ export async function getBattleData(roomId: string) {
     console.error("Error fetching votes:", votesError);
   }
 
-  const [feedPage, charityPref] = await Promise.all([
+  const [feedPage, charityPref, freePicks] = await Promise.all([
     getRoomFeed(roomId),
     getCharityPreference(roomId),
+    getFreePicks(roomId),
   ]);
 
   const { data: charities } = await supabase
@@ -108,6 +110,7 @@ export async function getBattleData(roomId: string) {
     charityTally: charityPref.tally,
     charityChoice: charityPref.myChoice,
     charityTotal: charityPref.total,
+    freePicks,
   };
 }
 

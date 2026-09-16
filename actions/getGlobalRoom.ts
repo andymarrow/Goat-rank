@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { bannerFor } from "@/lib/banners";
 import { getRoomFeed } from "./getFeed";
 import { getCharityPreference } from "./charityVote";
+import { getFreePicks } from "./freePick";
 
 export async function getGlobalRoomData(roomId: string) {
   const supabase = await createClient();
@@ -55,9 +56,10 @@ export async function getGlobalRoomData(roomId: string) {
   // Battle cries. Global arenas collected these through the shared VoteModal
   // but never fetched or rendered them — every paid message was invisible.
   // First page only — FeedList pulls the rest with a keyset cursor.
-  const [feedPage, charityPref] = await Promise.all([
+  const [feedPage, charityPref, freePicks] = await Promise.all([
     getRoomFeed(roomId),
     getCharityPreference(roomId),
+    getFreePicks(roomId),
   ]);
 
   const { data: charities } = await supabase
@@ -102,6 +104,7 @@ export async function getGlobalRoomData(roomId: string) {
     charityTally: charityPref.tally,
     charityChoice: charityPref.myChoice,
     charityTotal: charityPref.total,
+    freePicks,
   };
 }
 

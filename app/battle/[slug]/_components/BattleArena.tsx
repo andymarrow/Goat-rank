@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Countdown from "@/components/ui/Countdown";
+import AnimatedNumber from "@/components/ui/AnimatedNumber";
 import LivePresence from "@/components/ui/LivePresence";
 
 export default function BattleArena({
@@ -257,12 +258,15 @@ export default function BattleArena({
             <span className={`text-3xl sm:text-3xl md:text-4xl font-extrabold tabular-nums leading-none ${
               isLeftWinning ? "text-primary" : "text-muted-foreground"
             }`}>
-              {Math.round(leftPercentage)}%
+              <AnimatedNumber value={leftPercentage} duration={500} format={(n) => `${Math.round(n)}%`} />
             </span>
             {/* The pool behind this side. It read "78 votes" for $78 — the
                 number was the money all along, just mislabelled. */}
             <span className="text-xs text-muted-foreground tabular-nums">
-              <span className="font-bold text-foreground">${leftAmount.toLocaleString()}</span> backed
+              <span className="font-bold text-foreground">
+                <AnimatedNumber value={leftAmount} format={(n) => `$${Math.round(n).toLocaleString("en-US")}`} />
+              </span>{" "}
+              backed
             </span>
           </div>
 
@@ -303,10 +307,13 @@ export default function BattleArena({
             <span className={`text-3xl sm:text-3xl md:text-4xl font-extrabold tabular-nums leading-none ${
               isRightWinning ? "text-primary" : "text-muted-foreground"
             }`}>
-              {Math.round(rightPercentage)}%
+              <AnimatedNumber value={rightPercentage} duration={500} format={(n) => `${Math.round(n)}%`} />
             </span>
             <span className="text-xs text-muted-foreground tabular-nums">
-              <span className="font-bold text-foreground">${rightAmount.toLocaleString()}</span> backed
+              <span className="font-bold text-foreground">
+                <AnimatedNumber value={rightAmount} format={(n) => `$${Math.round(n).toLocaleString("en-US")}`} />
+              </span>{" "}
+              backed
             </span>
           </div>
         </div>

@@ -8,6 +8,8 @@ import { createClient } from "@/utils/supabase/client"; // <-- Import the client
 import { onBrand } from "@/lib/color";
 import CharityCard, { type Beneficiary } from "@/components/ui/CharityCard";
 import ArenaResult from "@/components/ui/ArenaResult";
+import FreePick from "@/components/ui/FreePick";
+import HostTeaser from "@/components/ui/HostTeaser";
 import { isArenaClosed } from "@/lib/arena";
 import MobileFeedDrawer from "@/components/ui/MobileFeedDrawer";
 
@@ -58,12 +60,20 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
           filter: `room_id=eq.${battleData.id}`,
         },
         (payload) => {
-          // Update the state with the new score!
           setBattleData((prev: any) => {
             const updatedContenders = prev.contenders.map((c: any) =>
               c.id === payload.new.id ? { ...c, amount: payload.new.current_votes } : c
             );
-            return { ...prev, contenders: updatedContenders };
+
+            // The pool is the sum of the sides, so it moves with them. Without
+            // this the percentages shifted while the headline figure sat
+            // still, which reads as a bug rather than as money arriving.
+            const totalPool = updatedContenders.reduce(
+              (sum: number, c: any) => sum + (Number(c.amount) || 0),
+              0
+            );
+
+            return { ...prev, contenders: updatedContenders, totalPool };
           });
         }
       )
@@ -78,12 +88,42 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
           filter: `room_id=eq.${battleData.id}`,
         },
         (payload) => {
-          // Add the new message to the top of the chat feed
+          const vote = payload.new as {
+            id: string;
+            amount: number;
+            voter_name: string;
+            voter_avatar: string | null;
+            voter_id: string | null;
+            message: string | null;
+            created_at: string;
+            contender_id: string;
+            is_demo: boolean;
+          };
+
           setBattleData((prev: any) => {
-            const newVote = payload.new;
+            // Into the feed the sidebar actually renders, not only the legacy
+            // recentVotes array nothing reads any more.
+            const entry = {
+              id: vote.id,
+              amount: Number(vote.amount) || 0,
+              voter_name: vote.voter_name,
+              voter_avatar: vote.voter_avatar,
+              voter_id: vote.voter_id,
+              message: vote.message,
+              upvote_count: 0,
+              created_at: vote.created_at,
+              backing:
+                prev.contenders?.find((c: any) => c.id === vote.contender_id)?.name ?? null,
+              upvoted: false,
+              is_demo: Boolean(vote.is_demo),
+            };
+
+            const already = (prev.feed ?? []).some((f: any) => f.id === entry.id);
+
             return {
               ...prev,
-              recentVotes: [newVote, ...prev.recentVotes],
+              recentVotes: [vote, ...(prev.recentVotes ?? [])],
+              feed: already ? prev.feed : [entry, ...(prev.feed ?? [])],
             };
           });
         }
@@ -137,9 +177,29 @@ export default function BattleClient({ initialBattleData }: { initialBattleData:
             <BattleArena battle={battleData} onVoteClick={handleVoteClick} />
           )}
 
+          {/* Somewhere to take part without paying. Kept below the stage so
+              the paid action stays the primary one. */}
+          {battleData.freePicks && (battleData.contenders?.length ?? 0) >= 2 && (
+            <FreePick
+              roomId={battleData.id}
+              closed={closed}
+              initial={battleData.freePicks}
+              contenders={(battleData.contenders ?? []).map(
+                (c: { id: string; name: string; color: string | null; amount: number }) => ({
+                  id: c.id,
+                  name: c.name,
+                  color: c.color,
+                  amount: Number(c.amount) || 0,
+                })
+              )}
+            />
+          )}
+
           {/* Who the 30% actually reaches. A name on its own asked people to
               pledge to something they may not recognise. */}
           {beneficiary && <CharityCard charity={beneficiary} />}
+
+          <HostTeaser pool={Number(battleData.totalPool) || 0} arenaTitle={battleData.title} />
         </div>
 
         {/* Right Sidebar Column */}
