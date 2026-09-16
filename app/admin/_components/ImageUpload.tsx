@@ -8,6 +8,54 @@ import { createClient } from "@/utils/supabase/client";
 const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 5 * 1024 * 1024;
 
+// Nothing on the site is displayed wider than about 600px, so twice that is
+// already generous for a retina screen.
+const MAX_EDGE = 1200;
+
+/**
+ * Shrink an upload before it is stored.
+ *
+ * Next's image optimizer is off (see next.config.ts), so whatever lands in the
+ * bucket is exactly what every visitor downloads. A 4MB phone photo served
+ * straight to a card that renders it at 150px is the kind of thing that makes
+ * a page feel broken on mobile data.
+ *
+ * Falls back to the original file if the browser cannot decode it, because a
+ * slightly heavy image beats a failed upload.
+ */
+async function downscale(file: File): Promise<Blob> {
+  if (typeof createImageBitmap !== "function") return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+
+    // Already small enough, and already a compact format: leave it alone.
+    if (scale === 1 && file.size <= 400 * 1024) return file;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close?.();
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", 0.86)
+    );
+
+    // Only keep the re-encode if it actually won.
+    return blob && blob.size < file.size ? blob : file;
+  } catch (error) {
+    console.error("downscale failed, uploading the original:", error);
+    return file;
+  }
+}
+
 /**
  * Upload-or-paste image field.
  *
@@ -43,12 +91,17 @@ export default function ImageUpload({
 
     setUploading(true);
     const supabase = createClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+
+    const payload = await downscale(file);
+    const type = payload.type || file.type;
+    const ext = type === "image/webp" ? "webp" : file.name.split(".").pop()?.toLowerCase() ?? "png";
     const path = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
 
     const { error: storageError } = await supabase.storage
       .from(bucket)
-      .upload(path, file, { cacheControl: "3600", contentType: file.type });
+      // A year: the path carries a timestamp, so a replacement is a new URL
+      // and this file never needs revalidating.
+      .upload(path, payload, { cacheControl: "31536000", contentType: type });
 
     if (storageError) {
       console.error("Upload failed:", storageError);
