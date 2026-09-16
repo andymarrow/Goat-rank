@@ -5,6 +5,7 @@ import { stripe, toDollars } from "@/lib/stripe";
 import { generatedAvatar } from "@/lib/avatar";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendVoteReceipt, sendRoomLive } from "@/lib/email/send";
+import { notify, notifyMany } from "@/lib/notify";
 
 // Postgres unique_violation. The transaction-id column is unique, so a
 // replayed delivery collides here instead of double-counting the pool.
@@ -155,6 +156,17 @@ export async function POST(req: Request) {
       });
     }
 
+    // Who needs to know: the host that money arrived, and anyone whose side
+    // just lost the lead. Both are best effort and deliberately after the
+    // insert, so a notification failure can never cost a recorded pledge.
+    await announceVote(supabase, {
+      roomId: meta.room_id,
+      contenderId: meta.contender_id,
+      voterId: meta.voter_id || null,
+      voterName,
+      amount: toDollars(amountCents),
+    });
+
     return NextResponse.json({ received: true, action: "vote_processed" }, { status: 200 });
   }
 
@@ -274,4 +286,86 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ received: true, ignored: "unknown type" }, { status: 200 });
+}
+
+/**
+ * Tell the people a pledge affects.
+ *
+ * "You have been overtaken" is the single most effective reason to come back
+ * to a contest, so it fires the moment the lead actually changes hands rather
+ * than on every pledge. Deduped to once an hour per person per arena: a
+ * notification per pledge trains people to ignore the bell.
+ */
+async function announceVote(
+  supabase: ReturnType<typeof createAdminClient>,
+  vote: {
+    roomId: string;
+    contenderId: string;
+    voterId: string | null;
+    voterName: string;
+    amount: number;
+  }
+): Promise<void> {
+  try {
+    const { data: room } = await supabase
+      .from("rooms")
+      .select("id, title, room_type, creator_id")
+      .eq("id", vote.roomId)
+      .maybeSingle();
+
+    if (!room) return;
+
+    const href = `/${room.room_type === "global" ? "global" : "battle"}/${room.id}`;
+
+    if (room.creator_id) {
+      await notify({
+        profileId: room.creator_id,
+        kind: "backed",
+        roomId: room.id,
+        href,
+        title: `$${Math.round(vote.amount)} landed in ${room.title}`,
+        body: `${vote.voterName} backed a side. Your 10% is in your wallet.`,
+        dedupeMinutes: 0,
+      });
+    }
+
+    // The standing after this pledge. The trigger has already applied it, so
+    // whoever is top now is top because of it.
+    const { data: contenders } = await supabase
+      .from("room_contenders")
+      .select("id, current_votes")
+      .eq("room_id", room.id);
+
+    const ranked = [...(contenders ?? [])].sort(
+      (a, b) => (Number(b.current_votes) || 0) - (Number(a.current_votes) || 0)
+    );
+
+    // Nothing to announce unless this pledge is what put its side on top.
+    if (ranked[0]?.id !== vote.contenderId || ranked.length < 2) return;
+
+    const overtaken = ranked[1].id;
+
+    const { data: affected } = await supabase
+      .from("votes")
+      .select("voter_id")
+      .eq("room_id", room.id)
+      .eq("contender_id", overtaken)
+      .eq("is_demo", false)
+      .not("voter_id", "is", null);
+
+    await notifyMany(
+      (affected ?? []).map((v) => v.voter_id as string),
+      () => ({
+        kind: "overtaken" as const,
+        roomId: room.id,
+        href,
+        title: `You have been overtaken in ${room.title}`,
+        body: `Your side just lost the lead. $${Math.round(vote.amount)} went the other way.`,
+        dedupeMinutes: 60,
+      }),
+      vote.voterId
+    );
+  } catch (error) {
+    console.error("announceVote failed:", error);
+  }
 }

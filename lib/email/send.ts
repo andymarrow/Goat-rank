@@ -109,11 +109,20 @@ export async function sendPayoutPaid(
 
 export async function sendRoomSettled(
   to: string,
-  args: { title: string; winner: string; pool: number; charity: string; roomId: string }
+  args: {
+    title: string;
+    winner: string;
+    pool: number;
+    charity: string;
+    roomId: string;
+    roomType?: string;
+  }
 ) {
   const { subject, html } = roomSettledEmail({
     ...args,
-    roomUrl: `${siteUrl()}/battle/${args.roomId}`,
+    // 1v1 and global arenas live on different routes; this used to send
+    // every settlement email to /battle.
+    roomUrl: `${siteUrl()}/${args.roomType === "global" ? "global" : "battle"}/${args.roomId}`,
   });
   return send(to, subject, html);
 }

@@ -8,6 +8,13 @@ alter table public.entities
   add column if not exists site_url text;
 
 
+-- ------------------------------------------------------------- welcome mail
+-- Stamped when the welcome email goes out, so confirming an address twice or
+-- signing in on a second device does not send it again.
+alter table public.profiles
+  add column if not exists welcomed_at timestamptz;
+
+
 -- ----------------------------------------------------------- notifications
 -- In-app, with email as the second channel rather than the only one. An arena
 -- that nobody is told about is an arena nobody comes back to.

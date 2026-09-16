@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import SearchLauncher from "@/components/ui/SearchLauncher";
+import NotificationBell from "@/components/ui/NotificationBell";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Swords, Sun, Moon, LogIn } from "lucide-react";
@@ -115,6 +116,9 @@ export default function DesktopNavbar() {
         <div className="flex items-center gap-3">
           {/* Cmd+K lives here too, so search is reachable from every page. */}
           <SearchLauncher variant="icon" />
+
+          {/* Hides itself for a signed-out visitor with nothing to read. */}
+          <NotificationBell />
 
           {mounted && (
             <button
