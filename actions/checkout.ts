@@ -122,7 +122,13 @@ export async function createVoteCheckout(data: {
           },
         },
       ],
-      success_url: `${origin}/${roomPath}/${data.roomId}?success=true`,
+      // Straight to the share moment rather than back to the arena. Whoever
+      // just paid is the most motivated sharer this site will ever have, and
+      // the old redirect dropped them on an unchanged page.
+      //
+      // Stripe substitutes the session id, which /pledge resolves to the vote
+      // through the API. Nothing is passed through the browser to forge.
+      success_url: `${origin}/pledge/confirm?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/${roomPath}/${data.roomId}?cancelled=true`,
 
       // Our database ids ride along so the webhook can attribute the vote

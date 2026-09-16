@@ -54,12 +54,14 @@ export async function updateEntity(
     category?: string;
     brand_color?: string;
     image_url?: string;
+    x_handle?: string;
+    site_url?: string;
   }
 ): Promise<AdminResult> {
   try {
     await requireAdmin();
 
-    const clean: Record<string, string> = {};
+    const clean: Record<string, string | null> = {};
     if (patch.name?.trim()) clean.name = patch.name.trim().slice(0, 80);
     if (patch.category?.trim()) clean.category = patch.category.trim().slice(0, 60);
 
@@ -75,6 +77,18 @@ export async function updateEntity(
       if (!check.ok) return { ok: false, error: check.error };
 
       clean.image_url = patch.image_url.trim();
+    }
+
+    // The handle turns a share card into a mention, which is what reaches the
+    // contender's own followers rather than only the backer's. Stored bare, so
+    // the UI can render it with or without the @.
+    if (patch.x_handle !== undefined) {
+      const handle = patch.x_handle.trim().replace(/^@+/, "").replace(/^https?:\/\/(www\.)?(x|twitter)\.com\//i, "");
+      clean.x_handle = handle.slice(0, 40) || null;
+    }
+
+    if (patch.site_url !== undefined) {
+      clean.site_url = patch.site_url.trim().slice(0, 200) || null;
     }
 
     if (Object.keys(clean).length === 0) return { ok: false, error: "Nothing to update." };

@@ -28,23 +28,44 @@ export type AdminRoom = {
       name: string;
       image_url: string | null;
       brand_color: string | null;
+      x_handle?: string | null;
     } | null;
   }[];
 };
+
+/**
+ * The arena select, in two flavours.
+ *
+ * `x_handle` arrives with migration 0013. Selecting a column that does not
+ * exist fails the whole query, so a deploy landing before the migration would
+ * empty the arenas console rather than merely hide one field. Both readers
+ * below retry without it on 42703.
+ */
+const ROOM_FIELDS =
+  `id, title, category, room_type, status, total_pool, charity_name, charity_id,
+   is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
+   room_contenders ( id, current_votes, seed_index, entities ( id, name, image_url, brand_color`;
+
+const WITH_HANDLE = `${ROOM_FIELDS}, x_handle ) )`;
+const WITHOUT_HANDLE = `${ROOM_FIELDS} ) )`;
+
+const MISSING_COLUMN = "42703";
 
 /** Read side — imported by the admin page, not callable from the browser. */
 export async function listRooms(): Promise<AdminRoom[]> {
   await requireAdmin();
 
-  const { data, error } = await createAdminClient()
-    .from("rooms")
-    .select(
-      `id, title, category, room_type, status, total_pool, charity_name, charity_id,
-       is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
-       room_contenders ( id, current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
-    )
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const supabase = createAdminClient();
+
+  const run = (select: string) =>
+    supabase
+      .from("rooms")
+      .select(select)
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+  let { data, error } = await run(WITH_HANDLE);
+  if (error?.code === MISSING_COLUMN) ({ data, error } = await run(WITHOUT_HANDLE));
 
   if (error) {
     console.error("listRooms failed:", error);
@@ -58,15 +79,13 @@ export async function listRooms(): Promise<AdminRoom[]> {
 export async function getAdminRoom(roomId: string): Promise<AdminRoom | null> {
   await requireAdmin();
 
-  const { data, error } = await createAdminClient()
-    .from("rooms")
-    .select(
-      `id, title, category, room_type, status, total_pool, charity_name, charity_id,
-       is_featured, featured_rank, expires_at, created_at, settled_at, creator_id,
-       room_contenders ( id, current_votes, seed_index, entities ( id, name, image_url, brand_color ) )`
-    )
-    .eq("id", roomId)
-    .maybeSingle();
+  const supabase = createAdminClient();
+
+  const run = (select: string) =>
+    supabase.from("rooms").select(select).eq("id", roomId).maybeSingle();
+
+  let { data, error } = await run(WITH_HANDLE);
+  if (error?.code === MISSING_COLUMN) ({ data, error } = await run(WITHOUT_HANDLE));
 
   if (error) {
     console.error("getAdminRoom failed:", error);

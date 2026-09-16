@@ -21,6 +21,7 @@ type Contender = {
     name: string;
     image_url: string | null;
     brand_color: string | null;
+    x_handle?: string | null;
   } | null;
 };
 
@@ -41,7 +42,7 @@ export default function ContenderEditor({
 }) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<
-    Record<string, { name: string; image_url: string; brand_color: string }>
+    Record<string, { name: string; image_url: string; brand_color: string; x_handle: string }>
   >({});
 
   const rows = [...contenders]
@@ -69,6 +70,7 @@ export default function ContenderEditor({
           name: e.name,
           image_url: e.image_url ?? "",
           brand_color: e.brand_color ?? "#FF7A00",
+          x_handle: e.x_handle ?? "",
         };
 
         const set = (patch: Partial<typeof draft>) =>
@@ -134,6 +136,20 @@ export default function ContenderEditor({
               </Field>
             </div>
 
+            {/* A backer's share card mentions this handle, which is how the
+                post reaches the contender's own followers instead of only the
+                backer's. */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field label="X handle">
+                <input
+                  value={draft.x_handle}
+                  onChange={(ev) => set({ x_handle: ev.target.value })}
+                  placeholder="Cristiano"
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+
             <Field label="Image">
               <div className="flex flex-col gap-2">
                 <ImageUpload
@@ -155,6 +171,7 @@ export default function ContenderEditor({
                     name: draft.name,
                     image_url: draft.image_url || undefined,
                     brand_color: draft.brand_color,
+                    x_handle: draft.x_handle,
                   })
                 }
               >
