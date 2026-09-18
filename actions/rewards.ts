@@ -365,10 +365,21 @@ export async function buyReward(itemId: string): Promise<PurchaseResult> {
 
     const held = Number((current as unknown as Record<string, number>)?.[column]) || 0;
 
-    await admin
+    const { error: grantError } = await admin
       .from("profiles")
       .update({ [column]: held + item.grant_amount })
       .eq("id", user.id);
+
+    // Points are already spent at this point, so a failed grant has to be
+    // given back rather than swallowed: the alternative is charging someone
+    // for nothing.
+    if (grantError) {
+      console.error("buyReward grant failed, refunding:", grantError.message);
+
+      await admin.rpc("award_goat_points", { uid: user.id, amount: item.cost });
+
+      return { ok: false, error: "Could not hand that over. Your points are untouched." };
+    }
 
     await admin.from("reward_purchases").insert({
       profile_id: user.id,

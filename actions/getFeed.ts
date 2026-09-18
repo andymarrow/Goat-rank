@@ -29,7 +29,7 @@ export async function getRoomFeed(
     .select(
       `id, amount, voter_name, voter_avatar, voter_id, message,
        upvote_count, created_at, contender_id, is_demo,
-       profiles ( goat_level )`
+       profiles!votes_voter_id_fkey ( goat_level )`
     )
     .eq("room_id", roomId)
     .eq("message_hidden", false)

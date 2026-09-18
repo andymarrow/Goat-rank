@@ -23,7 +23,7 @@ export type FreePickState = {
   allowance: number;
 };
 
-/** How many free picks a visitor gets, set from the admin console. */
+/** The site-wide allowance, set from the admin console. */
 async function allowance(): Promise<number> {
   try {
     const { data } = await createAdminClient()
@@ -58,6 +58,12 @@ export async function getFreePicks(roomId: string): Promise<FreePickState> {
     const supabase = createAdminClient();
     const fingerprint = await getFingerprint(false);
 
+    // Picks bought with points, or handed over by a level, sit on top of the
+    // site-wide allowance. Without this a redeemed reward changed nothing the
+    // buyer could see.
+    const bonus = await bonusPicks(fingerprint);
+    const total = limit + bonus;
+
     const { data, error } = await supabase
       .from("free_picks")
       .select("contender_id, user_fingerprint")
@@ -89,11 +95,33 @@ export async function getFreePicks(roomId: string): Promise<FreePickState> {
       mine,
       tally: [...counts.entries()].map(([contenderId, picks]) => ({ contenderId, picks })),
       total: data?.length ?? 0,
-      remaining: Math.max(0, limit - used),
-      allowance: limit,
+      remaining: Math.max(0, total - used),
+      allowance: total,
     };
   } catch {
     return empty;
+  }
+}
+
+/**
+ * Extra picks this person holds beyond the site-wide allowance.
+ *
+ * Only a signed-in account can hold them: an anonymous fingerprint has nothing
+ * to attach a purchase to.
+ */
+async function bonusPicks(fingerprint: string | null): Promise<number> {
+  if (!fingerprint?.startsWith("u:")) return 0;
+
+  try {
+    const { data } = await createAdminClient()
+      .from("profiles")
+      .select("bonus_free_picks")
+      .eq("id", fingerprint.slice(2))
+      .maybeSingle();
+
+    return Number(data?.bonus_free_picks) || 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -118,7 +146,7 @@ export async function castFreePick(roomId: string, contenderId: string): Promise
     const fingerprint = await getFingerprint(true);
     if (!fingerprint) return { ok: false, error: "Could not identify you." };
 
-    const limit = await allowance();
+    const limit = (await allowance()) + (await bonusPicks(fingerprint));
 
     const { data: existing } = await supabase
       .from("free_picks")
@@ -139,7 +167,7 @@ export async function castFreePick(roomId: string, contenderId: string): Promise
       if ((count ?? 0) >= limit) {
         return {
           ok: false,
-          error: `That is your ${limit} free picks used. Back a contender to keep having a say.`,
+          error: `That is your ${limit} free picks used. Back a contender, or buy more with points.`,
           remaining: 0,
         };
       }
