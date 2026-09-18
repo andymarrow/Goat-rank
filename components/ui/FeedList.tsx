@@ -10,6 +10,7 @@ import { getRoomFeed } from "@/actions/getFeed";
 import type { FeedItem } from "@/lib/feed";
 import { formatSince } from "@/lib/time";
 import { DemoDot } from "@/components/ui/DemoBadge";
+import LevelBadge from "@/components/ui/LevelBadge";
 
 const money = (n: number) => `$${(Number(n) || 0).toFixed(2)}`;
 
@@ -105,7 +106,13 @@ export default function FeedList({
                 profile click the picture, not the name. */}
             {entry.voter_id ? (
               <Link href={`/u/${entry.voter_id}`} aria-label={`View ${entry.voter_name}`}>
-                <Avatar src={entry.voter_avatar} name={entry.voter_name} size={24} />
+                {entry.level && entry.level > 1 ? (
+                  <LevelBadge level={entry.level} variant="ring" size={24} className="rounded-xl">
+                    <Avatar src={entry.voter_avatar} name={entry.voter_name} size={24} />
+                  </LevelBadge>
+                ) : (
+                  <Avatar src={entry.voter_avatar} name={entry.voter_name} size={24} />
+                )}
               </Link>
             ) : (
               <Avatar src={entry.voter_avatar} name={entry.voter_name} size={24} />
@@ -118,6 +125,9 @@ export default function FeedList({
                   {/* Disclosure: seeded bot content is marked, never passed
                       off as a real supporter. */}
                   {entry.is_demo && <DemoDot />}
+                  {entry.level && entry.level >= 5 && (
+                    <LevelBadge level={entry.level} variant="dot" className="shrink-0 !w-4 !h-4 !text-[8px]" />
+                  )}
 
                   {entry.voter_id ? (
                     <Link

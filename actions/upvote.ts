@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getFingerprint } from "@/lib/fingerprint";
+import { awardPoints, rates } from "@/lib/rewards";
 
 const UNIQUE_VIOLATION = "23505";
 
@@ -58,6 +59,10 @@ export async function toggleTestimonialUpvote(voteId: string): Promise<UpvoteRes
       throw error;
     }
 
+    // The author of the cry earns from being worth upvoting, once per upvoter
+    // per cry, and never for upvoting themselves.
+    await awardForUpvote(voteId, fingerprint);
+
     return { success: true, upvoted: true };
   } catch (error) {
     console.error("toggleTestimonialUpvote failed:", error);
@@ -83,5 +88,31 @@ export async function getMyUpvotes(voteIds: string[]): Promise<string[]> {
   } catch (error) {
     console.error("getMyUpvotes failed:", error);
     return [];
+  }
+}
+
+/** Pay the author of an upvoted battle cry. */
+async function awardForUpvote(voteId: string, upvoter: string): Promise<void> {
+  try {
+    const { data: vote } = await createAdminClient()
+      .from("votes")
+      .select("voter_id")
+      .eq("id", voteId)
+      .maybeSingle();
+
+    const author = vote?.voter_id;
+    if (!author || `u:${author}` === upvoter) return;
+
+    const rate = await rates();
+
+    await awardPoints({
+      profileId: author,
+      kind: "upvote",
+      points: Math.round(rate.points_upvote),
+      reason: "Someone upvoted your battle cry",
+      dedupeKey: `upvote:${voteId}:${upvoter}`,
+    });
+  } catch (error) {
+    console.error("awardForUpvote failed:", error);
   }
 }

@@ -6,6 +6,7 @@ import { generatedAvatar } from "@/lib/avatar";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { sendVoteReceipt, sendRoomLive } from "@/lib/email/send";
 import { notify, notifyMany } from "@/lib/notify";
+import { awardPoints, rates } from "@/lib/rewards";
 
 // Postgres unique_violation. The transaction-id column is unique, so a
 // replayed delivery collides here instead of double-counting the pool.
@@ -159,6 +160,15 @@ export async function POST(req: Request) {
     // Who needs to know: the host that money arrived, and anyone whose side
     // just lost the lead. Both are best effort and deliberately after the
     // insert, so a notification failure can never cost a recorded pledge.
+    // Points, after the money is recorded and never in front of it. The vote
+    // id is the dedupe key, so a redelivered webhook pays nothing twice.
+    await awardForPledge({
+      voterId: meta.voter_id || null,
+      roomId: meta.room_id,
+      amount: toDollars(amountCents),
+      paymentId,
+    });
+
     await announceVote(supabase, {
       roomId: meta.room_id,
       contenderId: meta.contender_id,
@@ -367,5 +377,51 @@ async function announceVote(
     );
   } catch (error) {
     console.error("announceVote failed:", error);
+  }
+}
+
+/**
+ * Points for a pledge: to the backer for paying, to the host for hosting
+ * somewhere worth paying into.
+ */
+async function awardForPledge(input: {
+  voterId: string | null;
+  roomId: string;
+  amount: number;
+  paymentId: string;
+}): Promise<void> {
+  try {
+    const rate = await rates();
+    const supabase = createAdminClient();
+
+    if (input.voterId) {
+      await awardPoints({
+        profileId: input.voterId,
+        kind: "pledge",
+        points: Math.max(1, Math.round(input.amount * rate.points_per_dollar)),
+        reason: `Backed a contender with $${Math.round(input.amount)}`,
+        roomId: input.roomId,
+        dedupeKey: `pledge:${input.paymentId}`,
+      });
+    }
+
+    const { data: room } = await supabase
+      .from("rooms")
+      .select("creator_id")
+      .eq("id", input.roomId)
+      .maybeSingle();
+
+    if (room?.creator_id && room.creator_id !== input.voterId) {
+      await awardPoints({
+        profileId: room.creator_id,
+        kind: "host_pledge",
+        points: Math.round(rate.points_host_pledge),
+        reason: "A pledge landed in your arena",
+        roomId: input.roomId,
+        dedupeKey: `host:${input.paymentId}`,
+      });
+    }
+  } catch (error) {
+    console.error("awardForPledge failed:", error);
   }
 }

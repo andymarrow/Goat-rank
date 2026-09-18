@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getFingerprint } from "@/lib/fingerprint";
 import { isArenaClosed } from "@/lib/arena";
+import { awardPoints, rates } from "@/lib/rewards";
 
 const DEFAULT_ALLOWANCE = 10;
 
@@ -154,6 +155,21 @@ export async function castFreePick(roomId: string, contenderId: string): Promise
           .insert({ room_id: roomId, contender_id: contenderId, user_fingerprint: fingerprint });
 
     if (error) throw error;
+
+    // A pick pays a little, once per arena: enough to make a free visit worth
+    // something, not enough to farm.
+    if (fingerprint.startsWith("u:")) {
+      const rate = await rates();
+
+      await awardPoints({
+        profileId: fingerprint.slice(2),
+        kind: "free_pick",
+        points: Math.round(rate.points_free_pick),
+        reason: "Picked a side",
+        roomId,
+        dedupeKey: `pick:${roomId}`,
+      });
+    }
 
     revalidatePath(`/${room.room_type === "global" ? "global" : "battle"}/${roomId}`);
 

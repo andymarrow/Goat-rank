@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { isArenaClosed } from "@/lib/arena";
 import { notifyMany } from "@/lib/notify";
 import { sendRoomSettled } from "@/lib/email/send";
+import { awardPoints, rates } from "@/lib/rewards";
 
 export type SettleResult = {
   settled: boolean;
@@ -146,6 +147,22 @@ async function announceResult(roomId: string, roomType: string): Promise<void> {
         ? `Your side took it with $${Math.round(pool).toLocaleString("en-US")} in the pool.`
         : `${winnerName} took it. See the final standing.`,
     }));
+
+    // Calling it right is worth points, once per arena per backer.
+    const rate = await rates();
+
+    await Promise.all(
+      [...backedWinner].map((id) =>
+        awardPoints({
+          profileId: id,
+          kind: "winner",
+          points: Math.round(rate.points_winner_bonus),
+          reason: `Backed the winner of ${room.title}`,
+          roomId,
+          dedupeKey: `winner:${roomId}`,
+        })
+      )
+    );
 
     if (room.creator_id) {
       await notifyMany([room.creator_id], () => ({

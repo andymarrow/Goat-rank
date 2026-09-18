@@ -23,6 +23,7 @@ const LINKS = [
   { href: "/profile", label: "Ranks" },
   { href: "/create", label: "Host" },
   { href: "/dashboard", label: "Command" },
+  { href: "/rewards", label: "Rewards" },
   { href: "/requests", label: "Requests" },
 ];
 

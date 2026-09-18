@@ -23,8 +23,10 @@ export type FeedItem = {
   backing: string | null;
   /** Whether the current viewer has already upvoted this one. */
   upvoted?: boolean;
-  /** Seeded bot content — disclosed in the UI with a marker. */
+  /** Seeded bot content, disclosed in the UI with a marker. */
   is_demo?: boolean;
+  /** Rewards standing, drawn as a ring on their avatar. */
+  level?: number;
 };
 
 export type FeedPage = {

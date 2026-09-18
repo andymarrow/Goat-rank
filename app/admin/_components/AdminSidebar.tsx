@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity, Swords, Hammer, Users, MessageSquare, Wallet, Settings,
-  ArrowLeft, ShieldCheck, Smile, Bot, Inbox,
+  ArrowLeft, ShieldCheck, Smile, Bot, Inbox, Trophy,
 } from "lucide-react";
 
 const SECTIONS = [
@@ -15,6 +15,7 @@ const SECTIONS = [
   { href: "/admin/feed", label: "Feed", icon: MessageSquare },
   { href: "/admin/people", label: "People", icon: ShieldCheck },
   { href: "/admin/requests", label: "Requests", icon: Inbox },
+  { href: "/admin/rewards", label: "Rewards", icon: Trophy },
   { href: "/admin/ledger", label: "Ledger", icon: Wallet, badge: "ledger" },
   { href: "/admin/demo", label: "Demo", icon: Bot },
   { href: "/admin/avatars", label: "Avatars", icon: Smile },

@@ -28,7 +28,8 @@ export async function getRoomFeed(
     .from("votes")
     .select(
       `id, amount, voter_name, voter_avatar, voter_id, message,
-       upvote_count, created_at, contender_id, is_demo`
+       upvote_count, created_at, contender_id, is_demo,
+       profiles ( goat_level )`
     )
     .eq("room_id", roomId)
     .eq("message_hidden", false)
@@ -101,6 +102,10 @@ export async function getRoomFeed(
       backing: r.contender_id ? names.get(r.contender_id) ?? null : null,
       upvoted: mine.has(r.id),
       is_demo: Boolean((r as { is_demo?: boolean }).is_demo),
+      level:
+        Number(
+          (r as { profiles?: { goat_level?: number } | null }).profiles?.goat_level
+        ) || undefined,
     })),
     nextCursor:
       page.length > 0

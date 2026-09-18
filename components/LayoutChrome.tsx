@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import DesktopNavbar from "./DesktopNavbar";
 import MobileTabBar from "./MobileTabBar";
 import SiteFooter from "./SiteFooter";
+import StreakTracker from "@/components/ui/StreakTracker";
 
 /**
  * Global navigation chrome.
@@ -31,6 +32,9 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Counts the day's visit from whichever page they landed on. */}
+      <StreakTracker />
+
       <DesktopNavbar />
 
       {/* The 80% inset is a desktop framing device. On a phone it threw away a

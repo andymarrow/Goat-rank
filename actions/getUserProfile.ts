@@ -18,6 +18,12 @@ export type PublicUserProfile = {
   isBot: boolean;
   botPersona: string | null;
   createdAt: string;
+  /** Standing in the rewards system, shown beside their name. */
+  level: number;
+  points: number;
+  lifetimePoints: number;
+  streak: number;
+  longestStreak: number;
   /** Participation — what a supporter does, as opposed to hosting. */
   totalPledged: number;
   arenasBacked: number;
@@ -55,7 +61,7 @@ export async function getUserProfile(userId: string): Promise<PublicUserProfile 
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, username, avatar_url, total_earned, is_banned, created_at, is_bot, bot_persona")
+    .select("id, username, avatar_url, total_earned, is_banned, created_at, is_bot, bot_persona, goat_points, lifetime_points, goat_level, streak_days, longest_streak")
     .eq("id", userId)
     .single();
 
@@ -124,6 +130,11 @@ export async function getUserProfile(userId: string): Promise<PublicUserProfile 
     isBot: Boolean((profile as { is_bot?: boolean }).is_bot),
     botPersona: (profile as { bot_persona?: string }).bot_persona ?? null,
     createdAt: profile.created_at,
+    level: Number((profile as { goat_level?: number }).goat_level) || 1,
+    points: Number((profile as { goat_points?: number }).goat_points) || 0,
+    lifetimePoints: Number((profile as { lifetime_points?: number }).lifetime_points) || 0,
+    streak: Number((profile as { streak_days?: number }).streak_days) || 0,
+    longestStreak: Number((profile as { longest_streak?: number }).longest_streak) || 0,
     totalPledged: votes.reduce((sum, v) => sum + (Number(v.amount) || 0), 0),
     arenasBacked: backed.length,
     criesPosted: votes.filter((v) => v.message?.trim()).length,

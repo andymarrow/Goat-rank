@@ -7,6 +7,8 @@ import { getUserProfile } from "@/actions/getUserProfile";
 import { formatSince } from "@/lib/time";
 import { DemoDot } from "@/components/ui/DemoBadge";
 import Avatar from "@/components/ui/Avatar";
+import LevelBadge from "@/components/ui/LevelBadge";
+import { Flame } from "lucide-react";
 import { absolute, breadcrumbSchema, jsonLd } from "@/lib/seo";
 
 /**
@@ -83,12 +85,16 @@ export default async function PublicUserPage({
       {/* Identity */}
       <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden mb-6 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 md:p-8">
-          <Avatar
-            src={profile.avatar_url}
-            name={profile.username}
-            size={96}
-            className="!w-16 !h-16 md:!w-24 md:!h-24 !rounded-2xl"
-          />
+          {/* The ring carries the level, which is what reads at a glance;
+              the number is there for anyone who looks closer. */}
+          <LevelBadge level={profile.level} variant="ring" size={96} className="rounded-2xl">
+            <Avatar
+              src={profile.avatar_url}
+              name={profile.username}
+              size={96}
+              className="!w-16 !h-16 md:!w-24 md:!h-24 !rounded-2xl"
+            />
+          </LevelBadge>
 
           <div className="w-full min-w-0 flex-1">
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">
@@ -102,7 +108,23 @@ export default async function PublicUserPage({
               {profile.isBot && <DemoDot className="!w-2.5 !h-2.5" />}
             </h1>
 
-            <p className="text-xs text-muted-foreground font-sans mt-1">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <LevelBadge level={profile.level} />
+
+              {profile.lifetimePoints > 0 && (
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground tabular-nums">
+                  {profile.lifetimePoints.toLocaleString()} points earned
+                </span>
+              )}
+
+              {profile.longestStreak > 1 && (
+                <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-orange-500">
+                  <Flame className="w-3 h-3" /> {profile.longestStreak} day best
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground font-sans mt-1.5">
               Joined {formatSince(profile.createdAt)}
             </p>
           </div>
