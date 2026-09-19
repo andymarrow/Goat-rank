@@ -4,6 +4,7 @@ import NoiseOverlay from "@/components/ui/NoiseOverlay";
 import SiteBanner from "@/components/SiteBanner";
 import LayoutChrome from "@/components/LayoutChrome";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import {
@@ -111,6 +112,10 @@ export default function RootLayout({
               out; every other route now has a way back. */}
           <LayoutChrome>{children}</LayoutChrome>
         </ThemeProvider>
+
+        {/* Vercel Web Analytics: page views and visitors. Injects its script
+            only on the deployed site, so local dev stays silent. */}
+        <Analytics />
       </body>
     </html>
   );
